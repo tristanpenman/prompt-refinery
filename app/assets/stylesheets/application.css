@@ -73,13 +73,27 @@ body { margin: 0; }
   font-size: 0.875rem;
 }
 
-.select-button {
-  float: right;
+.select-button,
+.secondary-button {
+  display: inline-block;
   padding: 0.5rem 0.8rem;
   border-radius: 0.35rem;
   color: #fff;
   background: #785b39;
   text-decoration: none;
+}
+
+.secondary-button {
+  border: 1px solid #785b39;
+  color: #785b39;
+  background: transparent;
+}
+
+.model-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .notice { margin-top: 2rem; }
@@ -276,4 +290,73 @@ body { margin: 0; }
 
 @media (max-width: 36rem) {
   .prompt-fields { grid-template-columns: 1fr; }
+}
+
+.evaluation-page {
+  box-sizing: border-box;
+  width: min(58rem, 100%);
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.evaluation-page header { margin: 2rem 0; }
+
+.evaluation-form {
+  padding: 1.25rem;
+  border: 1px solid #d7cfc3;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.evaluation-form label,
+.evaluation-form select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.evaluation-form select {
+  margin: 0.5rem 0 1rem;
+  padding: 0.7rem;
+}
+
+.evaluation-form input[type="submit"] {
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 0.35rem;
+  color: #fff;
+  background: #785b39;
+  cursor: pointer;
+}
+
+.evaluation-form input[type="submit"]:disabled { opacity: 0.65; }
+
+.evaluation-results { margin-top: 2rem; }
+
+.evaluation-results ol {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  list-style-position: inside;
+}
+
+.evaluation-result {
+  padding: 1.25rem;
+  border: 1px solid #d7cfc3;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.evaluation-result h3 { display: inline; }
+.evaluation-result details { margin: 1rem 0; }
+
+.result-content {
+  padding: 0.75rem;
+  border-radius: 0.35rem;
+  background: #f5f2ec;
+}
+
+.result-content p {
+  margin: 0;
+  white-space: pre-wrap;
 }

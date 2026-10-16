@@ -30,7 +30,10 @@
           <% if model["size"] %>
             <span><%= number_to_human_size(model["size"]) %></span>
           <% end %>
-          <%= link_to "Select", prompt_path(model: model["name"]), class: "select-button" %>
+          <div class="model-actions">
+            <%= link_to "Select", prompt_path(model: model["name"]), class: "select-button" %>
+            <%= link_to "Evaluate", evaluate_path(model: model["name"]), class: "secondary-button" %>
+          </div>
         </li>
       <% end %>
     </ul>

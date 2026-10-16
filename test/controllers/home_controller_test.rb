@@ -30,6 +30,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "gemma3:4b"
     assert_select "li", text: /gemma3 · 4.3B · Q4_K_M/
     assert_select "a[href=?]", prompt_path(model: "gemma3:4b"), text: "Select"
+    assert_select "a[href=?]", evaluate_path(model: "gemma3:4b"), text: "Evaluate"
   end
 
   test "reports an Ollama connection error" do
