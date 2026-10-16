@@ -364,14 +364,16 @@ body { margin: 0; }
 
 .trials-page header { margin: 2rem 0; }
 
-.trial-heading {
+.trial-heading,
+.collection-heading {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.65rem;
 }
 
-.trial-heading h1 { margin: 0; }
+.trial-heading h1,
+.collection-heading h1 { margin: 0; }
 
 .trial-responses {
   margin-top: 2rem;

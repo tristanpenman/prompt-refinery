@@ -13,6 +13,7 @@ Rails.application.routes.draw do
 
   resources :collections, only: %i[index show create update destroy] do
     get :revisions, on: :member, to: "collection_revisions#index"
+    patch :unarchive, on: :member
     resources :prompts, only: %i[create update destroy], controller: "collection_prompts"
   end
   resources :trials, only: %i[index show create]

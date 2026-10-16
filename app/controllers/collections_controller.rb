@@ -1,5 +1,5 @@
 class CollectionsController < ApplicationController
-  before_action :set_collection, only: %i[show update destroy]
+  before_action :set_collection, only: %i[show update destroy unarchive]
 
   def index
     load_collections
@@ -33,6 +33,11 @@ class CollectionsController < ApplicationController
   def destroy
     @collection.archive!
     redirect_to collections_path, notice: "Collection archived."
+  end
+
+  def unarchive
+    @collection.unarchive!
+    redirect_to @collection, notice: "Collection unarchived."
   end
 
   private

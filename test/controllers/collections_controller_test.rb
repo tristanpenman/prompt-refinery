@@ -127,4 +127,22 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Retained"
   end
+
+  test "shows archived status and unarchives a collection" do
+    collection = Collection.create!(name: "Restorable")
+    collection.archive!
+
+    get collection_path(collection)
+
+    assert_response :success
+    assert_select ".collection-heading h1", text: "Restorable"
+    assert_select ".collection-heading .status--archived", text: "Archived"
+    assert_select "a[href=?][data-turbo-method=patch]", unarchive_collection_path(collection), text: "Unarchive collection"
+    assert_select "button", text: "Archive collection", count: 0
+
+    patch unarchive_collection_path(collection)
+
+    assert_redirected_to collection
+    assert_nil collection.reload.archived_at
+  end
 end
