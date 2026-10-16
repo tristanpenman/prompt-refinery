@@ -234,6 +234,8 @@ body { margin: 0; }
 .editor-card h2,
 .collection-list h2 { margin-top: 0; }
 
+.archived-prompt-card h3 { margin-top: 0; }
+
 .editor-card label,
 .editor-card input,
 .editor-card textarea {

@@ -22,15 +22,15 @@
     <% else %>
       <p><strong>Latest revision:</strong> Not revised yet</p>
     <% end %>
-    <%= render "shared/errors", record: @collection %>
-    <%= form_with model: @collection do |form| %>
-      <%= form.label :name %>
-      <%= form.text_field :name, required: true %>
-      <%= form.submit "Save collection" %>
-    <% end %>
     <% if @collection.archived_at? %>
       <%= link_to "Unarchive collection", unarchive_collection_path(@collection), data: { turbo_method: :patch } %>
     <% else %>
+      <%= render "shared/errors", record: @collection %>
+      <%= form_with model: @collection do |form| %>
+        <%= form.label :name %>
+        <%= form.text_field :name, required: true %>
+        <%= form.submit "Save collection" %>
+      <% end %>
       <%= button_to "Archive collection", @collection, method: :delete, class: "danger-button", data: { turbo_confirm: "Archive this collection? It will no longer be available for new trials." } %>
     <% end %>
   </section>
@@ -41,46 +41,54 @@
       <p>No prompts in this collection yet.</p>
     <% else %>
       <% @prompts.each do |prompt| %>
-        <article class="editor-card">
-          <%= render "shared/errors", record: prompt %>
-          <%= form_with model: [@collection, prompt] do |form| %>
-            <div class="prompt-fields">
-              <div>
-                <%= form.label :name %>
-                <%= form.text_field :name, required: true %>
+        <article class="editor-card<%= " archived-prompt-card" if @collection.archived_at? %>">
+          <% if @collection.archived_at? %>
+            <h3><%= prompt.name %></h3>
+            <p><strong>Position:</strong> <%= prompt.position %></p>
+            <div class="result-content"><%= simple_format(prompt.template) %></div>
+          <% else %>
+            <%= render "shared/errors", record: prompt %>
+            <%= form_with model: [@collection, prompt] do |form| %>
+              <div class="prompt-fields">
+                <div>
+                  <%= form.label :name %>
+                  <%= form.text_field :name, required: true %>
+                </div>
+                <div>
+                  <%= form.label :position %>
+                  <%= form.number_field :position, required: true, min: 0 %>
+                </div>
               </div>
-              <div>
-                <%= form.label :position %>
-                <%= form.number_field :position, required: true, min: 0 %>
-              </div>
-            </div>
-            <%= form.label :template, "Prompt text" %>
-            <%= form.text_area :template, required: true, rows: 5 %>
-            <%= form.submit "Save prompt" %>
+              <%= form.label :template, "Prompt text" %>
+              <%= form.text_area :template, required: true, rows: 5 %>
+              <%= form.submit "Save prompt" %>
+            <% end %>
+            <%= button_to "Delete prompt", [@collection, prompt], method: :delete, class: "danger-button", data: { turbo_confirm: "Delete this prompt?" } %>
           <% end %>
-          <%= button_to "Delete prompt", [@collection, prompt], method: :delete, class: "danger-button", data: { turbo_confirm: "Delete this prompt?" } %>
         </article>
       <% end %>
     <% end %>
   </section>
 
-  <section class="editor-card">
-    <h2>Add prompt</h2>
-    <%= render "shared/errors", record: @prompt %>
-    <%= form_with model: [@collection, @prompt] do |form| %>
-      <div class="prompt-fields">
-        <div>
-          <%= form.label :name %>
-          <%= form.text_field :name, required: true, placeholder: "Prompt name" %>
+  <% unless @collection.archived_at? %>
+    <section class="editor-card">
+      <h2>Add prompt</h2>
+      <%= render "shared/errors", record: @prompt %>
+      <%= form_with model: [@collection, @prompt] do |form| %>
+        <div class="prompt-fields">
+          <div>
+            <%= form.label :name %>
+            <%= form.text_field :name, required: true, placeholder: "Prompt name" %>
+          </div>
+          <div>
+            <%= form.label :position %>
+            <%= form.number_field :position, required: true, min: 0 %>
+          </div>
         </div>
-        <div>
-          <%= form.label :position %>
-          <%= form.number_field :position, required: true, min: 0 %>
-        </div>
-      </div>
-      <%= form.label :template, "Prompt text" %>
-      <%= form.text_area :template, required: true, rows: 5, placeholder: "Write a prompt or use variables such as {{topic}}" %>
-      <%= form.submit "Add prompt" %>
-    <% end %>
-  </section>
+        <%= form.label :template, "Prompt text" %>
+        <%= form.text_area :template, required: true, rows: 5, placeholder: "Write a prompt or use variables such as {{topic}}" %>
+        <%= form.submit "Add prompt" %>
+      <% end %>
+    </section>
+  <% end %>
 </main>

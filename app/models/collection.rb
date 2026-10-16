@@ -14,12 +14,22 @@ class Collection < ApplicationRecord
     dependent: :destroy
 
   validates :name, presence: true
+  validate :read_only_while_archived, on: :update
 
   def archive!
     update!(archived_at: Time.current)
   end
 
   def unarchive!
-    update!(archived_at: nil)
+    reload.update!(archived_at: nil)
+  end
+
+  private
+
+  def read_only_while_archived
+    return unless archived_at_in_database.present?
+    return if changes_to_save.keys == [ "archived_at" ] && archived_at.nil?
+
+    errors.add(:base, "Archived collections are read-only")
   end
 end

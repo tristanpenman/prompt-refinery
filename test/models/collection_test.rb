@@ -22,6 +22,17 @@ class CollectionTest < ActiveSupport::TestCase
     assert_includes Collection.archived, collection
   end
 
+  test "an archived collection can only be unarchived" do
+    collection = Collection.create!(name: "Old prompts")
+    collection.archive!
+
+    assert_not collection.update(name: "Changed")
+    assert_includes collection.errors[:base], "Archived collections are read-only"
+
+    collection.unarchive!
+    assert_nil collection.archived_at
+  end
+
   test "returns prompts in position order" do
     collection = Collection.create!(name: "Summaries")
     second = collection.prompts.create!(name: "Detailed", template: "Explain {{topic}}", position: 2)

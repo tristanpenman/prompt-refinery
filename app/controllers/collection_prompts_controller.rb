@@ -1,5 +1,6 @@
 class CollectionPromptsController < ApplicationController
   before_action :set_collection
+  before_action :ensure_collection_active
   before_action :set_prompt, only: %i[update destroy]
 
   def create
@@ -33,6 +34,12 @@ class CollectionPromptsController < ApplicationController
 
   def set_prompt
     @prompt = @collection.prompts.find(params[:id])
+  end
+
+  def ensure_collection_active
+    return unless @collection.archived_at?
+
+    redirect_to @collection, alert: "Archived collections are read-only. Unarchive this collection to make changes."
   end
 
   def prompt_params

@@ -130,6 +130,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
 
   test "shows archived status and unarchives a collection" do
     collection = Collection.create!(name: "Restorable")
+    collection.prompts.create!(name: "Original prompt", template: "Read-only content", position: 0)
     collection.archive!
 
     get collection_path(collection)
@@ -138,7 +139,18 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".collection-heading h1", text: "Restorable"
     assert_select ".collection-heading .status--archived", text: "Archived"
     assert_select "a[href=?][data-turbo-method=patch]", unarchive_collection_path(collection), text: "Unarchive collection"
+    assert_select "input[name='collection[name]']", count: 0
+    assert_select "textarea", count: 0
     assert_select "button", text: "Archive collection", count: 0
+    assert_select "button", text: "Delete prompt", count: 0
+    assert_select "h2", text: "Add prompt", count: 0
+    assert_select ".archived-prompt-card h3", text: "Original prompt"
+    assert_select ".prompt-list", text: /Original prompt.*Read-only content/m
+
+    patch collection_path(collection), params: { collection: { name: "Changed" } }
+
+    assert_redirected_to collection
+    assert_equal "Restorable", collection.reload.name
 
     patch unarchive_collection_path(collection)
 

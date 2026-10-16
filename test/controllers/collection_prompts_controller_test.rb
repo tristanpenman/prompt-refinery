@@ -66,4 +66,26 @@ class CollectionPromptsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert_equal "Example", prompt.reload.name
   end
+
+  test "does not change prompts in an archived collection" do
+    prompt = @collection.prompts.create!(name: "Example", template: "Hello", position: 0)
+    @collection.archive!
+
+    assert_no_difference "Prompt.count" do
+      post collection_prompts_path(@collection), params: {
+        prompt: { name: "New", template: "New", position: 1 }
+      }
+    end
+    assert_redirected_to @collection
+
+    patch collection_prompt_path(@collection, prompt), params: {
+      prompt: { name: "Changed", template: "Changed", position: 1 }
+    }
+    assert_redirected_to @collection
+    assert_equal [ "Example", "Hello", 0 ], prompt.reload.attributes.values_at("name", "template", "position")
+
+    delete collection_prompt_path(@collection, prompt)
+    assert_redirected_to @collection
+    assert_nil prompt.reload.deleted_at
+  end
 end

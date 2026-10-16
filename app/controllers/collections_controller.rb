@@ -22,6 +22,11 @@ class CollectionsController < ApplicationController
   end
 
   def update
+    if @collection.archived_at?
+      redirect_to @collection, alert: "Archived collections are read-only. Unarchive this collection to make changes."
+      return
+    end
+
     if @collection.update(collection_params)
       redirect_to @collection, notice: "Collection updated."
     else
@@ -56,7 +61,7 @@ class CollectionsController < ApplicationController
 
   def prepare_show
     @prompts = @collection.prompts.to_a
-    @prompt = @collection.prompts.build(position: next_prompt_position)
+    @prompt = @collection.prompts.build(position: next_prompt_position) unless @collection.archived_at?
     @current_revision = @collection.collection_revisions.order(version: :desc).first
     @has_unrevised_changes = @current_revision &&
       @current_revision.content_digest != CollectionRevision.content_digest_for(@collection, @prompts)

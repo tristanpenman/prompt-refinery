@@ -20,4 +20,13 @@ class PromptTest < ActiveSupport::TestCase
     assert_not prompt.valid?
     assert_includes prompt.errors[:position], "must be greater than or equal to 0"
   end
+
+  test "cannot be changed while its collection is archived" do
+    prompt = @collection.prompts.create!(name: "Example", template: "Hello", position: 0)
+    @collection.archive!
+
+    assert_not prompt.update(name: "Changed")
+    assert_includes prompt.errors[:collection], "has been archived"
+    assert_raises(ActiveRecord::RecordInvalid) { prompt.soft_delete! }
+  end
 end
