@@ -31,8 +31,11 @@ class CollectionsController < ApplicationController
   end
 
   def destroy
-    @collection.destroy!
-    redirect_to collections_path, notice: "Collection deleted."
+    if @collection.destroy
+      redirect_to collections_path, notice: "Collection deleted."
+    else
+      redirect_to @collection, alert: "A collection cannot be deleted after it has been used to create a trial."
+    end
   end
 
   private

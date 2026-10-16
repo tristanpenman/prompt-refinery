@@ -44,4 +44,20 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to collections_path
   end
+
+  test "explains why a collection used by a trial cannot be deleted" do
+    collection = Collection.create!(name: "Retained")
+    trial = collection.trials.create!(model: "gemma3:4b")
+
+    assert_no_difference [ "Collection.count", "Trial.count" ] do
+      delete collection_path(collection)
+    end
+
+    assert_redirected_to collection
+    follow_redirect!
+    assert_response :success
+    assert_select "[role=alert]", text: "A collection cannot be deleted after it has been used to create a trial."
+    assert Collection.exists?(collection.id)
+    assert Trial.exists?(trial.id)
+  end
 end
