@@ -23,7 +23,7 @@ class EvaluationsController < ApplicationController
 
   def set_model
     @model = params[:model].to_s.strip
-    redirect_to root_path, alert: "Select a model first." if @model.blank?
+    redirect_to models_path, alert: "Select a model first." if @model.blank?
   end
 
   def set_collections

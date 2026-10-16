@@ -1,42 +1,64 @@
-<% content_for :title, "Models · Prompt Refinery" %>
+<% content_for :title, "Dashboard · Prompt Refinery" %>
 
-<main class="models-page">
+<main class="dashboard-page">
   <header>
     <p class="eyebrow">Prompt Refinery</p>
-    <h1>Available models</h1>
-    <p>Models currently installed on the connected Ollama server.</p>
-    <%= link_to "Manage collections", collections_path %>
-    <%= link_to "Manage trials", trials_path %>
+    <h1>Dashboard</h1>
+    <p>Models, prompt collections, and evaluation trials at a glance.</p>
     <%= button_to "Sign out", logout_path, method: :delete, class: "text-button" %>
   </header>
 
-  <% if @ollama_error %>
-    <section class="notice notice--error" role="alert">
-      <h2>Ollama is unavailable</h2>
-      <p><%= @ollama_error %></p>
-    </section>
-  <% elsif @models.empty? %>
-    <section class="notice">
-      <h2>No models installed</h2>
-      <p>Pull a model with <code>docker compose exec ollama ollama pull &lt;model&gt;</code>.</p>
-    </section>
-  <% else %>
-    <ul class="model-list">
-      <% @models.each do |model| %>
-        <li>
-          <h2><%= model.fetch("name", "Unnamed model") %></h2>
-          <% if model["details"].present? %>
-            <p><%= [model.dig("details", "family"), model.dig("details", "parameter_size"), model.dig("details", "quantization_level")].compact.join(" · ") %></p>
+  <div class="dashboard-grid">
+    <section class="dashboard-panel">
+      <header><h2>Models</h2><%= link_to "View all", models_path %></header>
+      <% if @ollama_error %>
+        <p class="form-error" role="alert"><%= @ollama_error %></p>
+      <% elsif @models.empty? %>
+        <p>No models installed.</p>
+      <% else %>
+        <ul>
+          <% @models.each do |model| %>
+            <li>
+              <%= link_to model.fetch("name", "Unnamed model"), prompt_path(model: model["name"]) %>
+              <% if model["modified_at"] %>
+                <small>Updated <%= time_ago_in_words(Time.zone.parse(model["modified_at"])) %> ago</small>
+              <% end %>
+            </li>
           <% end %>
-          <% if model["size"] %>
-            <span><%= number_to_human_size(model["size"]) %></span>
-          <% end %>
-          <div class="model-actions">
-            <%= link_to "Select", prompt_path(model: model["name"]), class: "select-button" %>
-            <%= link_to "Evaluate", evaluate_path(model: model["name"]), class: "secondary-button" %>
-          </div>
-        </li>
+        </ul>
       <% end %>
-    </ul>
-  <% end %>
+    </section>
+
+    <section class="dashboard-panel">
+      <header><h2>Collections</h2><%= link_to "Manage", collections_path %></header>
+      <% if @collections.empty? %>
+        <p>No collections yet.</p>
+      <% else %>
+        <ul>
+          <% @collections.each do |collection| %>
+            <li>
+              <%= link_to collection.name, collection %>
+              <small>Created <%= time_ago_in_words(collection.created_at) %> ago</small>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+
+    <section class="dashboard-panel">
+      <header><h2>Trials</h2><%= link_to "Manage", trials_path %></header>
+      <% if @trials.empty? %>
+        <p>No trials yet.</p>
+      <% else %>
+        <ul>
+          <% @trials.each do |trial| %>
+            <li>
+              <%= link_to "#{trial.collection.name} · #{trial.model}", trial %>
+              <small><span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span></small>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+  </div>
 </main>
