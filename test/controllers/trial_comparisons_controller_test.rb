@@ -10,8 +10,8 @@ class TrialComparisonsControllerTest < ActionDispatch::IntegrationTest
     @prompt = @collection.prompts.create!(name: "Greeting", template: "Say hello", position: 0)
     @baseline = create_trial(collection: @collection, model: "baseline-model")
     @trial = create_trial(collection: @collection, model: "current-model")
-    @baseline.responses.find_by!(prompt: @prompt).update!(status: :completed, content: "Baseline answer")
-    @trial.responses.find_by!(prompt: @prompt).update!(status: :completed, content: "Current answer")
+    @baseline.responses.find_by!(prompt: @prompt).update!(status: :completed, content: "**Baseline** answer")
+    @trial.responses.find_by!(prompt: @prompt).update!(status: :completed, content: "**Current** answer")
   end
 
   teardown do
@@ -47,6 +47,7 @@ class TrialComparisonsControllerTest < ActionDispatch::IntegrationTest
       assert_select ".comparison-response .revision-badge", text: "r1", count: 2
       assert_select ".comparison-response:nth-child(1)", text: /Baseline.*Baseline answer/m
       assert_select ".comparison-response:nth-child(2)", text: /Current.*Current answer/m
+      assert_select ".markdown-content strong", count: 2
     end
   end
 

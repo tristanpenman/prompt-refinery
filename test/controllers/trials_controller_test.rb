@@ -87,7 +87,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
   test "shows trial responses" do
     created_at = Time.zone.local(2026, 10, 16, 14, 30)
     trial = create_trial(collection: @collection, status: :completed, created_at: created_at)
-    trial.responses.first.update!(status: :completed, content: "Generated response")
+    trial.responses.first.update!(status: :completed, content: "**Generated** response")
 
     get trial_path(trial)
 
@@ -106,7 +106,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h3", text: /First r1/
     assert_select ".response-prompt", text: /Prompt\s+Hello/
     assert_select ".trial-responses details", count: 0
-    assert_select ".result-content", text: /Generated response/
+    assert_select ".result-content.markdown-content strong", text: "Generated"
   end
 
   test "marks the trial title when its collection is archived" do

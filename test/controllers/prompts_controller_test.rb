@@ -28,7 +28,14 @@ class PromptsControllerTest < ActionDispatch::IntegrationTest
   test "generates and displays an answer" do
     client = Class.new do
       def generate(model:, prompt:)
-        "#{model} says: #{prompt}"
+        <<~MARKDOWN
+          ## #{model} says
+
+          - **Answer:** #{prompt}
+          - Use `clear formatting`
+
+          <script>alert("unsafe")</script>
+        MARKDOWN
       end
     end
     PromptsController.ollama_client_class = client
@@ -40,7 +47,14 @@ class PromptsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
     assert_select "turbo-stream[action=replace][target=prompt_result]"
-    assert_select ".answer", text: /gemma3:4b says: Why is the sky blue\?/
+    assert_select ".answer .markdown-content" do
+      assert_select "h2", text: "gemma3:4b says"
+      assert_select "ul li", count: 2
+      assert_select "strong", text: "Answer:"
+      assert_select "code", text: "clear formatting"
+      assert_select "script", count: 0
+    end
+    assert_not_includes response.body, "alert("
   end
 
   test "reports a generation error" do

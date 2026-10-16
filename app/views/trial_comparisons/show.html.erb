@@ -44,7 +44,7 @@
                   <% if response.error? %>
                     <p class="form-error" role="alert"><%= response.error %></p>
                   <% elsif response.content? %>
-                    <div class="result-content"><%= simple_format(response.content) %></div>
+                    <div class="result-content markdown-content"><%= render_markdown(response.content) %></div>
                   <% else %>
                     <p>No response generated yet.</p>
                   <% end %>

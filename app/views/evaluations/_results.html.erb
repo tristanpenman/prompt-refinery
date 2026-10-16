@@ -21,7 +21,7 @@
               <% if result[:error] %>
                 <p class="form-error" role="alert"><%= result[:error] %></p>
               <% else %>
-                <div class="result-content"><%= simple_format(result[:response]) %></div>
+                <div class="result-content markdown-content"><%= render_markdown(result[:response]) %></div>
               <% end %>
             </li>
           <% end %>

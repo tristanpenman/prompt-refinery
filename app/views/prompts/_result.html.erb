@@ -7,7 +7,7 @@
   <% elsif @answer %>
     <section class="answer" aria-live="polite">
       <h2>Response</h2>
-      <div><%= simple_format(@answer) %></div>
+      <div class="result-content markdown-content"><%= render_markdown(@answer) %></div>
     </section>
   <% end %>
 </div>
