@@ -16,8 +16,12 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to login_path(return_to: "/")
   end
 
-  test "sets an encrypted cookie after login" do
-    post login_path, params: { token: "correct-token" }
+  test "sets a persistent encrypted cookie after login" do
+    travel_to Time.zone.local(2026, 10, 16, 12) do
+      post login_path, params: { token: "correct-token" }
+
+      assert_includes response.headers["Set-Cookie"], "expires=Sat, 16 Oct 2027 12:00:00 GMT"
+    end
 
     assert_redirected_to root_path
 

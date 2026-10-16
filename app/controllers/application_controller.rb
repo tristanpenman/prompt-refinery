@@ -36,6 +36,7 @@ class ApplicationController < ActionController::Base
   def store_authentication_cookie(token)
     cookies.encrypted[:prompt_refinery_auth_token] = {
       value: token,
+      expires: 1.year.from_now,
       httponly: true,
       same_site: :lax,
       secure: request.ssl?
