@@ -9,8 +9,9 @@
   <nav><%= link_to "← Trials", trials_path %></nav>
   <header>
     <p class="eyebrow">Trial #<%= @trial.id %></p>
-    <h1><%= @trial.collection.name %></h1>
+    <h1><%= @trial.collection_revision.name %></h1>
     <p><%= @trial.model %> · <span class="status status--<%= @trial.status %>"><%= @trial.status.humanize %></span></p>
+    <p>Collection version <%= @trial.collection_revision.version %></p>
   </header>
 
   <% if @trial.pending? || @trial.running? %>
@@ -26,12 +27,13 @@
       <p>This collection contains no prompts.</p>
     <% else %>
       <% @responses.each do |response| %>
+        <% prompt_revision = response.collection_revision_prompt.prompt_revision %>
         <article class="evaluation-result">
-          <h3><%= response.prompt.name %></h3>
+          <h3><%= prompt_revision.name %> <small>v<%= prompt_revision.version %></small></h3>
           <p><span class="status status--<%= response.status %>"><%= response.status.humanize %></span></p>
           <details>
             <summary>Prompt</summary>
-            <div class="result-content"><%= simple_format(response.prompt.template) %></div>
+            <div class="result-content"><%= simple_format(response.rendered_prompt) %></div>
           </details>
           <% if response.error? %>
             <p class="form-error" role="alert"><%= response.error %></p>

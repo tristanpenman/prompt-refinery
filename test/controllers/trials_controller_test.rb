@@ -18,7 +18,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "lists trials and creation options" do
-    trial = @collection.trials.create!(model: "gemma3:4b")
+    trial = create_trial(collection: @collection)
 
     get trials_path
 
@@ -26,6 +26,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "option", text: "Examples"
     assert_select "option", text: "gemma3:4b"
     assert_select "a[href=?]", trial_path(trial), text: "Examples"
+    assert_select "tr", text: /Examples\s+v1\s+gemma3:4b/
   end
 
   test "creates response records and enqueues the trial" do
@@ -41,13 +42,15 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "shows trial responses" do
-    trial = @collection.trials.create!(model: "gemma3:4b", status: :completed)
-    trial.responses.create!(prompt: @collection.prompts.first, status: :completed, content: "Generated response")
+    trial = create_trial(collection: @collection, status: :completed)
+    trial.responses.first.update!(status: :completed, content: "Generated response")
 
     get trial_path(trial)
 
     assert_response :success
     assert_select "h1", text: "Examples"
+    assert_select "p", text: "Collection version 1"
+    assert_select "h3", text: /First v1/
     assert_select ".result-content", text: /Generated response/
   end
 

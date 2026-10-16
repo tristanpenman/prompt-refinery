@@ -8,19 +8,27 @@ class TrialsController < ApplicationController
   end
 
   def show
-    @responses = @trial.responses.includes(:prompt).order("prompts.position", "responses.id")
+    @responses = @trial.responses
+      .joins(:collection_revision_prompt)
+      .includes(collection_revision_prompt: :prompt_revision)
+      .order("collection_revision_prompts.position", "responses.id")
   end
 
   def create
-    @trial = Trial.new(trial_params)
-
-    if create_trial_with_responses
-      TrialExecutionJob.perform_later(@trial)
-      redirect_to @trial, notice: "Trial queued."
-    else
-      load_index_data
-      render :index, status: :unprocessable_content
-    end
+    attributes = trial_params
+    collection = Collection.find(attributes[:collection_id])
+    @trial = Trial.create_for!(collection: collection, model: attributes[:model])
+    TrialExecutionJob.perform_later(@trial)
+    redirect_to @trial, notice: "Trial queued."
+  rescue ActiveRecord::RecordInvalid => error
+    @trial = error.record.is_a?(Trial) ? error.record : Trial.new(attributes)
+    load_index_data
+    render :index, status: :unprocessable_content
+  rescue ActiveRecord::RecordNotFound
+    @trial = Trial.new(attributes)
+    @trial.errors.add(:collection, "must exist")
+    load_index_data
+    render :index, status: :unprocessable_content
   end
 
   private
@@ -33,19 +41,8 @@ class TrialsController < ApplicationController
     params.expect(trial: %i[collection_id model])
   end
 
-  def create_trial_with_responses
-    Trial.transaction do
-      return false unless @trial.save
-
-      @trial.collection.prompts.each do |prompt|
-        @trial.responses.create!(prompt: prompt)
-      end
-    end
-    true
-  end
-
   def load_index_data
-    @trials = Trial.includes(:collection).order(created_at: :desc)
+    @trials = Trial.includes(:collection_revision).order(created_at: :desc)
     @collections = Collection.order(:name, :id)
     @models = ollama_client_class.new.models.map { |model| model.fetch("name") }
   rescue ::Ollama::Client::Error => error

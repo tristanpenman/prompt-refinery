@@ -5,8 +5,7 @@ class TrialExecutionJobTest < ActiveJob::TestCase
     @collection = Collection.create!(name: "Examples")
     @collection.prompts.create!(name: "First", template: "First prompt", position: 1)
     @collection.prompts.create!(name: "Second", template: "Second prompt", position: 2)
-    @trial = @collection.trials.create!(model: "gemma3:4b")
-    @collection.prompts.each { |prompt| @trial.responses.create!(prompt: prompt) }
+    @trial = create_trial(collection: @collection)
   end
 
   teardown do
@@ -21,6 +20,7 @@ class TrialExecutionJobTest < ActiveJob::TestCase
         "Response to #{prompt}"
       end
     end
+    @collection.prompts.first.update!(template: "This edit happened after the trial was created")
 
     TrialExecutionJob.perform_now(@trial)
 

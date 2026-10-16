@@ -35,12 +35,13 @@
     <% else %>
       <table>
         <thead>
-          <tr><th>Collection</th><th>Model</th><th>Status</th><th>Created</th></tr>
+          <tr><th>Collection</th><th>Version</th><th>Model</th><th>Status</th><th>Created</th></tr>
         </thead>
         <tbody>
           <% @trials.each do |trial| %>
             <tr>
-              <td><%= link_to trial.collection.name, trial %></td>
+              <td><%= link_to trial.collection_revision.name, trial %></td>
+              <td>v<%= trial.collection_revision.version %></td>
               <td><%= trial.model %></td>
               <td><span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span></td>
               <td><%= time_ago_in_words(trial.created_at) %> ago</td>

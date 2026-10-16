@@ -15,15 +15,15 @@ class TrialTest < ActiveSupport::TestCase
   end
 
   test "defaults to pending" do
-    trial = @collection.trials.create!(model: "gemma3:4b")
+    trial = create_trial(collection: @collection)
 
     assert_predicate trial, :pending?
   end
 
   test "destroys its responses" do
     prompt = @collection.prompts.create!(name: "Example", template: "Hello")
-    trial = @collection.trials.create!(model: "gemma3:4b")
-    response = trial.responses.create!(prompt: prompt)
+    trial = create_trial(collection: @collection)
+    response = trial.responses.find_by!(prompt: prompt)
 
     trial.destroy!
 
@@ -31,7 +31,7 @@ class TrialTest < ActiveSupport::TestCase
   end
 
   test "prevents its collection from being deleted" do
-    @collection.trials.create!(model: "gemma3:4b")
+    create_trial(collection: @collection)
 
     assert_not @collection.destroy
     assert_includes @collection.errors[:base], "Cannot delete record because dependent trials exist"

@@ -7,7 +7,11 @@ class TrialExecutionJob < ApplicationJob
     trial.update!(status: :running, started_at: Time.current)
     client = ollama_client_class.new
 
-    trial.responses.includes(:prompt).order("prompts.position", "responses.id").each do |response|
+    trial.responses
+      .joins(:collection_revision_prompt)
+      .includes(:collection_revision_prompt)
+      .order("collection_revision_prompts.position", "responses.id")
+      .each do |response|
       generate_response(client, trial, response)
     end
 
@@ -21,7 +25,7 @@ class TrialExecutionJob < ApplicationJob
   private
 
   def generate_response(client, trial, response)
-    content = client.generate(model: trial.model, prompt: response.prompt.template)
+    content = client.generate(model: trial.model, prompt: response.rendered_prompt)
     response.update!(status: :completed, content: content, error: nil)
   rescue ::Ollama::Client::Error => error
     response.update!(status: :failed, content: nil, error: error.message)

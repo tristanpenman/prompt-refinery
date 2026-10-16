@@ -10,6 +10,8 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    def create_trial(collection:, model: "gemma3:4b", **attributes)
+      Trial.create_for!(collection: collection, model: model, **attributes)
+    end
   end
 end

@@ -22,10 +22,10 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     collections = 4.times.map do |index|
       Collection.create!(name: "Collection #{index}", created_at: Time.zone.now - index.days)
     end
-    collections.first.trials.create!(model: "model-a", created_at: 1.hour.ago)
-    collections.second.trials.create!(model: "model-b", created_at: 2.hours.ago)
-    collections.third.trials.create!(model: "model-c", created_at: 3.hours.ago)
-    collections.last.trials.create!(model: "model-d", created_at: 4.hours.ago)
+    create_trial(collection: collections.first, model: "model-a", created_at: 1.hour.ago)
+    create_trial(collection: collections.second, model: "model-b", created_at: 2.hours.ago)
+    create_trial(collection: collections.third, model: "model-c", created_at: 3.hours.ago)
+    create_trial(collection: collections.last, model: "model-d", created_at: 4.hours.ago)
 
     get root_path
 
@@ -46,7 +46,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
       end
     end
     collection = Collection.create!(name: "Examples")
-    collection.trials.create!(model: "gemma3:4b")
+    create_trial(collection: collection)
 
     get root_path
 

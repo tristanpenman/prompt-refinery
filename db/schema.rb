@@ -10,11 +10,48 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_16_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_16_080000) do
+  create_table "collection_revision_prompts", force: :cascade do |t|
+    t.integer "collection_revision_id", null: false
+    t.integer "prompt_revision_id", null: false
+    t.integer "position", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["collection_revision_id", "position"], name: "index_revision_prompts_on_revision_and_position", unique: true
+    t.index ["collection_revision_id", "prompt_revision_id"], name: "index_revision_prompts_on_revision_and_prompt", unique: true
+    t.index ["collection_revision_id"], name: "index_collection_revision_prompts_on_collection_revision_id"
+    t.index ["prompt_revision_id"], name: "index_collection_revision_prompts_on_prompt_revision_id"
+  end
+
+  create_table "collection_revisions", force: :cascade do |t|
+    t.integer "collection_id", null: false
+    t.integer "version", null: false
+    t.string "name", null: false
+    t.string "content_digest", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["collection_id", "content_digest"], name: "index_collection_revisions_on_collection_id_and_content_digest", unique: true
+    t.index ["collection_id", "version"], name: "index_collection_revisions_on_collection_id_and_version", unique: true
+    t.index ["collection_id"], name: "index_collection_revisions_on_collection_id"
+  end
+
   create_table "collections", force: :cascade do |t|
     t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "prompt_revisions", force: :cascade do |t|
+    t.integer "prompt_id", null: false
+    t.integer "version", null: false
+    t.string "name", null: false
+    t.text "template", null: false
+    t.string "content_digest", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["prompt_id", "content_digest"], name: "index_prompt_revisions_on_prompt_id_and_content_digest", unique: true
+    t.index ["prompt_id", "version"], name: "index_prompt_revisions_on_prompt_id_and_version", unique: true
+    t.index ["prompt_id"], name: "index_prompt_revisions_on_prompt_id"
   end
 
   create_table "prompts", force: :cascade do |t|
@@ -36,7 +73,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_070000) do
     t.text "error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "collection_revision_prompt_id", null: false
+    t.text "rendered_prompt", null: false
+    t.index ["collection_revision_prompt_id"], name: "index_responses_on_collection_revision_prompt_id"
     t.index ["prompt_id"], name: "index_responses_on_prompt_id"
+    t.index ["trial_id", "collection_revision_prompt_id"], name: "index_responses_on_trial_and_revision_prompt", unique: true
     t.index ["trial_id", "prompt_id"], name: "index_responses_on_trial_id_and_prompt_id", unique: true
     t.index ["trial_id"], name: "index_responses_on_trial_id"
     t.check_constraint "status IN ('pending', 'completed', 'failed')", name: "responses_status_check"
@@ -50,12 +91,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_070000) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "collection_revision_id", null: false
     t.index ["collection_id"], name: "index_trials_on_collection_id"
+    t.index ["collection_revision_id"], name: "index_trials_on_collection_revision_id"
     t.check_constraint "status IN ('pending', 'running', 'completed', 'failed')", name: "trials_status_check"
   end
 
+  add_foreign_key "collection_revision_prompts", "collection_revisions"
+  add_foreign_key "collection_revision_prompts", "prompt_revisions"
+  add_foreign_key "collection_revisions", "collections"
+  add_foreign_key "prompt_revisions", "prompts"
   add_foreign_key "prompts", "collections"
+  add_foreign_key "responses", "collection_revision_prompts"
   add_foreign_key "responses", "prompts"
   add_foreign_key "responses", "trials"
+  add_foreign_key "trials", "collection_revisions"
   add_foreign_key "trials", "collections"
 end

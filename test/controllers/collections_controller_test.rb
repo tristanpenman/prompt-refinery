@@ -47,7 +47,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
 
   test "explains why a collection used by a trial cannot be deleted" do
     collection = Collection.create!(name: "Retained")
-    trial = collection.trials.create!(model: "gemma3:4b")
+    trial = create_trial(collection: collection)
 
     assert_no_difference [ "Collection.count", "Trial.count" ] do
       delete collection_path(collection)
