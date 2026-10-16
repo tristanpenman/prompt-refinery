@@ -1,8 +1,15 @@
 require "test_helper"
 
 class HomeControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    @original_encrypted_token = ENV["RAILS_AUTH_TOKEN"]
+    ENV["RAILS_AUTH_TOKEN"] = TokenAuthenticator.encrypt("test-token")
+    post login_path, params: { token: "test-token" }
+  end
+
   teardown do
     HomeController.ollama_client_class = ::Ollama::Client
+    ENV["RAILS_AUTH_TOKEN"] = @original_encrypted_token
   end
 
   test "lists models returned by Ollama" do

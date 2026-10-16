@@ -35,6 +35,22 @@ scripts/compose.sh
 
 Then open http://localhost:3000. Override the Ollama endpoint with `OLLAMA_URL` when needed.
 
+### Authentication
+
+Generate an encrypted authentication token interactively:
+
+```sh
+docker compose run --rm app bin/rails prompt_refinery:encrypt_token
+```
+
+Add the generated value to the local `.env` file and restart Prompt Refinery:
+
+```dotenv
+RAILS_AUTH_TOKEN=<encrypted value>
+```
+
+Enter the original plaintext token on the login page. Prompt Refinery stores it in an encrypted, HTTP-only session cookie. You can also use a one-time-style login URL such as `https://prompt_refinery.example.test/?token=<plaintext token>`; Prompt Refinery removes the token from the URL after setting the cookie.
+
 Common commands:
 
 ```sh

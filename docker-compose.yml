@@ -6,6 +6,7 @@ services:
     environment:
       OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
       RAILS_ALLOWED_HOSTS: ${RAILS_ALLOWED_HOSTS:-}
+      RAILS_AUTH_TOKEN: ${RAILS_AUTH_TOKEN:-}
       RAILS_LOG_TO_STDOUT: "1"
     extra_hosts:
       - "host.docker.internal:host-gateway"

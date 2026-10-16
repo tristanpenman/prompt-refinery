@@ -1,0 +1,20 @@
+<% content_for :title, "Sign in · Prompt Refinery" %>
+
+<main class="login-page">
+  <section class="login-card">
+    <p class="eyebrow">Prompt Refinery</p>
+    <h1>Enter your token</h1>
+    <p>Authenticate with the token configured for this Prompt Refinery server.</p>
+
+    <% if flash[:alert] %>
+      <p class="form-error" role="alert"><%= flash[:alert] %></p>
+    <% end %>
+
+    <%= form_with url: login_path do |form| %>
+      <%= hidden_field_tag :return_to, params[:return_to] %>
+      <%= form.label :token %>
+      <%= form.password_field :token, required: true, autofocus: true, autocomplete: "current-password" %>
+      <%= form.submit "Sign in" %>
+    <% end %>
+  </section>
+</main>

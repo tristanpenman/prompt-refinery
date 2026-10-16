@@ -79,3 +79,53 @@ body { margin: 0; }
   border-color: #cfaaa4;
   background: #fff8f6;
 }
+
+.login-page {
+  display: grid;
+  min-height: 100vh;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  place-items: center;
+}
+
+.login-card {
+  width: min(24rem, 100%);
+  padding: 2rem;
+  border: 1px solid #d7cfc3;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.login-card h1 { margin-top: 0; }
+
+.login-card label,
+.login-card input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-card input {
+  margin: 0.4rem 0 1rem;
+  padding: 0.7rem;
+}
+
+.login-card input[type="submit"] {
+  border: 0;
+  border-radius: 0.35rem;
+  color: #fff;
+  background: #785b39;
+  cursor: pointer;
+}
+
+.form-error { color: #9b2c20; }
+
+.text-button {
+  padding: 0;
+  border: 0;
+  color: #785b39;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: underline;
+}
