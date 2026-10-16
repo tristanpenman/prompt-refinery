@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_16_080000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_16_090000) do
   create_table "collection_revision_prompts", force: :cascade do |t|
     t.integer "collection_revision_id", null: false
     t.integer "prompt_revision_id", null: false
@@ -61,8 +61,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_080000) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
     t.index ["collection_id", "position"], name: "index_prompts_on_collection_id_and_position"
     t.index ["collection_id"], name: "index_prompts_on_collection_id"
+    t.index ["deleted_at"], name: "index_prompts_on_deleted_at"
   end
 
   create_table "responses", force: :cascade do |t|
