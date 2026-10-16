@@ -1,6 +1,7 @@
 class Collection < ApplicationRecord
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
+  scope :with_prompts, -> { joins(:prompts).distinct }
 
   has_many :trials, dependent: :restrict_with_error, inverse_of: :collection
   has_many :collection_revisions, dependent: :destroy, inverse_of: :collection

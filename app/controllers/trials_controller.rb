@@ -43,7 +43,7 @@ class TrialsController < ApplicationController
 
   def load_index_data
     @trials = Trial.includes(:collection, :collection_revision).order(created_at: :desc)
-    @collections = Collection.active.order(:name, :id)
+    @collections = Collection.active.with_prompts.order(:name, :id)
     @models = ollama_client_class.new.models.map { |model| model.fetch("name") }
   rescue ::Ollama::Client::Error => error
     @models = []

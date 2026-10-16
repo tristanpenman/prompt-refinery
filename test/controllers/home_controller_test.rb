@@ -24,7 +24,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
         name: "Collection #{index}",
         created_at: Time.zone.now - index.days,
         updated_at: Time.zone.now - index.days
-      )
+      ).tap { |collection| collection.prompts.create!(name: "Prompt #{index}", template: "Hello") }
     end
     create_trial(collection: collections.first, model: "model-a", created_at: 1.hour.ago)
     create_trial(collection: collections.second, model: "model-b", created_at: 2.hours.ago)
@@ -69,6 +69,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
       end
     end
     collection = Collection.create!(name: "Examples")
+    collection.prompts.create!(name: "Example", template: "Hello")
     completed_at = 2.hours.ago.change(usec: 0)
     create_trial(collection: collection, status: :completed, completed_at: completed_at)
 
@@ -86,6 +87,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
       end
     end
     collection = Collection.create!(name: "Archived examples")
+    collection.prompts.create!(name: "Example", template: "Hello")
     trial = create_trial(collection: collection)
     collection.archive!
 
@@ -103,6 +105,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
       end
     end
     collection = Collection.create!(name: "Examples")
+    collection.prompts.create!(name: "Example", template: "Hello")
     create_trial(collection: collection)
 
     get root_path

@@ -65,6 +65,25 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
   end
 
+  test "does not offer or create a trial for a collection without prompts" do
+    empty_collection = Collection.create!(name: "Empty")
+
+    get trials_path
+
+    assert_response :success
+    assert_select "option", text: "Examples"
+    assert_select "option", text: "Empty", count: 0
+
+    assert_no_enqueued_jobs do
+      assert_no_difference "Trial.count" do
+        post trials_path, params: { trial: { collection_id: empty_collection.id, model: "gemma3:4b" } }
+      end
+    end
+
+    assert_response :unprocessable_content
+    assert_select "[role=alert]", text: /Collection must contain at least one prompt/
+  end
+
   test "shows trial responses" do
     created_at = Time.zone.local(2026, 10, 16, 14, 30)
     trial = create_trial(collection: @collection, status: :completed, created_at: created_at)

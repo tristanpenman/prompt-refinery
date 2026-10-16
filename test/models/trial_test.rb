@@ -15,6 +15,7 @@ class TrialTest < ActiveSupport::TestCase
   end
 
   test "defaults to pending" do
+    @collection.prompts.create!(name: "Example", template: "Hello")
     trial = create_trial(collection: @collection)
 
     assert_predicate trial, :pending?
@@ -30,6 +31,14 @@ class TrialTest < ActiveSupport::TestCase
     assert_includes error.record.errors[:collection], "has been archived"
   end
 
+  test "cannot be created for a collection without prompts" do
+    error = assert_raises(ActiveRecord::RecordInvalid) do
+      create_trial(collection: @collection)
+    end
+
+    assert_includes error.record.errors[:collection], "must contain at least one prompt"
+  end
+
   test "destroys its responses" do
     prompt = @collection.prompts.create!(name: "Example", template: "Hello")
     trial = create_trial(collection: @collection)
@@ -41,6 +50,7 @@ class TrialTest < ActiveSupport::TestCase
   end
 
   test "prevents its collection from being deleted" do
+    @collection.prompts.create!(name: "Example", template: "Hello")
     create_trial(collection: @collection)
 
     assert_not @collection.destroy

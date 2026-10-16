@@ -15,6 +15,7 @@ class Trial < ApplicationRecord
   validates :model, presence: true
   validate :revision_belongs_to_collection
   validate :collection_is_active, on: :create
+  validate :collection_has_prompts, on: :create
 
   def self.create_for!(collection:, model:, **attributes)
     transaction do
@@ -42,5 +43,9 @@ class Trial < ApplicationRecord
 
   def collection_is_active
     errors.add(:collection, "has been archived") if collection&.archived_at?
+  end
+
+  def collection_has_prompts
+    errors.add(:collection, "must contain at least one prompt") if collection && collection.prompts.empty?
   end
 end

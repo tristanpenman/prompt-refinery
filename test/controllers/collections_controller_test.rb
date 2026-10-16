@@ -114,6 +114,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
 
   test "archives a collection that has been used by a trial" do
     collection = Collection.create!(name: "Retained")
+    collection.prompts.create!(name: "Example", template: "Hello")
     trial = create_trial(collection: collection)
 
     assert_no_difference [ "Collection.count", "Trial.count" ] do
