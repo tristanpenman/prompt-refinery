@@ -55,5 +55,8 @@ class CollectionsController < ApplicationController
   def prepare_show
     @prompts = @collection.prompts.to_a
     @prompt = @collection.prompts.build(position: next_prompt_position)
+    @current_revision = @collection.collection_revisions.order(version: :desc).first
+    @has_unversioned_changes = @current_revision &&
+      @current_revision.content_digest != CollectionRevision.content_digest_for(@collection, @prompts)
   end
 end

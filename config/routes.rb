@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   post "evaluate" => "evaluations#create"
 
   resources :collections, only: %i[index show create update destroy] do
+    get :versions, on: :member, to: "collection_versions#index"
     resources :prompts, only: %i[create update destroy], controller: "collection_prompts"
   end
   resources :trials, only: %i[index show create]

@@ -20,6 +20,19 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h3", text: "Summaries"
   end
 
+  test "shows the current version and draft state" do
+    collection = Collection.create!(name: "Versioned")
+    prompt = collection.prompts.create!(name: "Example", template: "Original")
+    create_trial(collection: collection)
+    prompt.update!(template: "Draft edit")
+
+    get collection_path(collection)
+
+    assert_response :success
+    assert_select "p", text: /Current version:\s+v1/
+    assert_select "p", text: /There are draft changes/
+  end
+
   test "creates and updates a collection" do
     assert_difference "Collection.count", 1 do
       post collections_path, params: { collection: { name: "Drafts" } }

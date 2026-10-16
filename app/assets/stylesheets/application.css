@@ -218,7 +218,9 @@ body { margin: 0; }
   padding: 3rem 1.5rem;
 }
 
-.collections-page header { margin: 2rem 0; }
+.collections-page header {
+  margin: 0.5rem 0 1.5rem 0;
+}
 
 .editor-card,
 .collection-list {
@@ -456,3 +458,24 @@ body { margin: 0; }
 @media (max-width: 48rem) {
   .dashboard-grid { grid-template-columns: 1fr; }
 }
+
+.version-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.version-header p { margin: 0; }
+
+.version-prompts {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 0;
+  padding-left: 1.5rem;
+}
+
+.version-prompts h3 { margin-top: 0; }
+
+.current-version { border-color: #a98a62; }
+.history-heading { margin-top: 2rem; }

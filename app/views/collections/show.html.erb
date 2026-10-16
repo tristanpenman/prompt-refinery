@@ -9,6 +9,14 @@
 
   <section class="editor-card">
     <h2>Collection details</h2>
+    <% if @current_revision %>
+      <p><strong>Latest version:</strong> v<%= @current_revision.version %> (<%= link_to "View version history", versions_collection_path(@collection) %>)</p>
+      <% if @has_unversioned_changes %>
+        <p>There are draft changes. A new version will be created when the collection is next used in a trial.</p>
+      <% end %>
+    <% else %>
+      <p><strong>Latest version:</strong> Not versioned yet</p>
+    <% end %>
     <%= render "shared/errors", record: @collection %>
     <%= form_with model: @collection do |form| %>
       <%= form.label :name %>
