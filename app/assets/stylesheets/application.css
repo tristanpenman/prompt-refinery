@@ -356,6 +356,15 @@ body { margin: 0; }
 
 .trials-page header { margin: 2rem 0; }
 
+.trial-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.trial-heading h1 { margin: 0; }
+
 .trial-responses { margin-top: 2rem; }
 
 .trial-list table,
@@ -381,6 +390,7 @@ body { margin: 0; }
   color: #625d56;
   background: #e5ded4;
   font-size: 0.8rem;
+  font-weight: 400;
 }
 
 .status--running { color: #704d00; background: #fff0bd; }

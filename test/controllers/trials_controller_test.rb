@@ -46,14 +46,19 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "shows trial responses" do
-    trial = create_trial(collection: @collection, status: :completed)
+    created_at = Time.zone.local(2026, 10, 16, 14, 30)
+    trial = create_trial(collection: @collection, status: :completed, created_at: created_at)
     trial.responses.first.update!(status: :completed, content: "Generated response")
 
     get trial_path(trial)
 
     assert_response :success
-    assert_select "h1", text: "Examples"
-    assert_select "p", text: "Collection revision 1"
+    assert_select ".trial-heading" do
+      assert_select "h1", text: "Examples"
+    end
+    assert_select ".status.status--completed", text: "Completed"
+    assert_select "p", text: "Revision: 1"
+    assert_select "time[datetime=?]", created_at.iso8601, text: created_at.to_fs(:long)
     assert_select "h3", text: /First r1/
     assert_select ".result-content", text: /Generated response/
   end

@@ -16,7 +16,7 @@ class HomeController < ApplicationController
   private
 
   def load_recent_records
-    @collections = Collection.order(created_at: :desc).limit(3)
+    @collections = Collection.order(updated_at: :desc).limit(3)
     @trials = Trial.includes(:collection).order(created_at: :desc).limit(3)
   end
 end

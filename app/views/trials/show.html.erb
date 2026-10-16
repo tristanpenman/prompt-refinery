@@ -9,9 +9,13 @@
   <nav><%= link_to "← Trials", trials_path %></nav>
   <header>
     <p class="eyebrow">Trial #<%= @trial.id %></p>
-    <h1><%= @trial.collection_revision.name %></h1>
-    <p><%= @trial.model %> · <span class="status status--<%= @trial.status %>"><%= @trial.status.humanize %></span></p>
-    <p>Collection revision <%= @trial.collection_revision.version %></p>
+    <div class="trial-heading">
+      <h1><%= @trial.collection_revision.name %></h1>
+    </div>
+    <p>Revision: <%= @trial.collection_revision.version %></p>
+    <p>Model: <%= @trial.model %></p>
+    <p>Created: <time datetime="<%= @trial.created_at.iso8601 %>"><%= @trial.created_at.to_fs(:long) %></time></p>
+    <p>Status: <span class="status status--<%= @trial.status %>"><%= @trial.status.humanize %></span></p>
   </header>
 
   <% if @trial.pending? || @trial.running? %>

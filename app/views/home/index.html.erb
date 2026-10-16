@@ -38,7 +38,7 @@
           <% @collections.each do |collection| %>
             <li>
               <%= link_to collection.name, collection %>
-              <small>Created <%= time_ago_in_words(collection.created_at) %> ago</small>
+              <small>Updated <%= time_ago_in_words(collection.updated_at) %> ago</small>
             </li>
           <% end %>
         </ul>
@@ -54,7 +54,12 @@
           <% @trials.each do |trial| %>
             <li>
               <%= link_to "#{trial.collection.name} · #{trial.model}", trial %>
-              <small><span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span></small>
+              <small>
+                <span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span>
+                <% if trial.completed? && trial.completed_at %>
+                  <time datetime="<%= trial.completed_at.iso8601 %>"><%= time_ago_in_words(trial.completed_at) %> ago</time>
+                <% end %>
+              </small>
             </li>
           <% end %>
         </ul>

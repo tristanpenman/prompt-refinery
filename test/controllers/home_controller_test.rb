@@ -20,7 +20,11 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
       define_method(:models) { models }
     end
     collections = 4.times.map do |index|
-      Collection.create!(name: "Collection #{index}", created_at: Time.zone.now - index.days)
+      Collection.create!(
+        name: "Collection #{index}",
+        created_at: Time.zone.now - index.days,
+        updated_at: Time.zone.now - index.days
+      )
     end
     create_trial(collection: collections.first, model: "model-a", created_at: 1.hour.ago)
     create_trial(collection: collections.second, model: "model-b", created_at: 2.hours.ago)
@@ -37,6 +41,42 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "model-3", count: 0
     assert_select "a", text: "Collection 3", count: 0
     assert_select "a[href=?]", models_path, text: "View all"
+    assert_select ".dashboard-panel:nth-child(1) small", text: /^Updated /
+    assert_select ".dashboard-panel:nth-child(2) small", text: /^Updated /
+  end
+
+  test "orders collections by when they were updated" do
+    older = Collection.create!(name: "Created recently", created_at: 1.hour.ago, updated_at: 3.days.ago)
+    newer = Collection.create!(name: "Updated recently", created_at: 3.days.ago, updated_at: 1.hour.ago)
+    HomeController.ollama_client_class = Class.new do
+      def models
+        []
+      end
+    end
+
+    get root_path
+
+    assert_response :success
+    collection_links = css_select(".dashboard-panel:nth-child(2) li > a").map(&:text)
+    assert_equal [ newer.name, older.name ], collection_links
+    assert_select ".dashboard-panel:nth-child(2) small", text: /Updated about 1 hour ago/
+  end
+
+  test "shows when a completed trial finished" do
+    HomeController.ollama_client_class = Class.new do
+      def models
+        []
+      end
+    end
+    collection = Collection.create!(name: "Examples")
+    completed_at = 2.hours.ago.change(usec: 0)
+    create_trial(collection: collection, status: :completed, completed_at: completed_at)
+
+    get root_path
+
+    assert_response :success
+    assert_select ".dashboard-panel:nth-child(3) small", text: /Completed about 2 hours ago/
+    assert_select ".dashboard-panel:nth-child(3) time[datetime=?]", completed_at.iso8601
   end
 
   test "still shows collections and trials when Ollama is unavailable" do
