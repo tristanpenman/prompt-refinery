@@ -28,7 +28,7 @@ compose build app
 echo "==> Preparing database"
 compose run --rm app bin/rails db:prepare
 
-echo "==> Starting app and Ollama"
-compose up -d app ollama
+echo "==> Starting app, background jobs, and Ollama"
+compose up -d app jobs ollama
 
 echo "Prompt Refinery is available at http://localhost:3000"

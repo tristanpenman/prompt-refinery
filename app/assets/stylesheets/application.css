@@ -360,3 +360,46 @@ body { margin: 0; }
   margin: 0;
   white-space: pre-wrap;
 }
+
+.trials-page {
+  box-sizing: border-box;
+  width: min(64rem, 100%);
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.trials-page header { margin: 2rem 0; }
+
+.trial-list,
+.trial-responses { margin-top: 2rem; }
+
+.trial-list table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.trial-list th,
+.trial-list td {
+  padding: 0.8rem;
+  border-bottom: 1px solid #e5ded4;
+  text-align: left;
+}
+
+.status {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  color: #625d56;
+  background: #e5ded4;
+  font-size: 0.8rem;
+}
+
+.status--running { color: #704d00; background: #fff0bd; }
+.status--completed { color: #315c35; background: #e9f5e8; }
+.status--failed { color: #7b2118; background: #fff0ed; }
+
+.trial-responses {
+  display: grid;
+  gap: 1rem;
+}

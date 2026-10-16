@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   resources :collections, only: %i[index show create update destroy] do
     resources :prompts, only: %i[create update destroy], controller: "collection_prompts"
   end
+  resources :trials, only: %i[index show create]
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

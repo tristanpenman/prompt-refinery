@@ -1,0 +1,45 @@
+<% content_for :title, "Trial ##{@trial.id} · Prompt Refinery" %>
+<% content_for :head do %>
+  <% if @trial.pending? || @trial.running? %>
+    <meta http-equiv="refresh" content="2">
+  <% end %>
+<% end %>
+
+<main class="trials-page">
+  <nav><%= link_to "← Trials", trials_path %></nav>
+  <header>
+    <p class="eyebrow">Trial #<%= @trial.id %></p>
+    <h1><%= @trial.collection.name %></h1>
+    <p><%= @trial.model %> · <span class="status status--<%= @trial.status %>"><%= @trial.status.humanize %></span></p>
+  </header>
+
+  <% if @trial.pending? || @trial.running? %>
+    <section class="notice" role="status">
+      <h2>Generating responses…</h2>
+      <p>This page refreshes automatically while the background job is running.</p>
+    </section>
+  <% end %>
+
+  <section class="trial-responses">
+    <h2>Responses</h2>
+    <% if @responses.empty? %>
+      <p>This collection contains no prompts.</p>
+    <% else %>
+      <% @responses.each do |response| %>
+        <article class="evaluation-result">
+          <h3><%= response.prompt.name %></h3>
+          <p><span class="status status--<%= response.status %>"><%= response.status.humanize %></span></p>
+          <details>
+            <summary>Prompt</summary>
+            <div class="result-content"><%= simple_format(response.prompt.template) %></div>
+          </details>
+          <% if response.error? %>
+            <p class="form-error" role="alert"><%= response.error %></p>
+          <% elsif response.content? %>
+            <div class="result-content"><%= simple_format(response.content) %></div>
+          <% end %>
+        </article>
+      <% end %>
+    <% end %>
+  </section>
+</main>

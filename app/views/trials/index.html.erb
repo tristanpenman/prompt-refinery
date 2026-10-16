@@ -1,0 +1,53 @@
+<% content_for :title, "Trials · Prompt Refinery" %>
+
+<main class="trials-page">
+  <nav><%= link_to "← Models", root_path %> · <%= link_to "Collections", collections_path %></nav>
+  <header>
+    <p class="eyebrow">Prompt Refinery</p>
+    <h1>Trials</h1>
+    <p>Run a complete prompt collection against an Ollama model in the background.</p>
+  </header>
+
+  <section class="editor-card">
+    <h2>New trial</h2>
+    <%= render "shared/errors", record: @trial if @trial %>
+    <% if @ollama_error %>
+      <p class="form-error" role="alert"><%= @ollama_error %></p>
+    <% elsif @collections.empty? %>
+      <p><%= link_to "Create a collection", collections_path %> before starting a trial.</p>
+    <% elsif @models.empty? %>
+      <p>No Ollama models are installed.</p>
+    <% else %>
+      <%= form_with model: @trial || Trial.new do |form| %>
+        <%= form.label :collection_id, "Collection" %>
+        <%= form.collection_select :collection_id, @collections, :id, :name, prompt: "Choose a collection", required: true %>
+        <%= form.label :model %>
+        <%= form.select :model, @models, { prompt: "Choose a model" }, required: true %>
+        <%= form.submit "Create trial" %>
+      <% end %>
+    <% end %>
+  </section>
+
+  <section class="trial-list">
+    <h2>Previous trials</h2>
+    <% if @trials.empty? %>
+      <p>No trials yet.</p>
+    <% else %>
+      <table>
+        <thead>
+          <tr><th>Collection</th><th>Model</th><th>Status</th><th>Created</th></tr>
+        </thead>
+        <tbody>
+          <% @trials.each do |trial| %>
+            <tr>
+              <td><%= link_to trial.collection.name, trial %></td>
+              <td><%= trial.model %></td>
+              <td><span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span></td>
+              <td><%= time_ago_in_words(trial.created_at) %> ago</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </section>
+</main>

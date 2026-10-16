@@ -17,6 +17,17 @@ services:
       - .:/rails
       - bundle:/usr/local/bundle
 
+  jobs:
+    command: bin/jobs
+    environment:
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      RAILS_LOG_TO_STDOUT: "1"
+    image: prompt-refinery:dev
+    restart: always
+    volumes:
+      - .:/rails
+      - bundle:/usr/local/bundle
+
   ollama:
     image: ollama/ollama:latest
     ports:
