@@ -126,7 +126,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
 
     get trial_path(trial)
     assert_response :success
-    assert_select "h1", text: "Retained"
+    assert_select "h1", text: /Retained/
   end
 
   test "shows archived status and unarchives a collection" do
@@ -137,8 +137,8 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     get collection_path(collection)
 
     assert_response :success
-    assert_select ".collection-heading h1", text: "Restorable"
-    assert_select ".collection-heading .status--archived", text: "Archived"
+    assert_select ".collections-page > header h1", text: /Restorable/
+    assert_select ".collections-page > header h1 .status--archived", text: "Archived"
     assert_select "a[href=?][data-turbo-method=patch]", unarchive_collection_path(collection), text: "Unarchive collection"
     assert_select "input[name='collection[name]']", count: 0
     assert_select "textarea", count: 0

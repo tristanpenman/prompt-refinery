@@ -3,8 +3,9 @@
 <main class="prompt-page">
   <nav><%= link_to "← Models", models_path %></nav>
   <header>
-    <p class="eyebrow">Selected model</p>
+    <p class="eyebrow">Prompt model</p>
     <h1><%= @model %></h1>
+    <p>Ask a question and generate a response with this model.</p>
   </header>
 
   <%= form_with url: prompt_path, data: { controller: "prompt", action: "turbo:submit-start->prompt#start turbo:submit-end->prompt#finish" } do |form| %>

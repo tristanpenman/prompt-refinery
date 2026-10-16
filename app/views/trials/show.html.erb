@@ -9,15 +9,15 @@
   <nav><%= link_to "← Trials", trials_path %></nav>
   <header>
     <p class="eyebrow">Trial #<%= @trial.id %></p>
-    <div class="trial-heading">
-      <h1><%= @trial.collection_revision.name %></h1>
+    <h1>
+      <%= @trial.collection_revision.name %>
       <% if @trial.collection.archived_at? %>
         <span class="status status--archived">Archived</span>
       <% end %>
-    </div>
+    </h1>
   </header>
 
-  <section class="editor-card trial-details">
+  <section class="editor-card">
     <h2>Trial details</h2>
     <p>Revision: <%= @trial.collection_revision.version %></p>
     <p>Model: <%= @trial.model %></p>

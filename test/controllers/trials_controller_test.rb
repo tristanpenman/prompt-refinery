@@ -92,11 +92,11 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     get trial_path(trial)
 
     assert_response :success
-    assert_select ".trial-heading" do
+    assert_select ".trials-page > header" do
       assert_select "h1", text: "Examples"
       assert_select "a", count: 0
     end
-    assert_select "section.editor-card.trial-details" do
+    assert_select "section.editor-card" do
       assert_select "h2", text: "Trial details"
       assert_select ".status.status--completed", text: "Completed"
       assert_select "p", text: "Revision: 1"
@@ -115,8 +115,8 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     get trial_path(trial)
 
     assert_response :success
-    assert_select ".trial-heading h1", text: "Examples"
-    assert_select ".trial-heading .status--archived", text: "Archived"
+    assert_select ".trials-page > header h1", text: /Examples/
+    assert_select ".trials-page > header h1 .status--archived", text: "Archived"
   end
 
   private

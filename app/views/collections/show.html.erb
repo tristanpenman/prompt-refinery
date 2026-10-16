@@ -4,12 +4,12 @@
   <nav><%= link_to "← Collections", collections_path %></nav>
   <header>
     <p class="eyebrow">Prompt collection</p>
-    <div class="collection-heading">
-      <h1><%= @collection.name %></h1>
+    <h1>
+      <%= @collection.name %>
       <% if @collection.archived_at? %>
         <span class="status status--archived">Archived</span>
       <% end %>
-    </div>
+    </h1>
   </header>
 
   <section class="editor-card">

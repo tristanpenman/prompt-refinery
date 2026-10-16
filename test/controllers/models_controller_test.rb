@@ -27,6 +27,11 @@ class ModelsControllerTest < ActionDispatch::IntegrationTest
     get models_path
 
     assert_response :success
+    assert_select ".models-page > header" do
+      assert_select ".eyebrow", text: "Prompt Refinery"
+      assert_select "h1", text: "Available models"
+      assert_select "p", text: "Models currently installed on the connected Ollama server."
+    end
     assert_select "h2", text: "gemma3:4b"
     assert_select "li", text: /gemma3 · 4.3B · Q4_K_M/
     assert_select "a[href=?]", prompt_path(model: "gemma3:4b"), text: "Select"

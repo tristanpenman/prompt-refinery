@@ -17,16 +17,24 @@
 
 body { margin: 0; }
 
+main > nav {
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+main > nav a { color: #785b39; }
+
+main > nav + header { margin: 0 0 2rem; }
+
+main > nav + header > .eyebrow { margin: 0 0 0.5rem; }
+main > nav + header > h1 { margin: 0; }
+main > nav + header > h1 + p { margin: 0.75rem 0 0; }
+
 .models-page {
   box-sizing: border-box;
   width: min(52rem, 100%);
   margin: 0 auto;
-  padding: 4rem 1.5rem;
-}
-
-.models-page h1 {
-  margin: 0;
-  font-size: clamp(2rem, 6vw, 3.5rem);
+  padding: 3rem 1.5rem;
 }
 
 .eyebrow {
@@ -160,7 +168,6 @@ body { margin: 0; }
   padding: 3rem 1.5rem;
 }
 
-.prompt-page header { margin: 2rem 0; }
 .prompt-page h1 { overflow-wrap: anywhere; }
 
 .prompt-page label,
@@ -216,10 +223,6 @@ body { margin: 0; }
   width: min(58rem, 100%);
   margin: 0 auto;
   padding: 3rem 1.5rem;
-}
-
-.collections-page header {
-  margin: 0.5rem 0 1.5rem 0;
 }
 
 .editor-card,
@@ -292,8 +295,6 @@ body { margin: 0; }
   padding: 3rem 1.5rem;
 }
 
-.evaluation-page header { margin: 2rem 0; }
-
 .evaluation-form {
   padding: 1.25rem;
   border: 1px solid #d7cfc3;
@@ -365,19 +366,6 @@ body { margin: 0; }
   padding: 3rem 1.5rem;
 }
 
-.trials-page header { margin: 2rem 0; }
-
-.trial-heading,
-.collection-heading {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-}
-
-.trial-heading h1,
-.collection-heading h1 { margin: 0; }
-
 .trial-list table,
 .collection-list table {
   width: 100%;
@@ -403,6 +391,8 @@ body { margin: 0; }
   font-size: 0.8rem;
   font-weight: 400;
 }
+
+h1 .status { vertical-align: middle; }
 
 .status--running { color: #704d00; background: #fff0bd; }
 .status--completed { color: #315c35; background: #e9f5e8; }

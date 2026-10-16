@@ -16,7 +16,11 @@ class PromptsControllerTest < ActionDispatch::IntegrationTest
     get prompt_path(model: "gemma3:4b")
 
     assert_response :success
-    assert_select "h1", text: "gemma3:4b"
+    assert_select ".prompt-page > header" do
+      assert_select ".eyebrow", text: "Prompt model"
+      assert_select "h1", text: "gemma3:4b"
+      assert_select "p", text: "Ask a question and generate a response with this model."
+    end
     assert_select "form[action=?]", prompt_path
     assert_select "textarea[name=question]"
   end
