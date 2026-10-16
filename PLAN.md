@@ -21,7 +21,7 @@ The goal of this project is to build a small local-first application for evaluat
 - ~~Create, edit, and delete collections, with deletion protected after use in a trial.~~
 - ~~Add, edit, order, and delete prompts within a collection.~~
 - ~~Store plain prompts and template text.~~
-- Duplicate collections and track versions.
+- Duplicate collections and track revisions.
 - Render templates with named variables such as `{{topic}}`.
 - Validate templates and preview the fully rendered prompt before execution.
 - Save reusable input rows so one collection can be evaluated against multiple cases.

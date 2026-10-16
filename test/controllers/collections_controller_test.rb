@@ -20,8 +20,8 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h3", text: "Summaries"
   end
 
-  test "shows the current version and draft state" do
-    collection = Collection.create!(name: "Versioned")
+  test "shows the current revision and draft state" do
+    collection = Collection.create!(name: "Revised")
     prompt = collection.prompts.create!(name: "Example", template: "Original")
     create_trial(collection: collection)
     prompt.update!(template: "Draft edit")
@@ -29,7 +29,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     get collection_path(collection)
 
     assert_response :success
-    assert_select "p", text: /Current version:\s+v1/
+    assert_select "p", text: /Latest revision:\s+r1/
     assert_select "p", text: /There are draft changes/
   end
 

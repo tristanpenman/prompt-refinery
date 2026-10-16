@@ -11,7 +11,7 @@
     <p class="eyebrow">Trial #<%= @trial.id %></p>
     <h1><%= @trial.collection_revision.name %></h1>
     <p><%= @trial.model %> · <span class="status status--<%= @trial.status %>"><%= @trial.status.humanize %></span></p>
-    <p>Collection version <%= @trial.collection_revision.version %></p>
+    <p>Collection revision <%= @trial.collection_revision.version %></p>
   </header>
 
   <% if @trial.pending? || @trial.running? %>
@@ -29,7 +29,7 @@
       <% @responses.each do |response| %>
         <% prompt_revision = response.collection_revision_prompt.prompt_revision %>
         <article class="evaluation-result">
-          <h3><%= prompt_revision.name %> <small>v<%= prompt_revision.version %></small></h3>
+          <h3><%= prompt_revision.name %> <small>r<%= prompt_revision.version %></small></h3>
           <p><span class="status status--<%= response.status %>"><%= response.status.humanize %></span></p>
           <details>
             <summary>Prompt</summary>

@@ -459,23 +459,24 @@ body { margin: 0; }
   .dashboard-grid { grid-template-columns: 1fr; }
 }
 
-.version-header {
+.revision-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.version-header p { margin: 0; }
+.revision-header p { margin: 0; }
 
-.version-prompts {
+.revision-prompts {
   display: grid;
   gap: 1rem;
-  margin-bottom: 0;
+  margin-bottom: 0.75rem;
   padding-left: 1.5rem;
 }
 
-.version-prompts h3 { margin-top: 0; }
+.revision-prompts h3 { margin-top: 0; }
 
-.current-version { border-color: #a98a62; }
+.current-revision { border-color: #a98a62; }
+
 .history-heading { margin-top: 2rem; }
