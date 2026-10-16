@@ -18,8 +18,30 @@ It is intended to make prompt experimentation repeatable and easy to review. A p
 
 Prompt Refinery uses [Ollama](https://ollama.com/) to run models locally. Ollama will use a supported GPU when one is available and otherwise fall back to CPU execution.
 
-## Application
+## Local development
 
-The application is planned as a Ruby on Rails web app using Hotwire for interactive workflows, SQLite for persistence, and Active Job for trial execution.
+Prompt Refinery is a Rails 8.1 application using Hotwire, SQLite, and Solid Queue. Ruby and Rails run in Docker; Ollama runs locally and is reached from the app at `http://host.docker.internal:11434` by default.
 
-Development and installation instructions will be added when the initial application scaffold is in place. See [PLAN.md](PLAN.md) for the proposed scope, architecture, and delivery milestones.
+Prerequisites:
+
+- Docker with Compose v2
+- [Ollama](https://ollama.com/) running on the host
+
+Start the application:
+
+```sh
+scripts/compose.sh
+```
+
+Then open http://localhost:3000. Override the Ollama endpoint with `OLLAMA_URL` when needed.
+
+Common commands:
+
+```sh
+docker compose run --rm app bin/rails test
+docker compose run --rm app bin/rails console
+docker compose logs -f app
+docker compose down
+```
+
+See [PLAN.md](PLAN.md) for the proposed scope, architecture, and delivery milestones.
