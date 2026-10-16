@@ -61,3 +61,7 @@ docker compose down
 ```
 
 See [PLAN.md](PLAN.md) for the proposed scope, architecture, and delivery milestones.
+
+## License
+
+Prompt Refinery is licensed under the [MIT License](LICENSE).
