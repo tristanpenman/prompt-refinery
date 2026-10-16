@@ -54,6 +54,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "option", text: "Examples", count: 0
     assert_select "a[href=?]", trial_path(existing_trial), text: "Examples"
+    assert_select "tr", text: /Examples\s+Archived\s+r1/
 
     assert_no_enqueued_jobs do
       assert_no_difference "Trial.count" do
@@ -74,6 +75,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".trial-heading" do
       assert_select "h1", text: "Examples"
+      assert_select "a", count: 0
     end
     assert_select ".status.status--completed", text: "Completed"
     assert_select "p", text: "Revision: 1"
@@ -82,6 +84,17 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".response-prompt", text: /Prompt\s+Hello/
     assert_select ".trial-responses details", count: 0
     assert_select ".result-content", text: /Generated response/
+  end
+
+  test "marks the trial title when its collection is archived" do
+    trial = create_trial(collection: @collection)
+    @collection.archive!
+
+    get trial_path(trial)
+
+    assert_response :success
+    assert_select ".trial-heading h1", text: "Examples"
+    assert_select ".trial-heading .status--archived", text: "Archived"
   end
 
   private

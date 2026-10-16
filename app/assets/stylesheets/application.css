@@ -260,6 +260,11 @@ body { margin: 0; }
 .collection-list,
 .trial-list { overflow-x: auto; }
 
+.collection-filter-link {
+  margin-top: 1rem;
+  text-align: right;
+}
+
 .prompt-fields {
   display: grid;
   grid-template-columns: 1fr 8rem;

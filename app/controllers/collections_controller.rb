@@ -58,7 +58,9 @@ class CollectionsController < ApplicationController
   end
 
   def load_collections
-    @collections = Collection.active.includes(:prompts, :collection_revisions).order(:name, :id)
+    @show_archived = params[:archived] == "true"
+    collection_scope = @show_archived ? Collection.archived : Collection.active
+    @collections = collection_scope.includes(:prompts, :collection_revisions).order(:name, :id)
     @collection_rows = @collections.map do |collection|
       latest_revision = collection.collection_revisions.max_by(&:version)
       has_draft = latest_revision.nil? ||

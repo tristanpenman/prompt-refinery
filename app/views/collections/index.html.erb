@@ -19,9 +19,9 @@
   </section>
 
   <section class="collection-list">
-    <h2>Collections</h2>
+    <h2><%= @show_archived ? "Archived collections" : "Collections" %></h2>
     <% if @collection_rows.empty? %>
-      <p>No collections yet.</p>
+      <p><%= @show_archived ? "No archived collections." : "No collections yet." %></p>
     <% else %>
       <table>
         <thead>
@@ -54,4 +54,12 @@
       </table>
     <% end %>
   </section>
+
+  <nav class="collection-filter-link">
+    <% if @show_archived %>
+      <%= link_to "View active collections", collections_path %>
+    <% else %>
+      <%= link_to "View archived collections", collections_path(archived: true) %>
+    <% end %>
+  </nav>
 </main>

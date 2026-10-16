@@ -48,6 +48,27 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr", text: /Unrecorded\s+N\/A\s+Draft\s+1/
   end
 
+  test "switches between active and archived collections" do
+    active = Collection.create!(name: "Active collection")
+    archived = Collection.create!(name: "Archived collection")
+    archived.archive!
+
+    get collections_path
+
+    assert_response :success
+    assert_select "a", text: active.name
+    assert_select "a", text: archived.name, count: 0
+    assert_select "a[href=?]", collections_path(archived: true), text: "View archived collections"
+
+    get collections_path(archived: true)
+
+    assert_response :success
+    assert_select "h2", text: "Archived collections"
+    assert_select "a", text: archived.name
+    assert_select "a", text: active.name, count: 0
+    assert_select "a[href=?]", collections_path, text: "View active collections"
+  end
+
   test "shows the current revision and draft state" do
     collection = Collection.create!(name: "Revised")
     prompt = collection.prompts.create!(name: "Example", template: "Original")

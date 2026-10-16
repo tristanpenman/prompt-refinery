@@ -40,7 +40,12 @@
         <tbody>
           <% @trials.each do |trial| %>
             <tr>
-              <td><%= link_to trial.collection_revision.name, trial %></td>
+              <td>
+                <%= link_to trial.collection_revision.name, trial %>
+                <% if trial.collection.archived_at? %>
+                  <span class="status status--archived">Archived</span>
+                <% end %>
+              </td>
               <td>r<%= trial.collection_revision.version %></td>
               <td><%= trial.model %></td>
               <td><span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span></td>

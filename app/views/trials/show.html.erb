@@ -11,6 +11,9 @@
     <p class="eyebrow">Trial #<%= @trial.id %></p>
     <div class="trial-heading">
       <h1><%= @trial.collection_revision.name %></h1>
+      <% if @trial.collection.archived_at? %>
+        <span class="status status--archived">Archived</span>
+      <% end %>
     </div>
     <p>Revision: <%= @trial.collection_revision.version %></p>
     <p>Model: <%= @trial.model %></p>
