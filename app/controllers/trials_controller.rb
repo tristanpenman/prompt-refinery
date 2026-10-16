@@ -16,7 +16,7 @@ class TrialsController < ApplicationController
 
   def create
     attributes = trial_params
-    collection = Collection.find(attributes[:collection_id])
+    collection = Collection.active.find(attributes[:collection_id])
     @trial = Trial.create_for!(collection: collection, model: attributes[:model])
     TrialExecutionJob.perform_later(@trial)
     redirect_to @trial, notice: "Trial queued."
@@ -43,7 +43,7 @@ class TrialsController < ApplicationController
 
   def load_index_data
     @trials = Trial.includes(:collection_revision).order(created_at: :desc)
-    @collections = Collection.order(:name, :id)
+    @collections = Collection.active.order(:name, :id)
     @models = ollama_client_class.new.models.map { |model| model.fetch("name") }
   rescue ::Ollama::Client::Error => error
     @models = []

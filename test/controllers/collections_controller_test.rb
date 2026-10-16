@@ -75,18 +75,23 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Published", collection.reload.name
   end
 
-  test "deletes a collection and its prompts" do
+  test "archives a collection without deleting it or its prompts" do
     collection = Collection.create!(name: "Disposable")
-    collection.prompts.create!(name: "Example", template: "Hello")
+    prompt = collection.prompts.create!(name: "Example", template: "Hello")
 
-    assert_difference [ "Collection.count", "Prompt.count" ], -1 do
+    assert_no_difference [ "Collection.count", "Prompt.count" ] do
       delete collection_path(collection)
     end
 
     assert_redirected_to collections_path
+    assert_not_nil collection.reload.archived_at
+    assert Prompt.exists?(prompt.id)
+
+    get collections_path
+    assert_select "a", text: "Disposable", count: 0
   end
 
-  test "explains why a collection used by a trial cannot be deleted" do
+  test "archives a collection that has been used by a trial" do
     collection = Collection.create!(name: "Retained")
     trial = create_trial(collection: collection)
 
@@ -94,11 +99,11 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
       delete collection_path(collection)
     end
 
-    assert_redirected_to collection
-    follow_redirect!
+    assert_redirected_to collections_path
+    assert_not_nil collection.reload.archived_at
+
+    get trial_path(trial)
     assert_response :success
-    assert_select "[role=alert]", text: "A collection cannot be deleted after it has been used to create a trial."
-    assert Collection.exists?(collection.id)
-    assert Trial.exists?(trial.id)
+    assert_select "h1", text: "Retained"
   end
 end

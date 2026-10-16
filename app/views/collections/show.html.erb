@@ -23,7 +23,7 @@
       <%= form.text_field :name, required: true %>
       <%= form.submit "Save collection" %>
     <% end %>
-    <%= button_to "Delete collection", @collection, method: :delete, class: "danger-button", data: { turbo_confirm: "Delete this collection and all its prompts?" } %>
+    <%= button_to "Archive collection", @collection, method: :delete, class: "danger-button", data: { turbo_confirm: "Archive this collection? It will no longer be available for new trials." } %>
   </section>
 
   <section class="prompt-list">

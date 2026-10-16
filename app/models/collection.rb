@@ -1,4 +1,7 @@
 class Collection < ApplicationRecord
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+
   has_many :trials, dependent: :restrict_with_error, inverse_of: :collection
   has_many :collection_revisions, dependent: :destroy, inverse_of: :collection
   has_many :prompts,
@@ -11,4 +14,8 @@ class Collection < ApplicationRecord
     dependent: :destroy
 
   validates :name, presence: true
+
+  def archive!
+    update!(archived_at: Time.current)
+  end
 end

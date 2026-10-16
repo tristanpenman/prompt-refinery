@@ -45,6 +45,25 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal @collection.prompts.ids, trial.responses.pluck(:prompt_id)
   end
 
+  test "does not offer or create a trial for an archived collection" do
+    existing_trial = create_trial(collection: @collection)
+    @collection.archive!
+
+    get trials_path
+
+    assert_response :success
+    assert_select "option", text: "Examples", count: 0
+    assert_select "a[href=?]", trial_path(existing_trial), text: "Examples"
+
+    assert_no_enqueued_jobs do
+      assert_no_difference "Trial.count" do
+        post trials_path, params: { trial: { collection_id: @collection.id, model: "gemma3:4b" } }
+      end
+    end
+
+    assert_response :unprocessable_content
+  end
+
   test "shows trial responses" do
     created_at = Time.zone.local(2026, 10, 16, 14, 30)
     trial = create_trial(collection: @collection, status: :completed, created_at: created_at)

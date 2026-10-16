@@ -12,6 +12,16 @@ class CollectionTest < ActiveSupport::TestCase
     assert_includes collection.errors[:name], "can't be blank"
   end
 
+  test "archives a collection without deleting it" do
+    collection = Collection.create!(name: "Old prompts")
+
+    collection.archive!
+
+    assert_not_nil collection.archived_at
+    assert_not_includes Collection.active, collection
+    assert_includes Collection.archived, collection
+  end
+
   test "returns prompts in position order" do
     collection = Collection.create!(name: "Summaries")
     second = collection.prompts.create!(name: "Detailed", template: "Explain {{topic}}", position: 2)

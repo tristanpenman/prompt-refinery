@@ -79,6 +79,23 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select ".dashboard-panel:nth-child(3) time[datetime=?]", completed_at.iso8601
   end
 
+  test "hides archived collections but retains their trials" do
+    HomeController.ollama_client_class = Class.new do
+      def models
+        []
+      end
+    end
+    collection = Collection.create!(name: "Archived examples")
+    trial = create_trial(collection: collection)
+    collection.archive!
+
+    get root_path
+
+    assert_response :success
+    assert_select ".dashboard-panel:nth-child(2) a", text: "Archived examples", count: 0
+    assert_select ".dashboard-panel:nth-child(3) a[href=?]", trial_path(trial), text: /Archived examples/
+  end
+
   test "still shows collections and trials when Ollama is unavailable" do
     HomeController.ollama_client_class = Class.new do
       def models

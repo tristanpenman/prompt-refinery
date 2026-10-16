@@ -20,6 +20,16 @@ class TrialTest < ActiveSupport::TestCase
     assert_predicate trial, :pending?
   end
 
+  test "cannot be created for an archived collection" do
+    @collection.archive!
+
+    error = assert_raises(ActiveRecord::RecordInvalid) do
+      create_trial(collection: @collection)
+    end
+
+    assert_includes error.record.errors[:collection], "has been archived"
+  end
+
   test "destroys its responses" do
     prompt = @collection.prompts.create!(name: "Example", template: "Hello")
     trial = create_trial(collection: @collection)

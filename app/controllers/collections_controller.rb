@@ -31,11 +31,8 @@ class CollectionsController < ApplicationController
   end
 
   def destroy
-    if @collection.destroy
-      redirect_to collections_path, notice: "Collection deleted."
-    else
-      redirect_to @collection, alert: "A collection cannot be deleted after it has been used to create a trial."
-    end
+    @collection.archive!
+    redirect_to collections_path, notice: "Collection archived."
   end
 
   private
@@ -61,7 +58,7 @@ class CollectionsController < ApplicationController
   end
 
   def load_collections
-    @collections = Collection.includes(:prompts, :collection_revisions).order(:name, :id)
+    @collections = Collection.active.includes(:prompts, :collection_revisions).order(:name, :id)
     @collection_rows = @collections.map do |collection|
       latest_revision = collection.collection_revisions.max_by(&:version)
       has_draft = latest_revision.nil? ||

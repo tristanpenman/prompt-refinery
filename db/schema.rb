@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_16_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_16_100000) do
   create_table "collection_revision_prompts", force: :cascade do |t|
     t.integer "collection_revision_id", null: false
     t.integer "prompt_revision_id", null: false
@@ -39,6 +39,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_090000) do
     t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "archived_at"
+    t.index ["archived_at"], name: "index_collections_on_archived_at"
   end
 
   create_table "prompt_revisions", force: :cascade do |t|

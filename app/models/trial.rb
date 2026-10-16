@@ -14,6 +14,7 @@ class Trial < ApplicationRecord
 
   validates :model, presence: true
   validate :revision_belongs_to_collection
+  validate :collection_is_active, on: :create
 
   def self.create_for!(collection:, model:, **attributes)
     transaction do
@@ -37,5 +38,9 @@ class Trial < ApplicationRecord
     return if collection_revision.collection_id == collection_id
 
     errors.add(:collection_revision, "must belong to the trial's collection")
+  end
+
+  def collection_is_active
+    errors.add(:collection, "has been archived") if collection&.archived_at?
   end
 end
