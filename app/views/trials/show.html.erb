@@ -23,6 +23,7 @@
     <p>Model: <%= @trial.model %></p>
     <p>Created: <time datetime="<%= @trial.created_at.iso8601 %>"><%= @trial.created_at.to_fs(:long) %></time></p>
     <p>Status: <span class="status status--<%= @trial.status %>"><%= @trial.status.humanize %></span></p>
+    <%= link_to "Compare trial", compare_trial_path(@trial) %>
   </section>
 
   <% if @trial.pending? || @trial.running? %>

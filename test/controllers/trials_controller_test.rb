@@ -101,6 +101,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
       assert_select ".status.status--completed", text: "Completed"
       assert_select "p", text: "Revision: 1"
       assert_select "time[datetime=?]", created_at.iso8601, text: created_at.to_fs(:long)
+      assert_select "a[href=?]", compare_trial_path(trial), text: "Compare trial"
     end
     assert_select "h3", text: /First r1/
     assert_select ".response-prompt", text: /Prompt\s+Hello/

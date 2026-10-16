@@ -398,6 +398,28 @@ h1 .status { vertical-align: middle; }
 .status--completed { color: #315c35; background: #e9f5e8; }
 .status--failed { color: #7b2118; background: #fff0ed; }
 
+.trial-comparisons > h2 { margin-top: 0; }
+.trial-comparisons > .editor-card > h3 { margin-top: 0; }
+
+.prompt-change-warning {
+  color: #704d00;
+  font-size: 0.9em;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.comparison-response { min-width: 0; }
+.comparison-response h4 { margin: 0; }
+.revision-badge { vertical-align: middle; }
+
+@media (max-width: 48rem) {
+  .comparison-grid { grid-template-columns: 1fr; }
+}
+
 .dashboard-page {
   box-sizing: border-box;
   width: min(72rem, 100%);

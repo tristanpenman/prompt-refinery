@@ -16,7 +16,9 @@ Rails.application.routes.draw do
     patch :unarchive, on: :member
     resources :prompts, only: %i[create update destroy], controller: "collection_prompts"
   end
-  resources :trials, only: %i[index show create]
+  resources :trials, only: %i[index show create] do
+    get :compare, on: :member, to: "trial_comparisons#show"
+  end
 
   get "up" => "rails/health#show", as: :rails_health_check
 end
