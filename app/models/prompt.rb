@@ -1,5 +1,6 @@
 class Prompt < ApplicationRecord
   belongs_to :collection, inverse_of: :prompts
+  has_many :responses, dependent: :restrict_with_error, inverse_of: :prompt
 
   validates :name, presence: true
   validates :template, presence: true
