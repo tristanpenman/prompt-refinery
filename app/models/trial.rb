@@ -1,3 +1,28 @@
+# == Schema Information
+#
+# Table name: trials
+# Database name: primary
+#
+#  id                     :integer          not null, primary key
+#  completed_at           :datetime
+#  model                  :string           not null
+#  started_at             :datetime
+#  status                 :string           default("pending"), not null
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  collection_id          :integer          not null
+#  collection_revision_id :integer          not null
+#
+# Indexes
+#
+#  index_trials_on_collection_id           (collection_id)
+#  index_trials_on_collection_revision_id  (collection_revision_id)
+#
+# Foreign Keys
+#
+#  collection_id           (collection_id => collections.id)
+#  collection_revision_id  (collection_revision_id => collection_revisions.id)
+#
 class Trial < ApplicationRecord
   STATUSES = {
     pending: "pending",

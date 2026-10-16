@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: collections
+# Database name: primary
+#
+#  id          :integer          not null, primary key
+#  archived_at :datetime
+#  name        :string           not null
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#
+# Indexes
+#
+#  index_collections_on_archived_at  (archived_at)
+#
 class Collection < ApplicationRecord
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }

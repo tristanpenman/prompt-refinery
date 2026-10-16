@@ -1,3 +1,33 @@
+# == Schema Information
+#
+# Table name: responses
+# Database name: primary
+#
+#  id                            :integer          not null, primary key
+#  content                       :text
+#  error                         :text
+#  rendered_prompt               :text             not null
+#  status                        :string           default("pending"), not null
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#  collection_revision_prompt_id :integer          not null
+#  prompt_id                     :integer          not null
+#  trial_id                      :integer          not null
+#
+# Indexes
+#
+#  index_responses_on_collection_revision_prompt_id  (collection_revision_prompt_id)
+#  index_responses_on_prompt_id                      (prompt_id)
+#  index_responses_on_trial_and_revision_prompt      (trial_id,collection_revision_prompt_id) UNIQUE
+#  index_responses_on_trial_id                       (trial_id)
+#  index_responses_on_trial_id_and_prompt_id         (trial_id,prompt_id) UNIQUE
+#
+# Foreign Keys
+#
+#  collection_revision_prompt_id  (collection_revision_prompt_id => collection_revision_prompts.id)
+#  prompt_id                      (prompt_id => prompts.id)
+#  trial_id                       (trial_id => trials.id)
+#
 class Response < ApplicationRecord
   STATUSES = {
     pending: "pending",

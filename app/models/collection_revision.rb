@@ -1,5 +1,27 @@
 require "digest"
-
+# == Schema Information
+#
+# Table name: collection_revisions
+# Database name: primary
+#
+#  id             :integer          not null, primary key
+#  content_digest :string           not null
+#  name           :string           not null
+#  version        :integer          not null
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  collection_id  :integer          not null
+#
+# Indexes
+#
+#  index_collection_revisions_on_collection_id                     (collection_id)
+#  index_collection_revisions_on_collection_id_and_content_digest  (collection_id,content_digest) UNIQUE
+#  index_collection_revisions_on_collection_id_and_version         (collection_id,version) UNIQUE
+#
+# Foreign Keys
+#
+#  collection_id  (collection_id => collections.id)
+#
 class CollectionRevision < ApplicationRecord
   belongs_to :collection, inverse_of: :collection_revisions
   has_many :collection_revision_prompts,
