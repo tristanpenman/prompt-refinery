@@ -26,7 +26,6 @@
   <% end %>
 
   <section class="trial-responses">
-    <h2>Responses</h2>
     <% if @responses.empty? %>
       <p>This collection contains no prompts.</p>
     <% else %>
@@ -35,15 +34,18 @@
         <article class="evaluation-result">
           <h3><%= prompt_revision.name %> <small>r<%= prompt_revision.version %></small></h3>
           <p><span class="status status--<%= response.status %>"><%= response.status.humanize %></span></p>
-          <details>
-            <summary>Prompt</summary>
+          <section class="response-prompt">
+            <h4>Prompt</h4>
             <div class="result-content"><%= simple_format(response.rendered_prompt) %></div>
-          </details>
-          <% if response.error? %>
-            <p class="form-error" role="alert"><%= response.error %></p>
-          <% elsif response.content? %>
-            <div class="result-content"><%= simple_format(response.content) %></div>
-          <% end %>
+          </section>
+          <section class="response-prompt">
+            <h4>Response</h4>
+            <% if response.error? %>
+              <p class="form-error" role="alert"><%= response.error %></p>
+            <% elsif response.content? %>
+              <div class="result-content"><%= simple_format(response.content) %></div>
+            <% end %>
+          </section>
         </article>
       <% end %>
     <% end %>

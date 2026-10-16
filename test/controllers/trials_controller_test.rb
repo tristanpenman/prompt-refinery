@@ -60,6 +60,8 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", text: "Revision: 1"
     assert_select "time[datetime=?]", created_at.iso8601, text: created_at.to_fs(:long)
     assert_select "h3", text: /First r1/
+    assert_select ".response-prompt", text: /Prompt\s+Hello/
+    assert_select ".trial-responses details", count: 0
     assert_select ".result-content", text: /Generated response/
   end
 
