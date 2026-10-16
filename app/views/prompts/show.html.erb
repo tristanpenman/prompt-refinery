@@ -1,0 +1,21 @@
+<% content_for :title, "#{@model} · Prompt Refinery" %>
+
+<main class="prompt-page">
+  <nav><%= link_to "← Models", root_path %></nav>
+  <header>
+    <p class="eyebrow">Selected model</p>
+    <h1><%= @model %></h1>
+  </header>
+
+  <%= form_with url: prompt_path, data: { controller: "prompt", action: "turbo:submit-start->prompt#start turbo:submit-end->prompt#finish" } do |form| %>
+    <%= form.hidden_field :model, value: @model %>
+    <%= form.label :question, "Question" %>
+    <%= form.text_area :question, value: @prompt, rows: 7, required: true, autofocus: true %>
+    <%= form.submit "Ask", data: { prompt_target: "submit" } %>
+    <p class="generating-status" data-prompt-target="status" role="status" hidden>
+      Generating a response…
+    </p>
+  <% end %>
+
+  <%= render "result" %>
+</main>

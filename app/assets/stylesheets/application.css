@@ -73,6 +73,15 @@ body { margin: 0; }
   font-size: 0.875rem;
 }
 
+.select-button {
+  float: right;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.35rem;
+  color: #fff;
+  background: #785b39;
+  text-decoration: none;
+}
+
 .notice { margin-top: 2rem; }
 
 .notice--error {
@@ -129,3 +138,49 @@ body { margin: 0; }
   cursor: pointer;
   text-decoration: underline;
 }
+
+.prompt-page {
+  box-sizing: border-box;
+  width: min(52rem, 100%);
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.prompt-page header { margin: 2rem 0; }
+.prompt-page h1 { overflow-wrap: anywhere; }
+
+.prompt-page label,
+.prompt-page textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.prompt-page textarea {
+  margin: 0.5rem 0 1rem;
+  padding: 0.8rem;
+  resize: vertical;
+}
+
+.prompt-page input[type="submit"] {
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 0.35rem;
+  color: #fff;
+  background: #785b39;
+  cursor: pointer;
+}
+
+.prompt-page input[type="submit"]:disabled { opacity: 0.65; }
+.generating-status { color: #785b39; }
+
+.answer {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid #d7cfc3;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.answer h2 { margin-top: 0; }
+.answer p { white-space: pre-wrap; }

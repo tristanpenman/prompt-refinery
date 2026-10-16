@@ -1,0 +1,13 @@
+<div id="prompt_result">
+  <% if @error %>
+    <section class="notice notice--error" role="alert">
+      <h2>Unable to generate a response</h2>
+      <p><%= @error %></p>
+    </section>
+  <% elsif @answer %>
+    <section class="answer" aria-live="polite">
+      <h2>Response</h2>
+      <div><%= simple_format(@answer) %></div>
+    </section>
+  <% end %>
+</div>

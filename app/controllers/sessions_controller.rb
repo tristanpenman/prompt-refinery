@@ -16,11 +16,11 @@ class SessionsController < ApplicationController
       else
         "Authentication has not been configured. Set RAILS_AUTH_TOKEN and restart the app."
       end
-      render :new, status: :unprocessable_content
+      render :new, formats: :html, status: :unprocessable_content
     end
   rescue TokenAuthenticator::ConfigurationError => error
     flash.now[:alert] = error.message
-    render :new, status: :unprocessable_content
+    render :new, formats: :html, status: :unprocessable_content
   end
 
   def destroy

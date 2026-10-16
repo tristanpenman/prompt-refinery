@@ -29,6 +29,7 @@
           <% if model["size"] %>
             <span><%= number_to_human_size(model["size"]) %></span>
           <% end %>
+          <%= link_to "Select", prompt_path(model: model["name"]), class: "select-button" %>
         </li>
       <% end %>
     </ul>
