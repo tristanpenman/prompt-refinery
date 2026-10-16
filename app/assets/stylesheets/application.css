@@ -257,24 +257,7 @@ body { margin: 0; }
   cursor: pointer;
 }
 
-.collection-list ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.collection-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 0;
-  border-top: 1px solid #e5ded4;
-}
-
-.collection-list li:first-child { border-top: 0; }
-.collection-list h3,
-.collection-list p { margin: 0; }
+.collection-list { overflow-x: auto; }
 
 .prompt-fields {
   display: grid;
@@ -375,14 +358,17 @@ body { margin: 0; }
 .trial-list,
 .trial-responses { margin-top: 2rem; }
 
-.trial-list table {
+.trial-list table,
+.collection-list table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
 }
 
 .trial-list th,
-.trial-list td {
+.trial-list td,
+.collection-list th,
+.collection-list td {
   padding: 0.8rem;
   border-bottom: 1px solid #e5ded4;
   text-align: left;

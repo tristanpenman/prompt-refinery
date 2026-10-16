@@ -2,7 +2,7 @@ class CollectionsController < ApplicationController
   before_action :set_collection, only: %i[show update destroy]
 
   def index
-    @collections = Collection.includes(:prompts).order(:name, :id)
+    load_collections
     @collection = Collection.new
   end
 
@@ -16,7 +16,7 @@ class CollectionsController < ApplicationController
     if @collection.save
       redirect_to @collection, notice: "Collection created."
     else
-      @collections = Collection.includes(:prompts).order(:name, :id)
+      load_collections
       render :index, status: :unprocessable_content
     end
   end
@@ -58,5 +58,20 @@ class CollectionsController < ApplicationController
     @current_revision = @collection.collection_revisions.order(version: :desc).first
     @has_unrevised_changes = @current_revision &&
       @current_revision.content_digest != CollectionRevision.content_digest_for(@collection, @prompts)
+  end
+
+  def load_collections
+    @collections = Collection.includes(:prompts, :collection_revisions).order(:name, :id)
+    @collection_rows = @collections.map do |collection|
+      latest_revision = collection.collection_revisions.max_by(&:version)
+      has_draft = latest_revision.nil? ||
+        latest_revision.content_digest != CollectionRevision.content_digest_for(collection, collection.prompts.to_a)
+
+      {
+        collection: collection,
+        revision: latest_revision&.version,
+        draft: has_draft
+      }
+    end
   end
 end

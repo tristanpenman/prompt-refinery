@@ -12,12 +12,40 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "lists collections" do
-    Collection.create!(name: "Summaries")
+    collection = Collection.create!(name: "Summaries")
+    collection.prompts.create!(name: "Example", template: "Original")
+    create_trial(collection: collection)
 
     get collections_path
 
     assert_response :success
-    assert_select "h3", text: "Summaries"
+    assert_select "th", text: "Revision"
+    assert_select "th", text: "Draft"
+    assert_select "th", text: "Created"
+    assert_select "th", text: "Updated"
+    assert_select "tr", text: /Summaries\s+r1\s+Recorded\s+1/
+  end
+
+  test "shows the latest recorded revision for a draft collection" do
+    collection = Collection.create!(name: "Draft summaries")
+    prompt = collection.prompts.create!(name: "Example", template: "Original")
+    create_trial(collection: collection)
+    prompt.update!(template: "Draft edit")
+
+    get collections_path
+
+    assert_response :success
+    assert_select "tr", text: /Draft summaries\s+r1\s+Draft\s+1/
+  end
+
+  test "shows N/A when a collection has no recorded revision" do
+    collection = Collection.create!(name: "Unrecorded")
+    collection.prompts.create!(name: "Example", template: "Original")
+
+    get collections_path
+
+    assert_response :success
+    assert_select "tr", text: /Unrecorded\s+N\/A\s+Draft\s+1/
   end
 
   test "shows the current revision and draft state" do

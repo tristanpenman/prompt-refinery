@@ -20,20 +20,38 @@
 
   <section class="collection-list">
     <h2>Collections</h2>
-    <% if @collections.empty? %>
+    <% if @collection_rows.empty? %>
       <p>No collections yet.</p>
     <% else %>
-      <ul>
-        <% @collections.each do |collection| %>
-          <li>
-            <div>
-              <h3><%= link_to collection.name, collection %></h3>
-              <p><%= pluralize(collection.prompts.size, "prompt") %></p>
-            </div>
-            <%= link_to "Manage", collection, class: "select-button" %>
-          </li>
-        <% end %>
-      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Revision</th>
+            <th>Draft</th>
+            <th>Prompts</th>
+            <th>Created</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @collection_rows.each do |row| %>
+            <% collection = row[:collection] %>
+            <tr>
+              <td><%= link_to collection.name, collection %></td>
+              <td><%= row[:revision] ? "r#{row[:revision]}" : "N/A" %></td>
+              <td>
+                <span class="status <%= row[:draft] ? "status--running" : "status--completed" %>">
+                  <%= row[:draft] ? "Draft" : "Recorded" %>
+                </span>
+              </td>
+              <td><%= collection.prompts.size %></td>
+              <td><time datetime="<%= collection.created_at.iso8601 %>"><%= collection.created_at.to_fs(:short) %></time></td>
+              <td><time datetime="<%= collection.updated_at.iso8601 %>"><%= collection.updated_at.to_fs(:short) %></time></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
     <% end %>
   </section>
 </main>
