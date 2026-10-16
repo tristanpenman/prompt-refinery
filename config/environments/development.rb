@@ -12,6 +12,12 @@ Rails.application.configure do
   # Show full error reports.
   config.consider_all_requests_local = true
 
+  ENV.fetch("RAILS_ALLOWED_HOSTS", "").split(",").filter_map do |host|
+    host.strip.presence
+  end.each do |host|
+    config.hosts << host
+  end
+
   # Enable server timing.
   config.server_timing = true
 
