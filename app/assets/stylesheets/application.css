@@ -257,7 +257,8 @@ body { margin: 0; }
   cursor: pointer;
 }
 
-.collection-list { overflow-x: auto; }
+.collection-list,
+.trial-list { overflow-x: auto; }
 
 .prompt-fields {
   display: grid;
@@ -355,7 +356,6 @@ body { margin: 0; }
 
 .trials-page header { margin: 2rem 0; }
 
-.trial-list,
 .trial-responses { margin-top: 2rem; }
 
 .trial-list table,

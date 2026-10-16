@@ -25,6 +25,10 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "option", text: "Examples"
     assert_select "option", text: "gemma3:4b"
+    assert_select "section.editor-card.trial-list" do
+      assert_select "h2", text: "Previous trials"
+      assert_select "table"
+    end
     assert_select "a[href=?]", trial_path(trial), text: "Examples"
     assert_select "tr", text: /Examples\s+r1\s+gemma3:4b/
   end
