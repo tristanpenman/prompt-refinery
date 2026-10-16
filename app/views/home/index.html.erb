@@ -5,6 +5,7 @@
     <p class="eyebrow">Prompt Refinery</p>
     <h1>Available models</h1>
     <p>Models currently installed on the connected Ollama server.</p>
+    <%= link_to "Manage collections", collections_path %>
     <%= button_to "Sign out", logout_path, method: :delete, class: "text-button" %>
   </header>
 

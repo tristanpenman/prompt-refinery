@@ -8,5 +8,9 @@ Rails.application.routes.draw do
   get "prompt" => "prompts#show", as: :prompt
   post "prompt" => "prompts#create"
 
+  resources :collections, only: %i[index show create update destroy] do
+    resources :prompts, only: %i[create update destroy], controller: "collection_prompts"
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

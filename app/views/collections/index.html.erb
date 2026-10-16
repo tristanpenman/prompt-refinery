@@ -1,0 +1,39 @@
+<% content_for :title, "Collections · Prompt Refinery" %>
+
+<main class="collections-page">
+  <nav><%= link_to "← Models", root_path %></nav>
+  <header>
+    <p class="eyebrow">Prompt Refinery</p>
+    <h1>Prompt collections</h1>
+    <p>Group related prompts so they can be evaluated together.</p>
+  </header>
+
+  <section class="editor-card">
+    <h2>New collection</h2>
+    <%= render "shared/errors", record: @collection %>
+    <%= form_with model: @collection do |form| %>
+      <%= form.label :name %>
+      <%= form.text_field :name, required: true, placeholder: "Collection name" %>
+      <%= form.submit "Create collection" %>
+    <% end %>
+  </section>
+
+  <section class="collection-list">
+    <h2>Collections</h2>
+    <% if @collections.empty? %>
+      <p>No collections yet.</p>
+    <% else %>
+      <ul>
+        <% @collections.each do |collection| %>
+          <li>
+            <div>
+              <h3><%= link_to collection.name, collection %></h3>
+              <p><%= pluralize(collection.prompts.size, "prompt") %></p>
+            </div>
+            <%= link_to "Manage", collection, class: "select-button" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+</main>
