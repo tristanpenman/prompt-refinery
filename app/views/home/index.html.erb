@@ -30,7 +30,7 @@
     </section>
 
     <section class="dashboard-panel">
-      <header><h2>Collections</h2><%= link_to "Manage", collections_path %></header>
+      <header><h2>Collections</h2><%= link_to "View all", collections_path %></header>
       <% if @collections.empty? %>
         <p>No collections yet.</p>
       <% else %>
@@ -46,7 +46,7 @@
     </section>
 
     <section class="dashboard-panel">
-      <header><h2>Trials</h2><%= link_to "Manage", trials_path %></header>
+      <header><h2>Trials</h2><%= link_to "View all", trials_path %></header>
       <% if @trials.empty? %>
         <p>No trials yet.</p>
       <% else %>

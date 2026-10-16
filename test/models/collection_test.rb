@@ -20,6 +20,17 @@ class CollectionTest < ActiveSupport::TestCase
     assert_equal [ first, second ], collection.prompts.reload.to_a
   end
 
+  test "does not return soft-deleted prompts" do
+    collection = Collection.create!(name: "Summaries")
+    active = collection.prompts.create!(name: "Active", template: "Hello", position: 0)
+    deleted = collection.prompts.create!(name: "Deleted", template: "Goodbye", position: 1)
+
+    deleted.soft_delete!
+
+    assert_equal [ active ], collection.prompts.reload.to_a
+    assert_equal [ deleted ], collection.deleted_prompts.reload.to_a
+  end
+
   test "destroys its prompts" do
     collection = Collection.create!(name: "Disposable")
     prompt = collection.prompts.create!(name: "Example", template: "Hello", position: 0)

@@ -21,7 +21,7 @@ class CollectionPromptsController < ApplicationController
   end
 
   def destroy
-    @prompt.destroy!
+    @prompt.soft_delete!
     redirect_to @collection, notice: "Prompt deleted."
   end
 

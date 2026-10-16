@@ -30,14 +30,29 @@ class CollectionPromptsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Summarize", "Summarize {{topic}}", 1 ], prompt.reload.attributes.values_at("name", "template", "position")
   end
 
-  test "deletes a prompt" do
+  test "soft deletes a prompt" do
     prompt = @collection.prompts.create!(name: "Example", template: "Hello")
 
-    assert_difference "Prompt.count", -1 do
+    assert_no_difference "Prompt.count" do
       delete collection_prompt_path(@collection, prompt)
     end
 
     assert_redirected_to @collection
+    assert_not_nil prompt.reload.deleted_at
+    assert_not_includes @collection.prompts.reload, prompt
+  end
+
+  test "soft deletes a prompt that has been used in a trial" do
+    prompt = @collection.prompts.create!(name: "Example", template: "Hello")
+    trial = create_trial(collection: @collection)
+
+    assert_no_difference [ "Prompt.count", "Response.count" ] do
+      delete collection_prompt_path(@collection, prompt)
+    end
+
+    assert_redirected_to @collection
+    assert_not_nil prompt.reload.deleted_at
+    assert_equal prompt, trial.responses.first.prompt
   end
 
   test "does not access a prompt through another collection" do

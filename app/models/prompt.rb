@@ -6,4 +6,8 @@ class Prompt < ApplicationRecord
   validates :name, presence: true
   validates :template, presence: true
   validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+
+  def soft_delete!
+    update!(deleted_at: Time.current)
+  end
 end

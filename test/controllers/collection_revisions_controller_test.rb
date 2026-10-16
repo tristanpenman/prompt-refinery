@@ -22,7 +22,7 @@ class CollectionRevisionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".editor-card", count: 2
-    assert_select ".current-revision", text: /r2/
+    assert_select ".current-revision", text: /Revision 2/
     assert_select ".current-revision", text: /Updated prompt/
     assert_select ".revision-list .editor-card", text: /Revision 1/
     assert_select ".revision-list .editor-card", text: /Original prompt/
