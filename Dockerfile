@@ -9,6 +9,7 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       build-essential \
       curl \
+      git \
       libsqlite3-dev \
       libyaml-dev \
       pkg-config && \
