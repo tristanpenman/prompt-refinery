@@ -8,3 +8,74 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+:root {
+  color: #23211f;
+  background: #f5f2ec;
+  font-family: system-ui, sans-serif;
+}
+
+body { margin: 0; }
+
+.models-page {
+  box-sizing: border-box;
+  width: min(52rem, 100%);
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+.models-page h1 {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+}
+
+.eyebrow {
+  margin-bottom: 0.5rem;
+  color: #785b39;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.model-list {
+  display: grid;
+  gap: 1rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.model-list li,
+.notice {
+  padding: 1.25rem;
+  border: 1px solid #d7cfc3;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.model-list h2,
+.notice h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.model-list p,
+.notice p {
+  margin-bottom: 0;
+  color: #625d56;
+}
+
+.model-list span {
+  display: inline-block;
+  margin-top: 0.75rem;
+  color: #785b39;
+  font-size: 0.875rem;
+}
+
+.notice { margin-top: 2rem; }
+
+.notice--error {
+  border-color: #cfaaa4;
+  background: #fff8f6;
+}

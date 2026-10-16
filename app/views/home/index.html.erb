@@ -1,0 +1,35 @@
+<% content_for :title, "Models · Prompt Refinery" %>
+
+<main class="models-page">
+  <header>
+    <p class="eyebrow">Prompt Refinery</p>
+    <h1>Available models</h1>
+    <p>Models currently installed on the connected Ollama server.</p>
+  </header>
+
+  <% if @ollama_error %>
+    <section class="notice notice--error" role="alert">
+      <h2>Ollama is unavailable</h2>
+      <p><%= @ollama_error %></p>
+    </section>
+  <% elsif @models.empty? %>
+    <section class="notice">
+      <h2>No models installed</h2>
+      <p>Pull a model with <code>docker compose exec ollama ollama pull &lt;model&gt;</code>.</p>
+    </section>
+  <% else %>
+    <ul class="model-list">
+      <% @models.each do |model| %>
+        <li>
+          <h2><%= model.fetch("name", "Unnamed model") %></h2>
+          <% if model["details"].present? %>
+            <p><%= [model.dig("details", "family"), model.dig("details", "parameter_size"), model.dig("details", "quantization_level")].compact.join(" · ") %></p>
+          <% end %>
+          <% if model["size"] %>
+            <span><%= number_to_human_size(model["size"]) %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</main>
