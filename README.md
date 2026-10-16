@@ -21,3 +21,5 @@ Prompt Refinery uses [Ollama](https://ollama.com/) to run models locally. Ollama
 ## Application
 
 The application is planned as a Ruby on Rails web app using Hotwire for interactive workflows, SQLite for persistence, and Active Job for trial execution.
+
+Development and installation instructions will be added when the initial application scaffold is in place. See [PLAN.md](PLAN.md) for the proposed scope, architecture, and delivery milestones.
