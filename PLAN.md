@@ -4,9 +4,10 @@ The goal of this project is to build a small local-first application for evaluat
 
 ## Prerequisites
 
-- Rails project scaffolding.
-- Docker container for running Ollama on GPU or CPU.
-- Inspect installed models via the Rails frontend.
+- ~~Rails project scaffolding.~~
+- ~~Docker container for running Ollama on GPU or CPU.~~
+- ~~Inspect installed models via the Rails frontend.~~
+- ~~Minimal Jupyter-style token authentication.~~
 - Submit a job to Ollama from the Rails frontend and monitor its progress through to completion.
 
 ## Prompt collections
@@ -35,4 +36,4 @@ The goal of this project is to build a small local-first application for evaluat
 
 ## Explicitly deferred
 
-Authentication, multi-user collaboration, hosted inference providers, distributed workers, automated LLM judging, statistical significance analysis, and remote deployment are outside the first release. The data model and service boundaries should avoid preventing these additions later.
+Authentication and user management, alternative hosted inference providers, distributed workers, automated LLM judging, statistical significance analysis, and remote deployment are outside the first release. The data model and service boundaries should avoid preventing these additions later.
