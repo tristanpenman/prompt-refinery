@@ -224,7 +224,7 @@ body { margin: 0; }
 
 .editor-card,
 .collection-list {
-  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
   padding: 1.25rem;
   border: 1px solid #d7cfc3;
   border-radius: 0.75rem;
@@ -338,6 +338,7 @@ body { margin: 0; }
   border: 1px solid #d7cfc3;
   border-radius: 0.75rem;
   background: #fff;
+  margin-bottom: 1.5rem;
 }
 
 .evaluation-result h3 { display: inline; }
@@ -377,10 +378,6 @@ body { margin: 0; }
 .trial-heading h1,
 .collection-heading h1 { margin: 0; }
 
-.trial-responses {
-  margin-top: 2rem;
-}
-
 .trial-list table,
 .collection-list table {
   width: 100%;
@@ -410,11 +407,6 @@ body { margin: 0; }
 .status--running { color: #704d00; background: #fff0bd; }
 .status--completed { color: #315c35; background: #e9f5e8; }
 .status--failed { color: #7b2118; background: #fff0ed; }
-
-.trial-responses {
-  display: grid;
-  gap: 2rem;
-}
 
 .dashboard-page {
   box-sizing: border-box;

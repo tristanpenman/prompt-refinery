@@ -15,11 +15,15 @@
         <span class="status status--archived">Archived</span>
       <% end %>
     </div>
+  </header>
+
+  <section class="editor-card trial-details">
+    <h2>Trial details</h2>
     <p>Revision: <%= @trial.collection_revision.version %></p>
     <p>Model: <%= @trial.model %></p>
     <p>Created: <time datetime="<%= @trial.created_at.iso8601 %>"><%= @trial.created_at.to_fs(:long) %></time></p>
     <p>Status: <span class="status status--<%= @trial.status %>"><%= @trial.status.humanize %></span></p>
-  </header>
+  </section>
 
   <% if @trial.pending? || @trial.running? %>
     <section class="notice" role="status">
@@ -29,6 +33,7 @@
   <% end %>
 
   <section class="trial-responses">
+    <h2>Responses</h2>
     <% if @responses.empty? %>
       <p>This collection contains no prompts.</p>
     <% else %>

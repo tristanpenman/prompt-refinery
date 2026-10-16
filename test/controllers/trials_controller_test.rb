@@ -96,9 +96,12 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
       assert_select "h1", text: "Examples"
       assert_select "a", count: 0
     end
-    assert_select ".status.status--completed", text: "Completed"
-    assert_select "p", text: "Revision: 1"
-    assert_select "time[datetime=?]", created_at.iso8601, text: created_at.to_fs(:long)
+    assert_select "section.editor-card.trial-details" do
+      assert_select "h2", text: "Trial details"
+      assert_select ".status.status--completed", text: "Completed"
+      assert_select "p", text: "Revision: 1"
+      assert_select "time[datetime=?]", created_at.iso8601, text: created_at.to_fs(:long)
+    end
     assert_select "h3", text: /First r1/
     assert_select ".response-prompt", text: /Prompt\s+Hello/
     assert_select ".trial-responses details", count: 0
