@@ -14,4 +14,10 @@ module ApplicationHelper
 
     sanitize(html, tags: MARKDOWN_TAGS, attributes: MARKDOWN_ATTRIBUTES)
   end
+
+  # public/ files aren't fingerprinted, so version the URL by content to bust browser favicon caches
+  def favicon_path
+    digest = Digest::SHA256.file(Rails.public_path.join("favicon.ico")).hexdigest
+    "/favicon.ico?v=#{digest.first(16)}"
+  end
 end
