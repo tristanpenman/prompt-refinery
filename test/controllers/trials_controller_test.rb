@@ -7,13 +7,14 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     @original_encrypted_token = ENV["RAILS_AUTH_TOKEN"]
     ENV["RAILS_AUTH_TOKEN"] = TokenAuthenticator.encrypt("test-token")
     post login_path, params: { token: "test-token" }
+    @backend = Backend.ensure_system_default!(base_url: "http://ollama:11434")
     @collection = Collection.create!(name: "Examples")
     @collection.prompts.create!(name: "First", template: "Hello", position: 0)
-    TrialsController.ollama_client_class = available_models_client
+    TrialsController.client_factory = available_models_factory
   end
 
   teardown do
-    TrialsController.ollama_client_class = ::Ollama::Client
+    TrialsController.client_factory = Inference::Client
     ENV["RAILS_AUTH_TOKEN"] = @original_encrypted_token
   end
 
@@ -24,24 +25,28 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "option", text: "Examples"
+    assert_select "select[name=backend_id] option", text: @backend.name
     assert_select "option", text: "gemma3:4b"
     assert_select "section.editor-card.trial-list" do
       assert_select "h2", text: "Previous trials"
       assert_select "table"
     end
     assert_select "a[href=?]", trial_path(trial), text: "Examples"
-    assert_select "tr", text: /Examples\s+r1\s+gemma3:4b/
+    assert_select "tr", text: /Examples\s+r1\s+#{Regexp.escape(@backend.name)}\s+gemma3:4b/
   end
 
   test "creates response records and enqueues the trial" do
     assert_enqueued_with(job: TrialExecutionJob) do
       assert_difference [ "Trial.count", "Response.count" ], 1 do
-        post trials_path, params: { trial: { collection_id: @collection.id, model: "gemma3:4b" } }
+        post trials_path, params: { trial: { collection_id: @collection.id, backend_id: @backend.id, model: "gemma3:4b" } }
       end
     end
 
     trial = Trial.last
     assert_redirected_to trial
+    assert_equal @backend, trial.backend
+    assert_equal @backend.name, trial.backend_name
+    assert_equal @backend.base_url, trial.backend_base_url
     assert_equal @collection.prompts.ids, trial.responses.pluck(:prompt_id)
   end
 
@@ -58,7 +63,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_enqueued_jobs do
       assert_no_difference "Trial.count" do
-        post trials_path, params: { trial: { collection_id: @collection.id, model: "gemma3:4b" } }
+        post trials_path, params: { trial: { collection_id: @collection.id, backend_id: @backend.id, model: "gemma3:4b" } }
       end
     end
 
@@ -76,7 +81,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_enqueued_jobs do
       assert_no_difference "Trial.count" do
-        post trials_path, params: { trial: { collection_id: empty_collection.id, model: "gemma3:4b" } }
+        post trials_path, params: { trial: { collection_id: empty_collection.id, backend_id: @backend.id, model: "gemma3:4b" } }
       end
     end
 
@@ -122,11 +127,14 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def available_models_client
-    Class.new do
+  def available_models_factory
+    client = Class.new do
       def models
         [ { "name" => "gemma3:4b" } ]
       end
+    end
+    Class.new do
+      define_singleton_method(:for) { |_backend, **_options| client.new }
     end
   end
 end

@@ -9,17 +9,18 @@ class TrialExecutionJobTest < ActiveJob::TestCase
   end
 
   teardown do
-    TrialExecutionJob.ollama_client_class = ::Ollama::Client
+    TrialExecutionJob.client_factory = Inference::Client
   end
 
   test "records responses sequentially and completes the trial" do
     calls = []
-    TrialExecutionJob.ollama_client_class = Class.new do
+    client_class = Class.new do
       define_method(:generate) do |model:, prompt:|
         calls << [ model, prompt ]
         "Response to #{prompt}"
       end
     end
+    TrialExecutionJob.client_factory = factory_for(client_class)
     @collection.prompts.first.update!(template: "This edit happened after the trial was created")
 
     TrialExecutionJob.perform_now(@trial)
@@ -33,13 +34,14 @@ class TrialExecutionJobTest < ActiveJob::TestCase
   end
 
   test "records an individual failure and continues the trial" do
-    TrialExecutionJob.ollama_client_class = Class.new do
+    client_class = Class.new do
       def generate(model:, prompt:)
         raise ::Ollama::Client::Error, "Generation failed" if prompt == "First prompt"
 
         "Generated successfully"
       end
     end
+    TrialExecutionJob.client_factory = factory_for(client_class)
 
     TrialExecutionJob.perform_now(@trial)
 
@@ -47,5 +49,13 @@ class TrialExecutionJobTest < ActiveJob::TestCase
     assert_equal [ "failed", "completed" ], @trial.responses.map(&:status)
     assert_equal "Generation failed", @trial.responses.first.error
     assert_equal "Generated successfully", @trial.responses.second.content
+  end
+
+  private
+
+  def factory_for(client_class)
+    Class.new do
+      define_singleton_method(:for) { |_backend, **_options| client_class.new }
+    end
   end
 end

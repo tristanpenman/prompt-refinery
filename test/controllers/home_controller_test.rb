@@ -114,6 +114,6 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[role=alert]", text: /Could not connect to Ollama/
     assert_select "a", text: "Examples"
-    assert_select "a", text: /Examples · gemma3:4b/
+    assert_select "a", text: /Examples · Local Ollama · gemma3:4b/
   end
 end

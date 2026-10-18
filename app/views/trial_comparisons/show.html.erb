@@ -12,7 +12,7 @@
     <section class="editor-card">
       <h2>Comparison details</h2>
       <p><strong>Baseline:</strong> Trial #<%= @baseline.id %> · <%= @baseline.model %> · Revision <%= @baseline.collection_revision.version %></p>
-      <p><strong>Current:</strong> Trial #<%= @trial.id %> · <%= @trial.model %> · Revision <%= @trial.collection_revision.version %></p>
+      <p><strong>Current:</strong> Trial #<%= @trial.id %> · <%= @trial.backend_name %> · <%= @trial.model %> · Revision <%= @trial.collection_revision.version %></p>
       <%= link_to "Choose another baseline", compare_trial_path(@trial) %>
     </section>
 
@@ -70,7 +70,7 @@
               <tr>
                 <td><%= link_to "Trial ##{trial.id}", compare_trial_path(@trial, baseline: trial.id) %></td>
                 <td>r<%= trial.collection_revision.version %></td>
-                <td><%= trial.model %></td>
+                <td><%= trial.backend_name %> · <%= trial.model %></td>
                 <td><span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span></td>
                 <td><%= time_ago_in_words(trial.created_at) %> ago</td>
               </tr>

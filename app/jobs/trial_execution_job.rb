@@ -1,11 +1,11 @@
 class TrialExecutionJob < ApplicationJob
   queue_as :default
 
-  class_attribute :ollama_client_class, default: ::Ollama::Client
+  class_attribute :client_factory, default: Inference::Client
 
   def perform(trial)
     trial.update!(status: :running, started_at: Time.current)
-    client = ollama_client_class.new
+    client = client_factory.for(trial.backend, base_url: trial.backend_base_url)
 
     trial.responses
       .joins(:collection_revision_prompt)

@@ -13,12 +13,20 @@
     <%= render "shared/errors", record: @trial if @trial %>
     <% if @ollama_error %>
       <p class="form-error" role="alert"><%= @ollama_error %></p>
+    <% elsif @backends.empty? %>
+      <p><%= link_to "Enable a backend", settings_backends_path %> before starting a trial.</p>
     <% elsif @collections.empty? %>
       <p><%= link_to "Create a collection", collections_path %> before starting a trial.</p>
     <% elsif @models.empty? %>
-      <p>No Ollama models are installed.</p>
+      <p>No models are installed on <%= @selected_backend.name %>.</p>
     <% else %>
+      <%= form_with url: trials_path, method: :get do |form| %>
+        <%= form.label :backend_id, "Backend" %>
+        <%= form.collection_select :backend_id, @backends, :id, :name, { selected: @selected_backend.id }, required: true %>
+        <%= form.submit "Select backend" %>
+      <% end %>
       <%= form_with model: @trial || Trial.new do |form| %>
+        <%= form.hidden_field :backend_id, value: @selected_backend.id %>
         <%= form.label :collection_id, "Collection" %>
         <%= form.collection_select :collection_id, @collections, :id, :name, prompt: "Choose a collection", required: true %>
         <%= form.label :model %>
@@ -35,7 +43,7 @@
     <% else %>
       <table>
         <thead>
-          <tr><th>Collection</th><th>Revision</th><th>Model</th><th>Status</th><th>Created</th></tr>
+          <tr><th>Collection</th><th>Revision</th><th>Backend</th><th>Model</th><th>Status</th><th>Created</th></tr>
         </thead>
         <tbody>
           <% @trials.each do |trial| %>
@@ -47,6 +55,7 @@
                 <% end %>
               </td>
               <td>r<%= trial.collection_revision.version %></td>
+              <td><%= trial.backend_name %></td>
               <td><%= trial.model %></td>
               <td><span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span></td>
               <td><%= time_ago_in_words(trial.created_at) %> ago</td>

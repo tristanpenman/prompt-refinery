@@ -26,6 +26,8 @@ class Backend < ApplicationRecord
 
   scope :enabled, -> { where(enabled: true) }
 
+  has_many :trials, dependent: :restrict_with_error, inverse_of: :backend
+
   before_validation :normalize_base_url
   before_destroy :prevent_system_backend_destruction
 

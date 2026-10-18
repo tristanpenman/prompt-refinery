@@ -10,6 +10,14 @@ class Inference::ClientTest < ActiveSupport::TestCase
     assert_equal backend.base_url, client.instance_variable_get(:@base_url)
   end
 
+  test "can override the current URL with a trial snapshot" do
+    backend = Backend.new(adapter: "ollama", base_url: "http://current.local:8080")
+
+    client = Inference::Client.for(backend, base_url: "http://snapshot.local:8080")
+
+    assert_equal "http://snapshot.local:8080", client.instance_variable_get(:@base_url)
+  end
+
   test "rejects an unsupported adapter" do
     backend = Backend.new(base_url: "http://example.test")
     backend.adapter = "unsupported"

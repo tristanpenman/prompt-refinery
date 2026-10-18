@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_18_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_18_020000) do
   create_table "backends", force: :cascade do |t|
     t.string "name", null: false
     t.string "base_url", null: false
@@ -109,6 +109,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_010000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "collection_revision_id", null: false
+    t.integer "backend_id", null: false
+    t.string "backend_name", null: false
+    t.string "backend_base_url", null: false
+    t.index ["backend_id"], name: "index_trials_on_backend_id"
     t.index ["collection_id"], name: "index_trials_on_collection_id"
     t.index ["collection_revision_id"], name: "index_trials_on_collection_revision_id"
     t.check_constraint "status IN ('pending', 'running', 'completed', 'failed')", name: "trials_status_check"
@@ -122,6 +126,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_010000) do
   add_foreign_key "responses", "collection_revision_prompts"
   add_foreign_key "responses", "prompts"
   add_foreign_key "responses", "trials"
+  add_foreign_key "trials", "backends"
   add_foreign_key "trials", "collection_revisions"
   add_foreign_key "trials", "collections"
 end

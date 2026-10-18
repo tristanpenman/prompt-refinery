@@ -10,8 +10,8 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    def create_trial(collection:, model: "gemma3:4b", **attributes)
-      Trial.create_for!(collection: collection, model: model, **attributes)
+    def create_trial(collection:, backend: Backend.ensure_system_default!, model: "gemma3:4b", **attributes)
+      Trial.create_for!(collection: collection, backend: backend, model: model, **attributes)
     end
   end
 end
