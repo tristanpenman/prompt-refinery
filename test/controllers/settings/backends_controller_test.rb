@@ -130,7 +130,7 @@ class Settings::BackendsControllerTest < ActionDispatch::IntegrationTest
   test "tests a backend connection and reports its model count" do
     backend = Backend.create!(name: "Edge board", base_url: "http://edge-board.local:8080")
     client = Object.new
-    client.define_singleton_method(:models) { [{ "name" => "one" }, { "name" => "two" }] }
+    client.define_singleton_method(:models) { [ { "name" => "one" }, { "name" => "two" } ] }
     factory = Object.new
     factory.define_singleton_method(:for) do |received_backend|
       raise "Wrong backend" unless received_backend == backend
