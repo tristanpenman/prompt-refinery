@@ -39,11 +39,11 @@ class BackendTest < ActiveSupport::TestCase
     assert_includes duplicate.errors[:adapter], "is not included in the list"
   end
 
-  test "system backend must remain enabled and cannot be demoted or destroyed" do
+  test "system backend can be disabled but cannot be demoted or destroyed" do
     backend = Backend.ensure_system_default!(base_url: "http://ollama:11434")
 
-    assert_not backend.update(enabled: false)
-    assert_includes backend.errors[:enabled], "must be enabled for the system backend"
+    assert backend.update(enabled: false)
+    assert_not backend.enabled?
     assert_not backend.update(system: false)
     assert_includes backend.errors[:system], "cannot be removed from the system backend"
     assert_not backend.destroy
@@ -62,11 +62,12 @@ class BackendTest < ActiveSupport::TestCase
 
   test "ensuring the system default is idempotent and updates its configured URL" do
     backend = Backend.ensure_system_default!(base_url: "http://ollama-one:11434/")
+    backend.update!(enabled: false)
     same_backend = Backend.ensure_system_default!(base_url: "http://ollama-two:11434///")
 
     assert_equal backend.id, same_backend.id
     assert_equal "http://ollama-two:11434", same_backend.base_url
-    assert same_backend.enabled?
+    assert_not same_backend.enabled?
     assert_equal "ollama", same_backend.adapter
     assert_equal 1, Backend.where(system: true).count
   end

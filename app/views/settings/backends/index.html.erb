@@ -41,9 +41,12 @@
               <p><code><%= backend.base_url %></code></p>
               <small>Adapter: <%= backend.adapter %></small>
             </div>
-            <%= button_to "Test connection",
-              test_connection_settings_backend_path(backend),
-              class: "secondary-button" %>
+            <div class="backend-actions">
+              <%= link_to "Edit", edit_settings_backend_path(backend), class: "secondary-button" %>
+              <%= button_to "Test connection",
+                test_connection_settings_backend_path(backend),
+                class: "secondary-button" %>
+            </div>
           </li>
         <% end %>
       </ul>

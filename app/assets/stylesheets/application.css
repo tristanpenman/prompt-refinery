@@ -17,6 +17,29 @@
 
 body { margin: 0; }
 
+button,
+input[type="button"],
+input[type="reset"],
+input[type="submit"],
+.select-button,
+.secondary-button,
+.primary-button,
+.danger-button {
+  box-sizing: border-box;
+  height: 2.25rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+form > :is(button, input[type="button"], input[type="reset"], input[type="submit"]):not(:has(~ :is(button, input[type="button"], input[type="reset"], input[type="submit"]))) {
+  margin-bottom: 0;
+}
+
+form + form {
+  margin-top: 0.75rem;
+}
+
 main > nav {
   margin: 0 0 1.5rem;
   padding: 0;
@@ -263,6 +286,22 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
 .backend-list form { flex: none; }
 .backend-list button { cursor: pointer; }
 
+.backend-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.backend-actions .secondary-button {
+  display: inline-flex;
+  box-sizing: border-box;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  line-height: 1;
+}
+
 .status--system {
   color: #513d75;
   background: #eee8f8;
@@ -306,7 +345,31 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
   border-radius: 0.35rem;
   color: #fff;
   background: #785b39;
+  font-family: inherit;
   cursor: pointer;
+}
+
+.primary-button,
+.danger-button {
+  display: inline-block;
+  width: auto;
+  margin: 0.4rem 0 1rem;
+  padding: 0.7rem;
+  border: 0;
+  border-radius: 0.35rem;
+  color: #fff;
+  background: #785b39;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.danger-button { background: #9b2c20; }
+
+.editor-card input[type="checkbox"] {
+  display: inline-block;
+  width: auto;
+  margin: 0 0.4rem 1rem 0;
+  padding: 0;
 }
 
 .collection-list,
@@ -321,14 +384,6 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
   display: grid;
   grid-template-columns: 1fr 8rem;
   gap: 1rem;
-}
-
-.danger-button {
-  width: auto !important;
-  padding: 0;
-  color: #9b2c20 !important;
-  background: transparent !important;
-  text-decoration: underline;
 }
 
 @media (max-width: 36rem) {

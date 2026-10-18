@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_18_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_18_010000) do
   create_table "backends", force: :cascade do |t|
     t.string "name", null: false
     t.string "base_url", null: false
@@ -21,7 +21,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_000000) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_backends_on_name", unique: true
     t.index ["system"], name: "index_backends_on_system", unique: true, where: "system = 1"
-    t.check_constraint "NOT system OR enabled", name: "backends_system_enabled_check"
     t.check_constraint "adapter IN ('ollama')", name: "backends_adapter_check"
   end
 

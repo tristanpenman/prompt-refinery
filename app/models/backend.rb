@@ -33,14 +33,15 @@ class Backend < ApplicationRecord
   validates :base_url, presence: true
   validates :adapter, presence: true, inclusion: { in: ADAPTERS }
   validate :base_url_is_valid
-  validate :system_backend_is_enabled
   validate :system_backend_cannot_be_demoted, on: :update
 
   def self.ensure_system_default!(base_url: ENV.fetch("OLLAMA_URL", DEFAULT_BASE_URL))
     transaction do
       backend = lock.find_by(system: true) || lock.find_or_initialize_by(name: DEFAULT_NAME)
+      existing_system_backend = backend.persisted? && backend.system?
       backend.name ||= DEFAULT_NAME
-      backend.assign_attributes(base_url: base_url, adapter: "ollama", enabled: true, system: true)
+      backend.assign_attributes(base_url: base_url, adapter: "ollama", system: true)
+      backend.enabled = true unless existing_system_backend
       backend.save!
       backend
     end
@@ -67,11 +68,6 @@ class Backend < ApplicationRecord
     errors.add(:base_url, "must not include a fragment") if uri.fragment.present?
   rescue URI::InvalidURIError
     errors.add(:base_url, "is not a valid URL")
-  end
-
-  def system_backend_is_enabled
-    is_system_backend = system? || system_in_database
-    errors.add(:enabled, "must be enabled for the system backend") if is_system_backend && !enabled?
   end
 
   def system_backend_cannot_be_demoted

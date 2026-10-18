@@ -25,6 +25,80 @@ class Settings::BackendsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".backend-list li", text: /#{system_backend.name}.*System.*Enabled/m
     assert_select ".backend-list li", text: /Disabled board.*Disabled/m
     assert_select "form[action=?]", test_connection_settings_backend_path(system_backend)
+    assert_select "a[href=?]", edit_settings_backend_path(system_backend), text: "Edit"
+  end
+
+  test "edits a regular backend" do
+    backend = Backend.create!(name: "Old board", base_url: "http://old-board.local:8080")
+
+    get edit_settings_backend_path(backend)
+
+    assert_response :success
+    assert_select "input[name='backend[name]'][value='Old board']"
+    assert_select "input[name='backend[base_url]'][value='http://old-board.local:8080']"
+    assert_select "select[name='backend[adapter]']"
+    assert_select "form[action=?]", settings_backend_path(backend)
+
+    patch settings_backend_path(backend), params: {
+      backend: {
+        name: "New board",
+        base_url: "https://new-board.example.test/ollama/",
+        adapter: "ollama",
+        enabled: "0"
+      }
+    }
+
+    assert_redirected_to settings_backends_path
+    backend.reload
+    assert_equal "New board", backend.name
+    assert_equal "https://new-board.example.test/ollama", backend.base_url
+    assert_not backend.enabled?
+  end
+
+  test "only allows a system backend enabled status to be edited" do
+    backend = Backend.ensure_system_default!(base_url: "http://ollama:11434")
+
+    get edit_settings_backend_path(backend)
+
+    assert_response :success
+    assert_select "input[name='backend[enabled]']"
+    assert_select "input[name='backend[name]']", count: 0
+    assert_select "input[name='backend[base_url]']", count: 0
+    assert_select "select[name='backend[adapter]']", count: 0
+    assert_select "button", text: "Delete backend", count: 0
+
+    patch settings_backend_path(backend), params: {
+      backend: {
+        name: "Forged name",
+        base_url: "http://forged.example.test",
+        adapter: "forged",
+        enabled: "0"
+      }
+    }
+
+    assert_redirected_to settings_backends_path
+    backend.reload
+    assert_equal Backend::DEFAULT_NAME, backend.name
+    assert_equal "http://ollama:11434", backend.base_url
+    assert_equal "ollama", backend.adapter
+    assert_not backend.enabled?
+  end
+
+  test "deletes a regular backend but not the system backend" do
+    backend = Backend.create!(name: "Disposable board", base_url: "http://disposable.local:8080")
+    system_backend = Backend.ensure_system_default!(base_url: "http://ollama:11434")
+
+    assert_difference "Backend.count", -1 do
+      delete settings_backend_path(backend)
+    end
+    assert_redirected_to settings_backends_path
+
+    assert_no_difference "Backend.count" do
+      delete settings_backend_path(system_backend)
+    end
+    assert_redirected_to settings_backends_path
+    follow_redirect!
+    assert_select ".flash--alert", text: "The system backend cannot be deleted"
   end
 
   test "creates a backend" do

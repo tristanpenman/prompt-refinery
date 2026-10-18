@@ -1,0 +1,49 @@
+<% content_for :title, "Edit #{@backend.name} · Settings · Prompt Refinery" %>
+
+<main class="settings-page">
+  <nav><%= link_to "← Backends", settings_backends_path %></nav>
+  <header>
+    <p class="eyebrow">Settings</p>
+    <h1>Edit <%= @backend.name %></h1>
+    <% if @backend.system? %>
+      <p>This system backend is managed by Prompt Refinery. Only its enabled status can be changed.</p>
+    <% else %>
+      <p>Update this inference backend's connection settings.</p>
+    <% end %>
+  </header>
+
+  <section class="editor-card">
+    <%= render "shared/errors", record: @backend %>
+    <%= form_with model: [:settings, @backend] do |form| %>
+      <% unless @backend.system? %>
+        <%= form.label :name %>
+        <%= form.text_field :name, required: true %>
+
+        <%= form.label :base_url, "Base URL" %>
+        <%= form.url_field :base_url, required: true %>
+
+        <%= form.label :adapter %>
+        <%= form.select :adapter, Backend::ADAPTERS.map { |adapter| [adapter.humanize, adapter] } %>
+      <% end %>
+
+      <%= form.label :enabled do %>
+        <%= form.check_box :enabled %>
+        Enabled
+      <% end %>
+
+      <%= form.submit "Save backend" %>
+    <% end %>
+  </section>
+
+  <% unless @backend.system? %>
+    <section class="editor-card">
+      <h2>Delete backend</h2>
+      <p>This permanently removes the backend configuration.</p>
+      <%= button_to "Delete backend",
+        settings_backend_path(@backend),
+        method: :delete,
+        class: "danger-button",
+        form: { data: { turbo_confirm: "Delete #{@backend.name}?" } } %>
+    </section>
+  <% end %>
+</main>
