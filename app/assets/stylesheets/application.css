@@ -103,6 +103,14 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
   font-weight: 600;
 }
 
+.model-list .model-family { margin-top: 0.25rem; }
+
+.field-hint {
+  margin: -0.6rem 0 1rem;
+  color: #625d56;
+  font-size: 0.875rem;
+}
+
 .model-list span {
   display: inline-block;
   margin-top: 0.75rem;

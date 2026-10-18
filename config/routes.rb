@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   root "home#index"
-  get "models" => "models#index", as: :models
+  resources :models, only: %i[index edit update]
 
   get "login" => "sessions#new", as: :login
   post "login" => "sessions#create"

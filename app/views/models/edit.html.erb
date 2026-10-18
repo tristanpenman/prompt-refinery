@@ -1,0 +1,26 @@
+<% content_for :title, "Edit #{@language_model.name} · Models · Prompt Refinery" %>
+
+<main class="models-page">
+  <nav><%= link_to "← Models", models_path %></nav>
+  <header>
+    <p class="eyebrow">Models</p>
+    <h1>Edit <%= @language_model.name %></h1>
+    <p>Discovered on <%= @language_model.backend.name %>.</p>
+  </header>
+
+  <section class="editor-card">
+    <%= render "shared/errors", record: @language_model %>
+    <%= form_with model: @language_model, url: model_path(@language_model) do |form| %>
+      <%= form.label :language_model_family_name, "Family" %>
+      <%= form.text_field :language_model_family_name, list: "language-model-families", aria: { describedby: "language-model-family-hint" } %>
+      <datalist id="language-model-families">
+        <% LanguageModelFamily.order(:name).each do |family| %>
+          <option value="<%= family.name %>"></option>
+        <% end %>
+      </datalist>
+      <p id="language-model-family-hint" class="field-hint">Choose an existing family or enter a new one. Leave blank to derive it from the model name.</p>
+
+      <%= form.submit "Save model" %>
+    <% end %>
+  </section>
+</main>

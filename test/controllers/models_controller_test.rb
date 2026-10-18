@@ -36,6 +36,64 @@ class ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_select "li", text: /gemma3 · 4.3B · Q4_K_M/
     assert_select "a[href=?]", prompt_path(model: "gemma3:4b", backend_id: @backend.id), text: "Select"
     assert_select "a[href=?]", evaluate_path(model: "gemma3:4b", backend_id: @backend.id), text: "Evaluate"
+    language_model = @backend.language_models.find_by!(name: "gemma3:4b")
+    assert_select ".model-family", text: "Family: gemma3"
+    assert_select "a[href=?]", edit_model_path(language_model), text: "Edit"
+  end
+
+  test "records discovered models once per backend" do
+    ModelsController.client_factory = client_factory(models: [ { "name" => "gemma3:4b" } ])
+
+    get models_path
+    get models_path
+
+    assert_equal [ "gemma3:4b" ], @backend.language_models.pluck(:name)
+  end
+
+  test "edits a model's family" do
+    language_model = LanguageModel.create!(backend: @backend, name: "gemma3:4b")
+    LanguageModelFamily.create!(name: "Gemma")
+
+    get edit_model_path(language_model)
+
+    assert_response :success
+    assert_select "h1", text: "Edit gemma3:4b"
+    assert_select "form[action=?]", model_path(language_model)
+    assert_select "input[name='language_model[language_model_family_name]'][value='gemma3']"
+    assert_select "datalist option[value='Gemma']"
+
+    patch model_path(language_model), params: { language_model: { language_model_family_name: "Gemma" } }
+
+    assert_redirected_to models_path
+    assert_equal "Gemma", language_model.reload.language_model_family.name
+  end
+
+  test "creates a new family when editing a model" do
+    language_model = LanguageModel.create!(backend: @backend, name: "gemma3:4b")
+
+    patch model_path(language_model), params: { language_model: { language_model_family_name: " Gemma 3 " } }
+
+    assert_redirected_to models_path
+    assert_equal "Gemma 3", language_model.reload.language_model_family.name
+  end
+
+  test "restores the derived family when the family is cleared" do
+    family = LanguageModelFamily.create!(name: "Gemma")
+    language_model = LanguageModel.create!(backend: @backend, language_model_family: family, name: "gemma3:4b")
+
+    patch model_path(language_model), params: { language_model: { language_model_family_name: "" } }
+
+    assert_redirected_to models_path
+    assert_equal "gemma3", language_model.reload.language_model_family.name
+  end
+
+  test "re-renders the form when the model cannot be saved" do
+    language_model = LanguageModel.create!(backend: @backend, name: ":latest", language_model_family: LanguageModelFamily.create!(name: "Unknown"))
+
+    patch model_path(language_model), params: { language_model: { language_model_family_name: "" } }
+
+    assert_response :unprocessable_content
+    assert_select ".form-error", text: /Language model family must exist/
   end
 
   test "reports an Ollama connection error" do

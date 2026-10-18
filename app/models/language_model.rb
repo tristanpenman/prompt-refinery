@@ -29,6 +29,15 @@ class LanguageModel < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { scope: :backend_id }
 
+  def language_model_family_name
+    language_model_family&.name
+  end
+
+  def language_model_family_name=(family_name)
+    family_name = family_name.to_s.strip
+    self.language_model_family = family_name.present? ? LanguageModelFamily.find_or_initialize_by(name: family_name) : nil
+  end
+
   def self.family_name_for(model_name)
     model_name.to_s.strip.split(":", 2).first.presence
   end

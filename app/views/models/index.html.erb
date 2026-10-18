@@ -26,6 +26,9 @@
         <li>
           <h2><%= model.fetch("name", "Unnamed model") %></h2>
           <p class="model-backend">Backend: <%= model.fetch("backend").name %></p>
+          <% if model["language_model"] %>
+            <p class="model-family">Family: <%= model["language_model"].language_model_family.name %></p>
+          <% end %>
           <% if model["details"].present? %>
             <p><%= [model.dig("details", "family"), model.dig("details", "parameter_size"), model.dig("details", "quantization_level")].compact.join(" · ") %></p>
           <% end %>
@@ -35,6 +38,9 @@
           <div class="model-actions">
             <%= link_to "Select", prompt_path(model: model["name"], backend_id: model.fetch("backend").id), class: "select-button" %>
             <%= link_to "Evaluate", evaluate_path(model: model["name"], backend_id: model.fetch("backend").id), class: "secondary-button" %>
+            <% if model["language_model"] %>
+              <%= link_to "Edit", edit_model_path(model["language_model"]), class: "secondary-button" %>
+            <% end %>
           </div>
         </li>
       <% end %>
