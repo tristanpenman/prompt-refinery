@@ -18,11 +18,13 @@ module Ollama
 
     def generate(model:, prompt:)
       response = request(
-        "api/generate",
-        body: { model: model, prompt: prompt, stream: false },
+        "api/chat",
+        body: { model: model, messages: [ { role: "user", content: prompt } ], stream: false },
         read_timeout: GENERATION_TIMEOUT
       )
-      parse(response, key: "response", description: "generation response")
+      parse(response, key: "message", description: "generation response").fetch("content")
+    rescue KeyError => error
+      raise Error, "Ollama returned an invalid generation response: #{error.message}"
     end
 
     private
