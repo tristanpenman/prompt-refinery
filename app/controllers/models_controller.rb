@@ -7,6 +7,9 @@ class ModelsController < ApplicationController
     catalog = Inference::ModelCatalog.new(client_factory:).call
     @models = catalog.models
     @backend_errors = catalog.errors
+    @families = @models.filter_map { |model| model["language_model"]&.language_model_family }.uniq.sort_by(&:name)
+    @family = @families.find { |family| family.id.to_s == params[:family] }
+    @models = @models.select { |model| model["language_model"]&.language_model_family == @family } if @family
   end
 
   def edit

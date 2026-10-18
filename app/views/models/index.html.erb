@@ -4,9 +4,22 @@
   <nav><%= link_to "← Dashboard", root_path %></nav>
   <header>
     <p class="eyebrow">Prompt Refinery</p>
-    <h1>Available models</h1>
+    <h1>Models</h1>
     <p>Models currently available from enabled inference backends.</p>
   </header>
+
+  <% if @families.any? %>
+    <%= form_with url: models_path, method: :get, class: "model-filter", role: "search" do |form| %>
+      <%= form.label :family, "Model family" %>
+      <%= form.select :family,
+        options_from_collection_for_select(@families, :id, :name, @family&.id),
+        include_blank: "All families" %>
+      <%= form.submit "Filter", name: nil %>
+      <% if @family %>
+        <%= link_to "Clear", models_path, class: "secondary-button" %>
+      <% end %>
+    <% end %>
+  <% end %>
 
   <% @backend_errors.each do |error| %>
     <section class="notice notice--error" role="alert">

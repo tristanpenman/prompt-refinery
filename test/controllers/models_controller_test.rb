@@ -28,7 +28,7 @@ class ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".models-page > header" do
       assert_select ".eyebrow", text: "Prompt Refinery"
-      assert_select "h1", text: "Available models"
+      assert_select "h1", text: "Models"
       assert_select "p", text: "Models currently available from enabled inference backends."
     end
     assert_select "h2", text: "gemma3:4b"
@@ -39,6 +39,45 @@ class ModelsControllerTest < ActionDispatch::IntegrationTest
     language_model = @backend.language_models.find_by!(name: "gemma3:4b")
     assert_select ".model-family", text: "Family: gemma3"
     assert_select "a[href=?]", edit_model_path(language_model), text: "Edit"
+  end
+
+  test "filters models by family" do
+    edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
+    ModelsController.client_factory = changing_client_factory(
+      calls: Hash.new(0),
+      responses: {
+        @backend.id => [ { "name" => "gemma3:4b" }, { "name" => "llama3:8b" } ],
+        edge.id => [ { "name" => "gemma3:1b" } ]
+      }
+    )
+
+    get models_path
+
+    gemma = LanguageModelFamily.find_by!(name: "gemma3")
+    assert_select "form.model-filter[action=?][method=get]", models_path do
+      assert_select "select[name=family] option", text: "All families"
+      assert_select "select[name=family] option[value=?]", gemma.id.to_s, text: "gemma3"
+      assert_select "select[name=family] option", text: "llama3"
+    end
+    assert_select ".model-list li", count: 3
+
+    get models_path(family: gemma.id)
+
+    assert_select ".model-list li", count: 2
+    assert_select "h2", text: "gemma3:4b"
+    assert_select "h2", text: "gemma3:1b"
+    assert_select "h2", text: "llama3:8b", count: 0
+    assert_select "select[name=family] option[selected][value=?]", gemma.id.to_s
+    assert_select "a[href=?]", models_path, text: "Clear"
+  end
+
+  test "ignores an unknown family filter" do
+    ModelsController.client_factory = client_factory(models: [ { "name" => "gemma3:4b" } ])
+
+    get models_path(family: "missing")
+
+    assert_select ".model-list li", count: 1
+    assert_select "a", text: "Clear", count: 0
   end
 
   test "records discovered models once per backend" do
