@@ -1,7 +1,7 @@
 <% content_for :title, "Backends · Settings · Prompt Refinery" %>
 
 <main class="settings-page">
-  <nav><%= link_to "← Dashboard", root_path %></nav>
+  <nav><%= link_to "← Settings", settings_path %></nav>
   <header>
     <p class="eyebrow">Settings</p>
     <h1>Backends</h1>
@@ -29,7 +29,7 @@
     <% else %>
       <ul>
         <% @backends.each do |backend| %>
-          <li>
+          <li id="<%= dom_id(backend) %>">
             <div class="backend-details">
               <h3>
                 <%= backend.name %>

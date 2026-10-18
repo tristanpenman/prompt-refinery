@@ -1,0 +1,31 @@
+<% content_for :title, "Settings · Prompt Refinery" %>
+
+<main class="dashboard-page">
+  <header>
+    <p class="eyebrow">Prompt Refinery</p>
+    <h1>Settings</h1>
+    <p>Configure Prompt Refinery and its inference services.</p>
+    <%= link_to "← Dashboard", root_path %>
+  </header>
+
+  <div class="dashboard-grid">
+    <section class="dashboard-panel">
+      <header><h2>Backends</h2><%= link_to "View all", settings_backends_path %></header>
+      <% if @backends.empty? %>
+        <p>No backends configured.</p>
+      <% else %>
+        <ul>
+          <% @backends.each do |backend| %>
+            <li>
+              <%= link_to backend.name, settings_backends_path(anchor: dom_id(backend)) %>
+              <small>
+                <%= backend.adapter %> · <%= backend.enabled? ? "Enabled" : "Disabled" %>
+                <% if backend.system? %> · System<% end %>
+              </small>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+  </div>
+</main>

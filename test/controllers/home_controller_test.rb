@@ -41,6 +41,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "model-3", count: 0
     assert_select "a", text: "Collection 3", count: 0
     assert_select "a[href=?]", models_path, text: "View all"
+    assert_select "a[href=?]", settings_path, text: "Settings"
     assert_select ".dashboard-panel:nth-child(1) small", text: /^Updated /
     assert_select ".dashboard-panel:nth-child(2) small", text: /^Updated /
   end

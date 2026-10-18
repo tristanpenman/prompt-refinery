@@ -19,7 +19,8 @@ class Settings::BackendsControllerTest < ActionDispatch::IntegrationTest
     get settings_backends_path
 
     assert_response :success
-    assert_select "h1", text: "Inference backends"
+    assert_select "h1", text: "Backends"
+    assert_select "a[href=?]", settings_path, text: "← Settings"
     assert_select ".backend-list li", count: 2
     assert_select ".backend-list li", text: /#{system_backend.name}.*System.*Enabled/m
     assert_select ".backend-list li", text: /Disabled board.*Disabled/m

@@ -20,6 +20,7 @@ Rails.application.routes.draw do
     get :compare, on: :member, to: "trial_comparisons#show"
   end
 
+  get "settings" => "settings#index", as: :settings
   namespace :settings do
     resources :backends, only: %i[index create] do
       post :test_connection, on: :member
