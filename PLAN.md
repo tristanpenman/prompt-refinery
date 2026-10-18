@@ -21,7 +21,8 @@ The goal of this project is to build a small local-first application for evaluat
 - ~~Create, edit, and delete collections, with deletion protected after use in a trial.~~
 - ~~Add, edit, order, and delete prompts within a collection.~~
 - ~~Store plain prompts and template text.~~
-- Duplicate collections and track revisions.
+- ~~Track revisions of prompts and collections.~~
+- Duplicate collections and prompts.
 - Render templates with named variables such as `{{topic}}`.
 - Validate templates and preview the fully rendered prompt before execution.
 - Save reusable input rows so one collection can be evaluated against multiple cases.
@@ -33,10 +34,11 @@ The goal of this project is to build a small local-first application for evaluat
 - ~~Queue work locally with configurable worker concurrency and execute prompts sequentially through Ollama's HTTP API.~~
 - ~~Show pending, running, completed, and failed states with per-prompt responses and errors.~~
 - ~~Preserve the collection, prompt relationship, model name, response or error, status, and trial timestamps.~~
+- ~~Snapshot rendered prompts~~
+- Preserve model parameters and detailed timings for reproducibility.
 - Select input cases and generation settings.
 - Expand each prompt/input combination into an immutable trial item.
 - Add cancellation and more detailed progress reporting.
-- Snapshot rendered prompts and preserve model parameters and detailed timings for reproducibility.
 - Allow failed items to be retried without rerunning successful items.
 
 ## Review and scoring
