@@ -1,0 +1,52 @@
+<% content_for :title, "Backends · Settings · Prompt Refinery" %>
+
+<main class="settings-page">
+  <nav><%= link_to "← Dashboard", root_path %></nav>
+  <header>
+    <p class="eyebrow">Settings</p>
+    <h1>Backends</h1>
+    <p>Manage the servers Prompt Refinery can use for model inference.</p>
+  </header>
+
+  <section class="editor-card">
+    <h2>Add backend</h2>
+    <%= render "shared/errors", record: @backend %>
+    <%= form_with model: [:settings, @backend] do |form| %>
+      <%= form.label :name %>
+      <%= form.text_field :name, required: true, placeholder: "RK3588 board" %>
+
+      <%= form.label :base_url, "Base URL" %>
+      <%= form.url_field :base_url, required: true, placeholder: "http://edge-board.local:8080" %>
+
+      <%= form.submit "Add backend" %>
+    <% end %>
+  </section>
+
+  <section class="backend-list">
+    <h2>Available backends</h2>
+    <% if @backends.empty? %>
+      <p>No backends configured.</p>
+    <% else %>
+      <ul>
+        <% @backends.each do |backend| %>
+          <li>
+            <div class="backend-details">
+              <h3>
+                <%= backend.name %>
+                <% if backend.system? %><span class="status status--system">System</span><% end %>
+                <span class="status status--<%= backend.enabled? ? "completed" : "archived" %>">
+                  <%= backend.enabled? ? "Enabled" : "Disabled" %>
+                </span>
+              </h3>
+              <p><code><%= backend.base_url %></code></p>
+              <small>Adapter: <%= backend.adapter %></small>
+            </div>
+            <%= button_to "Test connection",
+              test_connection_settings_backend_path(backend),
+              class: "secondary-button" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+</main>

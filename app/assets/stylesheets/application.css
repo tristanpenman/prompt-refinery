@@ -225,6 +225,53 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
   padding: 3rem 1.5rem;
 }
 
+.settings-page {
+  box-sizing: border-box;
+  width: min(58rem, 100%);
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.backend-list {
+  padding: 1.25rem;
+  border: 1px solid #d7cfc3;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.backend-list > h2 { margin-top: 0; }
+
+.backend-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.backend-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid #e5ded4;
+}
+
+.backend-list li:first-child { border-top: 0; }
+.backend-list h3 { margin: 0; }
+.backend-list p { margin: 0.4rem 0; }
+.backend-list code { overflow-wrap: anywhere; }
+.backend-list form { flex: none; }
+.backend-list button { cursor: pointer; }
+
+.status--system {
+  color: #513d75;
+  background: #eee8f8;
+}
+
+@media (max-width: 36rem) {
+  .backend-list li { align-items: flex-start; flex-direction: column; }
+}
+
 .editor-card,
 .collection-list {
   margin-bottom: 1.5rem;

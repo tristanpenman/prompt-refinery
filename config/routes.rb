@@ -20,5 +20,11 @@ Rails.application.routes.draw do
     get :compare, on: :member, to: "trial_comparisons#show"
   end
 
+  namespace :settings do
+    resources :backends, only: %i[index create] do
+      post :test_connection, on: :member
+    end
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 end
