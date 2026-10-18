@@ -5,7 +5,7 @@
   <header>
     <p class="eyebrow">Evaluate model</p>
     <h1><%= @model %></h1>
-    <p>Run every prompt in a collection sequentially against this model.</p>
+    <p>Run every prompt in a collection sequentially against this model on <%= @backend.name %>.</p>
   </header>
 
   <% if @collections.empty? %>
@@ -16,6 +16,7 @@
   <% else %>
     <%= form_with url: evaluate_path, class: "evaluation-form", data: { controller: "evaluation", action: "turbo:submit-start->evaluation#start turbo:submit-end->evaluation#finish" } do |form| %>
       <%= form.hidden_field :model, value: @model %>
+      <%= form.hidden_field :backend_id, value: @backend.id %>
       <%= form.label :collection_id, "Prompt collection" %>
       <%= form.collection_select :collection_id, @collections, :id, :name, { selected: @collection&.id }, required: true %>
       <%= form.submit "Run evaluation", data: { evaluation_target: "submit" } %>

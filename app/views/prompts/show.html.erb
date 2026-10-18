@@ -5,11 +5,12 @@
   <header>
     <p class="eyebrow">Prompt model</p>
     <h1><%= @model %></h1>
-    <p>Ask a question and generate a response with this model.</p>
+    <p>Ask a question and generate a response with this model on <%= @backend.name %>.</p>
   </header>
 
   <%= form_with url: prompt_path, data: { controller: "prompt", action: "turbo:submit-start->prompt#start turbo:submit-end->prompt#finish" } do |form| %>
     <%= form.hidden_field :model, value: @model %>
+    <%= form.hidden_field :backend_id, value: @backend.id %>
     <%= form.label :question, "Question" %>
     <%= form.text_area :question, value: @prompt, rows: 7, required: true, autofocus: true %>
     <%= form.submit "Ask", data: { prompt_target: "submit" } %>

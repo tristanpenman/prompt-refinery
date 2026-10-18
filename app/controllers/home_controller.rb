@@ -1,15 +1,13 @@
 class HomeController < ApplicationController
-  class_attribute :ollama_client_class, default: ::Ollama::Client
+  class_attribute :client_factory, default: Inference::Client
 
   def index
-    @models = ollama_client_class.new.models
+    catalog = Inference::ModelCatalog.new(client_factory:).call
+    @models = catalog.models
       .sort_by { |model| model["modified_at"].to_s }
       .reverse
       .first(3)
-    load_recent_records
-  rescue ::Ollama::Client::Error => error
-    @models = []
-    @ollama_error = error.message
+    @backend_errors = catalog.errors
     load_recent_records
   end
 

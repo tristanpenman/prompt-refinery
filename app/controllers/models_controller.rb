@@ -1,10 +1,9 @@
 class ModelsController < ApplicationController
-  class_attribute :ollama_client_class, default: ::Ollama::Client
+  class_attribute :client_factory, default: Inference::Client
 
   def index
-    @models = ollama_client_class.new.models
-  rescue ::Ollama::Client::Error => error
-    @models = []
-    @ollama_error = error.message
+    catalog = Inference::ModelCatalog.new(client_factory:).call
+    @models = catalog.models
+    @backend_errors = catalog.errors
   end
 end

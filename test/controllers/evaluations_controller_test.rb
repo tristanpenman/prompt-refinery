@@ -6,19 +6,21 @@ class EvaluationsControllerTest < ActionDispatch::IntegrationTest
     ENV["RAILS_AUTH_TOKEN"] = TokenAuthenticator.encrypt("test-token")
     post login_path, params: { token: "test-token" }
     @collection = Collection.create!(name: "Summaries")
+    @backend = Backend.ensure_system_default!
   end
 
   teardown do
-    EvaluationsController.ollama_client_class = ::Ollama::Client
+    EvaluationsController.client_factory = Inference::Client
     ENV["RAILS_AUTH_TOKEN"] = @original_encrypted_token
   end
 
   test "shows the available collections" do
-    get evaluate_path(model: "gemma3:4b")
+    get evaluate_path(model: "gemma3:4b", backend_id: @backend.id)
 
     assert_response :success
     assert_select "h1", text: "gemma3:4b"
     assert_select "option[value=?]", @collection.id.to_s, text: "Summaries"
+    assert_select "input[name=backend_id][value=?]", @backend.id.to_s
   end
 
   test "evaluates prompts sequentially and returns a Turbo Stream" do
@@ -31,10 +33,10 @@ class EvaluationsControllerTest < ActionDispatch::IntegrationTest
         "Response to #{prompt}"
       end
     end
-    EvaluationsController.ollama_client_class = client
+    EvaluationsController.client_factory = factory_for(client)
 
     post evaluate_path,
-      params: { model: "gemma3:4b", collection_id: @collection.id },
+      params: { model: "gemma3:4b", backend_id: @backend.id, collection_id: @collection.id },
       headers: { "Accept" => "text/vnd.turbo-stream.html, text/html" }
 
     assert_response :success
@@ -55,12 +57,20 @@ class EvaluationsControllerTest < ActionDispatch::IntegrationTest
         "Generated successfully"
       end
     end
-    EvaluationsController.ollama_client_class = client
+    EvaluationsController.client_factory = factory_for(client)
 
-    post evaluate_path, params: { model: "gemma3:4b", collection_id: @collection.id }
+    post evaluate_path, params: { model: "gemma3:4b", backend_id: @backend.id, collection_id: @collection.id }
 
     assert_response :success
     assert_select "[role=alert]", text: "Generation failed"
     assert_select ".evaluation-result", text: /Generated successfully/
+  end
+
+  private
+
+  def factory_for(client_class)
+    Object.new.tap do |factory|
+      factory.define_singleton_method(:for) { |_backend| client_class.new }
+    end
   end
 end

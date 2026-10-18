@@ -5,24 +5,27 @@
   <header>
     <p class="eyebrow">Prompt Refinery</p>
     <h1>Available models</h1>
-    <p>Models currently installed on the connected Ollama server.</p>
+    <p>Models currently available from enabled inference backends.</p>
   </header>
 
-  <% if @ollama_error %>
+  <% @backend_errors.each do |error| %>
     <section class="notice notice--error" role="alert">
-      <h2>Ollama is unavailable</h2>
-      <p><%= @ollama_error %></p>
+      <h2><%= error.backend.name %> is unavailable</h2>
+      <p><%= error.message %></p>
     </section>
-  <% elsif @models.empty? %>
+  <% end %>
+
+  <% if @models.empty? %>
     <section class="notice">
       <h2>No models installed</h2>
-      <p>Pull a model with <code>docker compose exec ollama ollama pull &lt;model&gt;</code>.</p>
+      <p>Install a model on an enabled inference backend.</p>
     </section>
   <% else %>
     <ul class="model-list">
       <% @models.each do |model| %>
         <li>
           <h2><%= model.fetch("name", "Unnamed model") %></h2>
+          <p class="model-backend">Backend: <%= model.fetch("backend").name %></p>
           <% if model["details"].present? %>
             <p><%= [model.dig("details", "family"), model.dig("details", "parameter_size"), model.dig("details", "quantization_level")].compact.join(" · ") %></p>
           <% end %>
@@ -30,8 +33,8 @@
             <span><%= number_to_human_size(model["size"]) %></span>
           <% end %>
           <div class="model-actions">
-            <%= link_to "Select", prompt_path(model: model["name"]), class: "select-button" %>
-            <%= link_to "Evaluate", evaluate_path(model: model["name"]), class: "secondary-button" %>
+            <%= link_to "Select", prompt_path(model: model["name"], backend_id: model.fetch("backend").id), class: "select-button" %>
+            <%= link_to "Evaluate", evaluate_path(model: model["name"], backend_id: model.fetch("backend").id), class: "secondary-button" %>
           </div>
         </li>
       <% end %>

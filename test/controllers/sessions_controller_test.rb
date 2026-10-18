@@ -25,11 +25,11 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_path
 
-    HomeController.ollama_client_class = empty_ollama_client
+    HomeController.client_factory = empty_client_factory
     get root_path
     assert_response :success
   ensure
-    HomeController.ollama_client_class = ::Ollama::Client
+    HomeController.client_factory = Inference::Client
   end
 
   test "rejects an incorrect token" do
@@ -53,11 +53,9 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def empty_ollama_client
-    Class.new do
-      def models
-        []
-      end
-    end
+  def empty_client_factory
+    client = Object.new
+    client.define_singleton_method(:models) { [] }
+    Object.new.tap { |factory| factory.define_singleton_method(:for) { |_backend| client } }
   end
 end

@@ -1,7 +1,8 @@
 class PromptsController < ApplicationController
-  class_attribute :ollama_client_class, default: ::Ollama::Client
+  class_attribute :client_factory, default: Inference::Client
 
   before_action :set_model
+  before_action :set_backend
 
   def show; end
 
@@ -14,9 +15,9 @@ class PromptsController < ApplicationController
       return
     end
 
-    @answer = ollama_client_class.new.generate(model: @model, prompt: @prompt)
+    @answer = client_factory.for(@backend).generate(model: @model, prompt: @prompt)
     render_result
-  rescue ::Ollama::Client::Error => error
+  rescue ::Ollama::Client::Error, Inference::Client::UnsupportedAdapter => error
     @error = error.message
     render_result(status: :bad_gateway)
   end
@@ -26,6 +27,16 @@ class PromptsController < ApplicationController
   def set_model
     @model = params[:model].to_s.strip
     redirect_to models_path, alert: "Select a model first." if @model.blank?
+  end
+
+  def set_backend
+    @backend = if params[:backend_id].present?
+      Backend.enabled.find(params[:backend_id])
+    else
+      Backend.enabled.find_by(system: true) || Backend.enabled.first!
+    end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to models_path, alert: "Select an available model backend."
   end
 
   def render_result(status: :ok)

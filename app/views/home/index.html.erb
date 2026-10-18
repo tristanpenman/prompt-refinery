@@ -14,18 +14,22 @@
   <div class="dashboard-grid">
     <section class="dashboard-panel">
       <header><h2>Models</h2><%= link_to "View all", models_path %></header>
-      <% if @ollama_error %>
-        <p class="form-error" role="alert"><%= @ollama_error %></p>
-      <% elsif @models.empty? %>
+      <% @backend_errors.each do |error| %>
+        <p class="form-error" role="alert"><%= error.backend.name %>: <%= error.message %></p>
+      <% end %>
+      <% if @models.empty? %>
         <p>No models installed.</p>
       <% else %>
         <ul>
           <% @models.each do |model| %>
             <li>
-              <%= link_to model.fetch("name", "Unnamed model"), prompt_path(model: model["name"]) %>
-              <% if model["modified_at"] %>
-                <small>Updated <%= time_ago_in_words(Time.zone.parse(model["modified_at"])) %> ago</small>
-              <% end %>
+              <%= link_to model.fetch("name", "Unnamed model"), prompt_path(model: model["name"], backend_id: model.fetch("backend").id) %>
+              <small>
+                <%= model.fetch("backend").name %>
+                <% if model["modified_at"] %>
+                  · Updated <%= time_ago_in_words(Time.zone.parse(model["modified_at"])) %> ago
+                <% end %>
+              </small>
             </li>
           <% end %>
         </ul>

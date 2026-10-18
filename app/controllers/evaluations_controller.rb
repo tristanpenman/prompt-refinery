@@ -1,14 +1,15 @@
 class EvaluationsController < ApplicationController
-  class_attribute :ollama_client_class, default: ::Ollama::Client
+  class_attribute :client_factory, default: Inference::Client
 
   before_action :set_model
+  before_action :set_backend
   before_action :set_collections
 
   def show; end
 
   def create
     @collection = Collection.find(params[:collection_id])
-    client = ollama_client_class.new
+    client = client_factory.for(@backend)
     @results = @collection.prompts.map do |prompt|
       evaluate_prompt(client, prompt)
     end
@@ -24,6 +25,16 @@ class EvaluationsController < ApplicationController
   def set_model
     @model = params[:model].to_s.strip
     redirect_to models_path, alert: "Select a model first." if @model.blank?
+  end
+
+  def set_backend
+    @backend = if params[:backend_id].present?
+      Backend.enabled.find(params[:backend_id])
+    else
+      Backend.enabled.find_by(system: true) || Backend.enabled.first!
+    end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to models_path, alert: "Select an available model backend."
   end
 
   def set_collections

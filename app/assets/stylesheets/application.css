@@ -97,6 +97,12 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
   color: #625d56;
 }
 
+.model-list .model-backend {
+  margin-top: 0.5rem;
+  color: #785b39;
+  font-weight: 600;
+}
+
 .model-list span {
   display: inline-block;
   margin-top: 0.75rem;
@@ -106,7 +112,9 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
 
 .select-button,
 .secondary-button {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.5rem 0.8rem;
   border-radius: 0.35rem;
   color: #fff;
