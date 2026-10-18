@@ -1,0 +1,42 @@
+# == Schema Information
+#
+# Table name: language_models
+# Database name: primary
+#
+#  id                       :integer          not null, primary key
+#  name                     :string           not null
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  backend_id               :integer          not null
+#  language_model_family_id :integer          not null
+#
+# Indexes
+#
+#  index_language_models_on_backend_id                (backend_id)
+#  index_language_models_on_backend_id_and_name       (backend_id,name) UNIQUE
+#  index_language_models_on_language_model_family_id  (language_model_family_id)
+#
+# Foreign Keys
+#
+#  backend_id                (backend_id => backends.id)
+#  language_model_family_id  (language_model_family_id => language_model_families.id)
+#
+class LanguageModel < ApplicationRecord
+  belongs_to :backend, inverse_of: :language_models
+  belongs_to :language_model_family, inverse_of: :language_models
+
+  before_validation :assign_derived_family, if: -> { language_model_family.nil? }
+
+  validates :name, presence: true, uniqueness: { scope: :backend_id }
+
+  def self.family_name_for(model_name)
+    model_name.to_s.strip.split(":", 2).first.presence
+  end
+
+  private
+
+  def assign_derived_family
+    family_name = self.class.family_name_for(name)
+    self.language_model_family = LanguageModelFamily.find_or_create_by!(name: family_name) if family_name
+  end
+end

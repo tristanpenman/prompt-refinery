@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_18_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_000000) do
   create_table "backends", force: :cascade do |t|
     t.string "name", null: false
     t.string "base_url", null: false
@@ -54,6 +54,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_020000) do
     t.datetime "updated_at", null: false
     t.datetime "archived_at"
     t.index ["archived_at"], name: "index_collections_on_archived_at"
+  end
+
+  create_table "language_model_families", force: :cascade do |t|
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_language_model_families_on_name", unique: true
+  end
+
+  create_table "language_models", force: :cascade do |t|
+    t.integer "backend_id", null: false
+    t.integer "language_model_family_id", null: false
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["backend_id", "name"], name: "index_language_models_on_backend_id_and_name", unique: true
+    t.index ["backend_id"], name: "index_language_models_on_backend_id"
+    t.index ["language_model_family_id"], name: "index_language_models_on_language_model_family_id"
   end
 
   create_table "prompt_revisions", force: :cascade do |t|
@@ -121,6 +139,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_020000) do
   add_foreign_key "collection_revision_prompts", "collection_revisions"
   add_foreign_key "collection_revision_prompts", "prompt_revisions"
   add_foreign_key "collection_revisions", "collections"
+  add_foreign_key "language_models", "backends"
+  add_foreign_key "language_models", "language_model_families"
   add_foreign_key "prompt_revisions", "prompts"
   add_foreign_key "prompts", "collections"
   add_foreign_key "responses", "collection_revision_prompts"
