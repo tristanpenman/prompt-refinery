@@ -1,5 +1,10 @@
 class SettingsController < ApplicationController
   def index
     @backends = Backend.order(system: :desc, name: :asc, id: :asc)
+    @language_model_families = LanguageModelFamily
+      .left_joins(:language_models)
+      .group(:id)
+      .select("language_model_families.*, COUNT(language_models.id) AS language_models_count")
+      .order(:name)
   end
 end

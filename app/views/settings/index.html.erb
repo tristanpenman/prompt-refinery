@@ -27,5 +27,21 @@
         </ul>
       <% end %>
     </section>
+
+    <section class="dashboard-panel" id="model-families">
+      <header><h2>Model Families</h2></header>
+      <% if @language_model_families.empty? %>
+        <p>No model families registered.</p>
+      <% else %>
+        <ul>
+          <% @language_model_families.each do |family| %>
+            <li>
+              <%= family.name %>
+              <small><%= pluralize(family.language_models_count, "model") %></small>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
   </div>
 </main>
