@@ -26,6 +26,9 @@ class LanguageModel < ApplicationRecord
   belongs_to :language_model_family, inverse_of: :language_models
 
   before_validation :assign_derived_family, if: -> { language_model_family.nil? }
+  after_update -> { destroy_family_if_empty(language_model_family_id_before_last_save) },
+    if: :saved_change_to_language_model_family_id?
+  after_destroy -> { destroy_family_if_empty(language_model_family_id) }
 
   validates :name, presence: true, uniqueness: { scope: :backend_id }
 
@@ -47,5 +50,9 @@ class LanguageModel < ApplicationRecord
   def assign_derived_family
     family_name = self.class.family_name_for(name)
     self.language_model_family = LanguageModelFamily.find_or_create_by!(name: family_name) if family_name
+  end
+
+  def destroy_family_if_empty(family_id)
+    LanguageModelFamily.where(id: family_id).where.missing(:language_models).destroy_all
   end
 end
