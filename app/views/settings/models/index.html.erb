@@ -1,22 +1,22 @@
-<% content_for :title, "Models · Prompt Refinery" %>
+<% content_for :title, "Models · Settings · Prompt Refinery" %>
 
 <main class="models-page">
-  <nav><%= link_to "← Dashboard", root_path %></nav>
+  <nav><%= link_to "← Settings", settings_path %></nav>
   <header>
-    <p class="eyebrow">Prompt Refinery</p>
+    <p class="eyebrow">Settings</p>
     <h1>Models</h1>
     <p>Models currently available from enabled inference backends.</p>
   </header>
 
   <% if @families.any? %>
-    <%= form_with url: models_path, method: :get, class: "model-filter", role: "search" do |form| %>
+    <%= form_with url: settings_models_path, method: :get, class: "model-filter", role: "search" do |form| %>
       <%= form.label :family, "Model family" %>
       <%= form.select :family,
         options_from_collection_for_select(@families, :id, :name, @family&.id),
         include_blank: "All families" %>
       <%= form.submit "Filter", name: nil %>
       <% if @family %>
-        <%= link_to "Clear", models_path, class: "secondary-button" %>
+        <%= link_to "Clear", settings_models_path, class: "secondary-button" %>
       <% end %>
     <% end %>
   <% end %>
@@ -52,7 +52,7 @@
             <%= link_to "Select", prompt_path(model: model["name"], backend_id: model.fetch("backend").id), class: "select-button" %>
             <%= link_to "Evaluate", evaluate_path(model: model["name"], backend_id: model.fetch("backend").id), class: "secondary-button" %>
             <% if model["language_model"] %>
-              <%= link_to "Edit", edit_model_path(model["language_model"]), class: "secondary-button" %>
+              <%= link_to "Edit", edit_settings_model_path(model["language_model"]), class: "secondary-button" %>
             <% end %>
           </div>
         </li>

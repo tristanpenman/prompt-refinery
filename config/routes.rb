@@ -1,6 +1,5 @@
 Rails.application.routes.draw do
   root "home#index"
-  resources :models, only: %i[index edit update]
 
   get "login" => "sessions#new", as: :login
   post "login" => "sessions#create"
@@ -26,6 +25,7 @@ Rails.application.routes.draw do
 
   get "settings" => "settings#index", as: :settings
   namespace :settings do
+    resources :models, only: %i[index edit update]
     resources :backends, only: %i[index create edit update destroy] do
       post :test_connection, on: :member
     end

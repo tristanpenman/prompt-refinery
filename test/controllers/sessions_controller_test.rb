@@ -25,11 +25,8 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_path
 
-    HomeController.client_factory = empty_client_factory
     get root_path
     assert_response :success
-  ensure
-    HomeController.client_factory = Inference::Client
   end
 
   test "rejects an incorrect token" do
@@ -49,13 +46,5 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     get root_path(token: "incorrect-token")
 
     assert_redirected_to login_path(return_to: "/")
-  end
-
-  private
-
-  def empty_client_factory
-    client = Object.new
-    client.define_singleton_method(:models) { [] }
-    Object.new.tap { |factory| factory.define_singleton_method(:for) { |_backend| client } }
   end
 end

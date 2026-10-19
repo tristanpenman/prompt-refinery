@@ -26,7 +26,7 @@ class PromptsController < ApplicationController
 
   def set_model
     @model = params[:model].to_s.strip
-    redirect_to models_path, alert: "Select a model first." if @model.blank?
+    redirect_to settings_models_path, alert: "Select a model first." if @model.blank?
   end
 
   def set_backend
@@ -36,7 +36,7 @@ class PromptsController < ApplicationController
       Backend.enabled.find_by(system: true) || Backend.enabled.first!
     end
   rescue ActiveRecord::RecordNotFound
-    redirect_to models_path, alert: "Select an available model backend."
+    redirect_to settings_models_path, alert: "Select an available model backend."
   end
 
   def render_result(status: :ok)
