@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_19_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_010000) do
   create_table "backends", force: :cascade do |t|
     t.string "name", null: false
     t.string "base_url", null: false
@@ -118,6 +118,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_000000) do
     t.check_constraint "status IN ('pending', 'completed', 'failed')", name: "responses_status_check"
   end
 
+  create_table "test_cases", force: :cascade do |t|
+    t.integer "test_suite_id", null: false
+    t.json "values", default: {}, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_test_cases_on_deleted_at"
+    t.index ["test_suite_id", "position"], name: "index_test_cases_on_test_suite_id_and_position"
+    t.index ["test_suite_id"], name: "index_test_cases_on_test_suite_id"
+  end
+
+  create_table "test_suites", force: :cascade do |t|
+    t.string "name", null: false
+    t.json "variables", default: [], null: false
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["archived_at"], name: "index_test_suites_on_archived_at"
+  end
+
   create_table "trials", force: :cascade do |t|
     t.integer "collection_id", null: false
     t.string "model", null: false
@@ -146,6 +167,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_000000) do
   add_foreign_key "responses", "collection_revision_prompts"
   add_foreign_key "responses", "prompts"
   add_foreign_key "responses", "trials"
+  add_foreign_key "test_cases", "test_suites"
   add_foreign_key "trials", "backends"
   add_foreign_key "trials", "collection_revisions"
   add_foreign_key "trials", "collections"
