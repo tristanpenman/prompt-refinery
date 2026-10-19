@@ -18,7 +18,28 @@ class TestSuitesControllerTest < ActionDispatch::IntegrationTest
     get test_suites_path
 
     assert_response :success
-    assert_select "tr", text: /Topics\s+topic, audience\s+1/
+    assert_select "th", text: "Revision"
+    assert_select "th", text: "Draft"
+    assert_select "tr", text: /Topics\s+N\/A\s+Draft\s+topic, audience\s+1/
+  end
+
+  test "shows the latest recorded revision and draft state" do
+    test_suite = TestSuite.create!(name: "Topics", variables: [ "topic" ])
+    test_case = test_suite.test_cases.create!(values: { "topic" => "Ruby" })
+    TestSuiteRevision.capture!(test_suite)
+
+    get test_suites_path
+    assert_select "tr", text: /Topics\s+r1\s+Recorded/
+
+    test_case.update!(values: { "topic" => "Rust" })
+
+    get test_suites_path
+    assert_select "tr", text: /Topics\s+r1\s+Draft/
+
+    get test_suite_path(test_suite)
+    assert_select "p", text: /Latest revision:\s+r1/
+    assert_select "a[href=?]", revisions_test_suite_path(test_suite), text: "View revision history"
+    assert_select "p", text: /There are draft changes/
   end
 
   test "switches between active and archived test suites" do

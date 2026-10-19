@@ -61,6 +61,9 @@ class TestSuitesController < ApplicationController
 
   def prepare_show
     @test_cases = @test_suite.test_cases.to_a
+    @current_revision = @test_suite.test_suite_revisions.order(version: :desc).first
+    @has_unrevised_changes = @current_revision &&
+      @current_revision.content_digest != TestSuiteRevision.content_digest_for(@test_suite, @test_cases)
     # Validation errors leave unsaved variables on the suite, so forms are built from the saved ones.
     @variables = @test_suite.variables_in_database
     return if @test_suite.archived_at? || @variables.empty?
@@ -74,6 +77,17 @@ class TestSuitesController < ApplicationController
   def load_test_suites
     @show_archived = params[:archived] == "true"
     test_suite_scope = @show_archived ? TestSuite.archived : TestSuite.active
-    @test_suites = test_suite_scope.includes(:test_cases).order(:name, :id)
+    @test_suites = test_suite_scope.includes(:test_cases, :test_suite_revisions).order(:name, :id)
+    @test_suite_rows = @test_suites.map do |test_suite|
+      latest_revision = test_suite.test_suite_revisions.max_by(&:version)
+      has_draft = latest_revision.nil? ||
+        latest_revision.content_digest != TestSuiteRevision.content_digest_for(test_suite, test_suite.test_cases.to_a)
+
+      {
+        test_suite: test_suite,
+        revision: latest_revision&.version,
+        draft: has_draft
+      }
+    end
   end
 end

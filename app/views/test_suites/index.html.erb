@@ -22,13 +22,15 @@
 
   <section class="collection-list">
     <h2><%= @show_archived ? "Archived test suites" : "Test suites" %></h2>
-    <% if @test_suites.empty? %>
+    <% if @test_suite_rows.empty? %>
       <p><%= @show_archived ? "No archived test suites." : "No test suites yet." %></p>
     <% else %>
       <table>
         <thead>
           <tr>
             <th>Name</th>
+            <th>Revision</th>
+            <th>Draft</th>
             <th>Variables</th>
             <th>Test cases</th>
             <th>Created</th>
@@ -36,9 +38,16 @@
           </tr>
         </thead>
         <tbody>
-          <% @test_suites.each do |test_suite| %>
+          <% @test_suite_rows.each do |row| %>
+            <% test_suite = row[:test_suite] %>
             <tr>
               <td><%= link_to test_suite.name, test_suite %></td>
+              <td><%= row[:revision] ? "r#{row[:revision]}" : "N/A" %></td>
+              <td>
+                <span class="status <%= row[:draft] ? "status--running" : "status--completed" %>">
+                  <%= row[:draft] ? "Draft" : "Recorded" %>
+                </span>
+              </td>
               <td><%= test_suite.variables.any? ? test_suite.variable_list : "None" %></td>
               <td><%= test_suite.test_cases.size %></td>
               <td><time datetime="<%= test_suite.created_at.iso8601 %>"><%= test_suite.created_at.to_fs(:short) %></time></td>

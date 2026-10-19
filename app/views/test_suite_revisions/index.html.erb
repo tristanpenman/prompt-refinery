@@ -1,0 +1,73 @@
+<% content_for :title, "#{@test_suite.name} revisions · Prompt Refinery" %>
+
+<main class="collections-page">
+  <nav><%= link_to "← Test suite", @test_suite %></nav>
+  <header>
+    <p class="eyebrow">Test suite history</p>
+    <h1><%= @test_suite.name %></h1>
+    <p>Compare the current working state with immutable revisions previously used in trials.</p>
+  </header>
+
+  <h2 class="history-heading">Current revision</h2>
+  <section class="editor-card current-revision">
+    <header class="revision-header">
+      <div>
+        <p>
+          <% if @has_unrevised_changes %>
+            Draft · Will become r<%= @current_revision_number %> when used in a trial
+          <% else %>
+            Revision <%= @latest_revision.version %> · Captured <%= time_ago_in_words(@latest_revision.created_at) %> ago
+          <% end %>
+        </p>
+      </div>
+      <span class="status <%= "status--running" if @has_unrevised_changes %>"><%= @has_unrevised_changes ? "Draft" : "Current" %></span>
+    </header>
+
+    <p><strong>Variables:</strong> <%= @test_suite.variables.any? ? @test_suite.variable_list : "None" %></p>
+    <% if @current_test_cases.empty? %>
+      <p>This test suite currently contains no test cases.</p>
+    <% else %>
+      <ol class="revision-prompts">
+        <% @current_test_cases.each.with_index(1) do |test_case, number| %>
+          <li>
+            <h3>Test case <%= number %></h3>
+            <%= render "test_case_values", variables: @test_suite.variables, values: test_case.values %>
+          </li>
+        <% end %>
+      </ol>
+    <% end %>
+  </section>
+
+  <h2 class="history-heading">Previous revisions</h2>
+  <% if @revisions.empty? %>
+    <section class="notice">
+      <p>No previous revisions yet.</p>
+    </section>
+  <% else %>
+    <div class="revision-list">
+      <% @revisions.each do |revision| %>
+        <section class="editor-card">
+          <header class="revision-header">
+            <div>
+              <p>Revision <%= revision.version %> · <%= revision.name %> · Captured <%= time_ago_in_words(revision.created_at) %> ago</p>
+            </div>
+          </header>
+
+          <p><strong>Variables:</strong> <%= revision.variables.any? ? revision.variables.join(", ") : "None" %></p>
+          <% if revision.test_suite_revision_cases.empty? %>
+            <p>This revision contains no test cases.</p>
+          <% else %>
+            <ol class="revision-prompts">
+              <% revision.test_suite_revision_cases.each.with_index(1) do |member, number| %>
+                <li>
+                  <h3>Test case <%= number %> <small>r<%= member.test_case_revision.version %></small></h3>
+                  <%= render "test_case_values", variables: revision.variables, values: member.test_case_revision.values %>
+                </li>
+              <% end %>
+            </ol>
+          <% end %>
+        </section>
+      <% end %>
+    </div>
+  <% end %>
+</main>

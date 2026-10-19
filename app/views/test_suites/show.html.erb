@@ -14,6 +14,14 @@
 
   <section class="editor-card">
     <h2>Test suite details</h2>
+    <% if @current_revision %>
+      <p><strong>Latest revision:</strong> r<%= @current_revision.version %> (<%= link_to "View revision history", revisions_test_suite_path(@test_suite) %>)</p>
+      <% if @has_unrevised_changes %>
+        <p>There are draft changes. A new revision will be created when the test suite is next used in a trial.</p>
+      <% end %>
+    <% else %>
+      <p><strong>Latest revision:</strong> Not revised yet</p>
+    <% end %>
     <% if @test_suite.archived_at? %>
       <p><strong>Variables:</strong> <%= @variables.any? ? @test_suite.variable_list : "None" %></p>
       <%= link_to "Unarchive test suite", unarchive_test_suite_path(@test_suite), data: { turbo_method: :patch } %>

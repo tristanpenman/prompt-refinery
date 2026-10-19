@@ -1,0 +1,6 @@
+<dl>
+  <% variables.each do |name| %>
+    <dt><code>{{<%= name %>}}</code></dt>
+    <dd><%= simple_format(values[name]) %></dd>
+  <% end %>
+</dl>

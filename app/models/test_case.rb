@@ -23,6 +23,7 @@
 #
 class TestCase < ApplicationRecord
   belongs_to :test_suite, inverse_of: :test_cases
+  has_many :test_case_revisions, dependent: :destroy, inverse_of: :test_case
 
   validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :values_match_suite_variables

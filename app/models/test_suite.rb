@@ -20,6 +20,7 @@ class TestSuite < ApplicationRecord
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
 
+  has_many :test_suite_revisions, dependent: :destroy, inverse_of: :test_suite
   has_many :test_cases,
     -> { where(deleted_at: nil).order(:position, :id) },
     dependent: :destroy,
