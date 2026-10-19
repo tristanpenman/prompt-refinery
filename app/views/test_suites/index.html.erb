@@ -1,15 +1,15 @@
-<% content_for :title, "Test suites · Prompt Refinery" %>
+<% content_for :title, "Test Suites · Prompt Refinery" %>
 
 <main class="resource-page">
   <nav><%= link_to "← Dashboard", root_path %></nav>
   <header>
     <p class="eyebrow">Prompt Refinery</p>
-    <h1>Test suites</h1>
+    <h1>Test Suites</h1>
     <p>Define test cases that supply values for the variables in a prompt template.</p>
   </header>
 
   <section class="editor-card">
-    <h2>New test suite</h2>
+    <h2>New Test Suite</h2>
     <%= render "shared/errors", record: @test_suite %>
     <%= form_with model: @test_suite do |form| %>
       <%= form.label :name %>
@@ -21,7 +21,7 @@
   </section>
 
   <section class="resource-list">
-    <h2><%= @show_archived ? "Archived test suites" : "Test suites" %></h2>
+    <h2><%= @show_archived ? "Archived Test Suites" : "Test Suites" %></h2>
     <% if @test_suite_rows.empty? %>
       <p><%= @show_archived ? "No archived test suites." : "No test suites yet." %></p>
     <% else %>

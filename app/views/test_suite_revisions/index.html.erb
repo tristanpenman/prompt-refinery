@@ -1,4 +1,4 @@
-<% content_for :title, "#{@test_suite.name} revisions · Prompt Refinery" %>
+<% content_for :title, "#{@test_suite.name} Revisions · Prompt Refinery" %>
 
 <main class="resource-page">
   <nav><%= link_to "← Test suite", @test_suite %></nav>
@@ -8,7 +8,7 @@
     <p>Compare the current working state with immutable revisions previously used in trials.</p>
   </header>
 
-  <h2 class="history-heading">Current revision</h2>
+  <h2 class="history-heading">Current Revision</h2>
   <section class="editor-card current-revision">
     <header class="revision-header">
       <div>
@@ -30,7 +30,7 @@
       <ol class="revision-prompts">
         <% @current_test_cases.each.with_index(1) do |test_case, number| %>
           <li>
-            <h3>Test case <%= number %></h3>
+            <h3>Test Case <%= number %></h3>
             <%= render "test_case_values", variables: @test_suite.variables, values: test_case.values %>
           </li>
         <% end %>
@@ -38,7 +38,7 @@
     <% end %>
   </section>
 
-  <h2 class="history-heading">Previous revisions</h2>
+  <h2 class="history-heading">Previous Revisions</h2>
   <% if @revisions.empty? %>
     <section class="notice">
       <p>No previous revisions yet.</p>
@@ -60,7 +60,7 @@
             <ol class="revision-prompts">
               <% revision.test_suite_revision_cases.each.with_index(1) do |member, number| %>
                 <li>
-                  <h3>Test case <%= number %> <small>r<%= member.test_case_revision.version %></small></h3>
+                  <h3>Test Case <%= number %> <small>r<%= member.test_case_revision.version %></small></h3>
                   <%= render "test_case_values", variables: revision.variables, values: member.test_case_revision.values %>
                 </li>
               <% end %>

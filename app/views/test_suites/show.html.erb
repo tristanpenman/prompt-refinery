@@ -13,7 +13,7 @@
   </header>
 
   <section class="editor-card">
-    <h2>Test suite details</h2>
+    <h2>Test Suite Details</h2>
     <% if @current_revision %>
       <p><strong>Latest revision:</strong> r<%= @current_revision.version %> (<%= link_to "View revision history", revisions_test_suite_path(@test_suite) %>)</p>
       <% if @has_unrevised_changes %>
@@ -40,14 +40,14 @@
   </section>
 
   <section class="prompt-list">
-    <h2>Test cases</h2>
+    <h2>Test Cases</h2>
     <% if @test_cases.empty? %>
       <p>No test cases in this suite yet.</p>
     <% else %>
       <% @test_cases.each do |test_case| %>
         <article class="editor-card<%= " archived-card" if @test_suite.archived_at? %>">
           <% if @test_suite.archived_at? %>
-            <h3>Test case <%= test_case.position %></h3>
+            <h3>Test Case <%= test_case.position %></h3>
             <dl>
               <% @variables.each do |name| %>
                 <dt><code>{{<%= name %>}}</code></dt>
@@ -68,7 +68,7 @@
 
   <% unless @test_suite.archived_at? %>
     <section class="editor-card">
-      <h2>Add test case</h2>
+      <h2>Add Test Case</h2>
       <% if @test_case %>
         <%= form_with model: [@test_suite, @test_case] do |form| %>
           <%= render "test_cases/fields", form: form, test_case: @test_case, variables: @variables %>

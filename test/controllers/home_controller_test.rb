@@ -69,8 +69,8 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_select ".dashboard-panel:nth-child(2) small", text: /Completed about 2 hours ago/
-    assert_select ".dashboard-panel:nth-child(2) time[datetime=?]", completed_at.iso8601
+    assert_select ".dashboard-panel:nth-child(3) small", text: /Completed about 2 hours ago/
+    assert_select ".dashboard-panel:nth-child(3) time[datetime=?]", completed_at.iso8601
   end
 
   test "hides archived prompts but retains their trials" do
@@ -82,7 +82,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".dashboard-panel:nth-child(1) a", text: "Example", count: 0
-    assert_select ".dashboard-panel:nth-child(2) a[href=?]", trial_path(trial), text: /Example · Topics · gemma3:4b/
+    assert_select ".dashboard-panel:nth-child(3) a[href=?]", trial_path(trial), text: /Example · Topics · gemma3:4b/
   end
 
   test "hides archived test suites" do
@@ -91,6 +91,6 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_select ".dashboard-panel:nth-child(3) p", text: "No test suites yet."
+    assert_select ".dashboard-panel:nth-child(2) p", text: "No test suites yet."
   end
 end

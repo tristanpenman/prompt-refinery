@@ -56,7 +56,7 @@ class TestSuitesControllerTest < ActionDispatch::IntegrationTest
     get test_suites_path(archived: true)
 
     assert_response :success
-    assert_select "h2", text: "Archived test suites"
+    assert_select "h2", text: "Archived Test Suites"
     assert_select "a", text: archived.name
     assert_select "a", text: active.name, count: 0
   end
@@ -95,7 +95,7 @@ class TestSuitesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "textarea[name='test_case[values][topic]']", text: "Ruby"
     assert_select "textarea[name='test_case[values][audience]']", count: 2
-    assert_select "h2", text: "Add test case"
+    assert_select "h2", text: "Add Test Case"
   end
 
   test "asks for variables before test cases can be added" do
@@ -124,7 +124,7 @@ class TestSuitesControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1 .status--archived", text: "Archived"
     assert_select "textarea", count: 0
     assert_select ".archived-card dd", text: "Ruby"
-    assert_select "h2", text: "Add test case", count: 0
+    assert_select "h2", text: "Add Test Case", count: 0
 
     patch test_suite_path(test_suite), params: { test_suite: { name: "Changed" } }
     assert_redirected_to test_suite
