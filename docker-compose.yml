@@ -3,6 +3,8 @@ services:
     build:
       context: .
     image: prompt-refinery:dev
+    # Remove any stale pid left in the bind-mounted tmp/ by an unclean stop
+    command: bash -c "rm -f tmp/pids/server.pid && exec ./bin/rails server -b 0.0.0.0"
     environment:
       OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
       RAILS_ALLOWED_HOSTS: ${RAILS_ALLOWED_HOSTS:-}
