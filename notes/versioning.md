@@ -9,7 +9,9 @@ Trials need to remain reproducible after the prompt or test suite they ran has b
 - What exact prompt text was sent to the model?
 - Can those records still be inspected if the current prompt or test suite changes?
 
-A trial evaluates a single prompt against a test suite, so prompts, test suites, and test cases are versioned. Collections are an organisational grouping for prompts. They do not define what a trial runs, so they are not versioned: renaming a collection, or moving a prompt into or out of it, has no effect on trial history.
+A trial evaluates a single prompt against a test suite, so prompts, test suites, and test cases are versioned.
+
+This design is implemented. The sections below describe the model and the reasoning behind it.
 
 ## Possible approaches
 
@@ -31,13 +33,10 @@ Keep `Prompt`, `TestSuite`, and `TestCase` as stable identities, while storing t
 
 This requires more tables, but makes versions reusable, inspectable, and comparable. It also separates authoring mutable drafts from the immutable inputs used for execution.
 
-## Recommended model
+## Model
 
-Use an immutable prompt revision, and immutable test suite revisions with explicit revision members:
+Prompt Refinery uses an immutable prompt revision, and immutable test suite revisions with explicit revision members:
 
-- `Collection`
-  - Optional grouping of prompts used by the authoring UI.
-  - Not versioned, and not referenced by trials.
 - `Prompt`
   - Stable identity for a prompt across edits.
   - Has many prompt revisions.
@@ -52,7 +51,7 @@ Use an immutable prompt revision, and immutable test suite revisions with explic
 - `TestSuiteRevision`
   - Belongs to a test suite.
   - Has a monotonically increasing version number.
-  - Stores versioned suite attributes such as its name.
+  - Stores versioned suite attributes: its name and variables.
   - Is immutable after creation.
 - `TestCase`
   - Stable identity for a test case across edits.
@@ -67,8 +66,7 @@ Use an immutable prompt revision, and immutable test suite revisions with explic
   - Stores the case position within that suite revision.
   - Captures membership and ordering at that point in time.
 - `Trial`
-  - Belongs to a prompt revision and a test suite revision.
-  - May retain direct prompt and test suite references for convenient querying, but the revisions are authoritative.
+  - Belongs to a prompt revision and a test suite revision. It has no direct prompt or test suite reference; those are reached through the revisions.
 - `Response`
   - Belongs to a trial and a `TestSuiteRevisionCase` member.
   - Stores the rendered prompt actually sent to Ollama as well as the generated response.
@@ -79,7 +77,7 @@ Referencing the revision member from a response is stronger than referencing onl
 
 ## Creating a trial
 
-Trial creation should happen in one database transaction:
+Trial creation happens in one database transaction:
 
 1. Resolve or create an immutable revision representing the prompt's current state.
 2. Resolve or create an immutable revision representing the test suite's current state, including a revision for each of its test cases.
@@ -97,7 +95,7 @@ Two policies are reasonable:
 - Create a revision on every saved prompt, test suite, or test case edit. This gives complete authoring history but can create many versions while a user is making small changes.
 - Create a revision when a trial starts. This creates versions only for states that were actually executed and is simpler for the first implementation.
 
-Creating revisions at trial time is a good initial policy. A content digest can avoid duplicating a revision when the prompt or suite has not changed since the previous trial. Explicit draft and publish behavior can be added later without changing the trial relationships.
+Prompt Refinery creates revisions at trial time. A content digest avoids duplicating a revision when the prompt or suite has not changed since the previous trial, and the authoring pages compare the digest with the latest revision to show whether there are draft changes. Explicit draft and publish behavior can be added later without changing the trial relationships.
 
 A CSV import is an ordinary edit to a test suite: it adds or replaces test cases, and the next trial captures the result as a new suite revision.
 
@@ -105,7 +103,7 @@ Refinement also creates revisions: when the teacher model proposes an improved p
 
 ## Integrity constraints
 
-The database should enforce as much of the revision graph as possible:
+The database enforces as much of the revision graph as possible:
 
 - Unique `(prompt_id, version)` and `(prompt_id, content_digest)` on prompt revisions.
 - Unique `(test_suite_id, version)` and `(test_suite_id, content_digest)` on test suite revisions.
@@ -117,20 +115,16 @@ The database should enforce as much of the revision graph as possible:
 - Unique `(trial_id, test_suite_revision_case_id)` on responses.
 - Restrict deletion of any revision referenced by a trial or response.
 
-Application validation should additionally ensure that a response's revision member belongs to the same test suite revision as its trial, and that every variable used by the prompt revision's template has a value in every test case revision. The first relationship can be enforced more strongly with composite foreign keys if the added schema complexity is justified.
+Application validation additionally ensures that a response's revision member belongs to the same test suite revision as its trial, and that every variable used by the prompt revision's template is one of the suite revision's variables. Test case validation guarantees each case has a value for every suite variable. The first relationship could be enforced more strongly with composite foreign keys if the added schema complexity is justified.
 
 Revision rows should never be updated or destroyed through normal application code. Database permissions or triggers could enforce immutability later, but model-level protections and restrictive foreign keys are a reasonable starting point for this local application.
 
 ## Displaying history
 
-A trial page should display identifiers such as `Prompt v5` and `Suite v3`, while always rendering the snapshot text from the referenced revisions. Links can lead to read-only revision pages showing the prompt template, and the suite's membership, ordering, and variable values exactly as they were when run.
+Trial pages display identifiers such as `Explain r5` and `Topics r3`, while always rendering the snapshot text from the referenced revisions. Prompt and test suite history pages show each revision's template, or the suite's membership, ordering, and variable values exactly as they were captured.
 
 Human-readable version numbers are useful for the interface, but record IDs and foreign keys remain the authoritative identity. The content digest can help detect identical versions and verify exported trial data.
 
-## Migration from the current schema
+## Migration history
 
-The current schema versions collections as well as prompts: trials reference a `CollectionRevision`, and responses reference a `CollectionRevisionPrompt` member that links to a `PromptRevision`. Prompt revisions already hold everything that needs to be preserved, so the migration removes the collection layer rather than reconstructing history. The test suite tables are new and need no migration of their own.
-
-Each existing trial ran several prompts, but a trial will now run one prompt against a test suite. Existing trials can be split into one trial per prompt revision, each taking the response for that prompt and copying the original model, backend snapshot, status, and timestamps. Because those prompts had no variables, each split trial can reference a shared, empty-valued single-case test suite revision. Split trials should be marked as migrated so they are not mistaken for trials created under the new model.
-
-Once trials and responses no longer read through them, the `collection_revisions` and `collection_revision_prompts` tables can be dropped, along with the direct `Trial -> Collection` and `Response -> Prompt` relationships.
+Prompt Refinery originally grouped prompts into collections, and trials ran a whole collection through `CollectionRevision` and `CollectionRevisionPrompt` records. When trials moved to a single prompt revision and test suite revision, the existing trials could not be expressed in the new model and were deleted rather than split. Collections and their revisions were then removed entirely, leaving prompts as standalone records; previously soft-deleted prompts became archived prompts.

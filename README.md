@@ -1,14 +1,14 @@
 # Prompt Refinery
 
-Prompt Refinery is a local-first tool for evaluating collections of related prompts against language models.
+Prompt Refinery is a local-first tool for evaluating prompts against language models.
 
-It is intended to make prompt experimentation repeatable and easy to review. A prompt collection can contain both fixed prompts and templates whose variables are filled with user-provided inputs. Prompt Refinery runs those prompts as a tracked trial, preserves the generated outputs, and provides an interface for reviewing, comparing, and scoring the results.
+It is intended to make prompt experimentation repeatable and easy to review. A prompt can be fixed text or a template whose `{{variables}}` are filled in from the test cases in a test suite. Prompt Refinery runs a prompt against every test case as a tracked trial, preserves the generated outputs, and provides an interface for reviewing, comparing, and scoring the results.
 
 ## Goals
 
-- Organize related prompts into reusable collections.
+- Keep revision history for prompts and reusable test suites.
 - Support static prompts and prompts with interpolated input variables.
-- Create and monitor trial runs across prompts and input cases.
+- Create and monitor trial runs of a prompt across a suite of test cases.
 - Preserve prompts, inputs, model settings, outputs, errors, and timing information.
 - Review, compare, score, and annotate generated responses.
 - Export trial results for further analysis.
