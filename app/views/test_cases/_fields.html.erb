@@ -1,0 +1,9 @@
+<% variables.each do |name| %>
+  <% field_id = "#{dom_id(test_case)}_#{name}" %>
+  <%= label_tag field_id do %>
+    <code>{{<%= name %>}}</code>
+  <% end %>
+  <%= text_area_tag "#{form.object_name}[values][#{name}]", test_case.values[name], id: field_id, rows: 3 %>
+<% end %>
+<%= form.label :position, for: "#{dom_id(test_case)}_position" %>
+<%= form.number_field :position, required: true, min: 0, id: "#{dom_id(test_case)}_position" %>

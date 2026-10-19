@@ -1,0 +1,74 @@
+<% content_for :title, "#{@test_suite.name_in_database} · Prompt Refinery" %>
+
+<main class="collections-page">
+  <nav><%= link_to "← Test suites", test_suites_path %></nav>
+  <header>
+    <p class="eyebrow">Test suite</p>
+    <h1>
+      <%= @test_suite.name_in_database %>
+      <% if @test_suite.archived_at? %>
+        <span class="status status--archived">Archived</span>
+      <% end %>
+    </h1>
+  </header>
+
+  <section class="editor-card">
+    <h2>Test suite details</h2>
+    <% if @test_suite.archived_at? %>
+      <p><strong>Variables:</strong> <%= @variables.any? ? @test_suite.variable_list : "None" %></p>
+      <%= link_to "Unarchive test suite", unarchive_test_suite_path(@test_suite), data: { turbo_method: :patch } %>
+    <% else %>
+      <%= render "shared/errors", record: @test_suite %>
+      <%= form_with model: @test_suite do |form| %>
+        <%= form.label :name %>
+        <%= form.text_field :name, required: true %>
+        <%= form.label :variable_list, "Variables" %>
+        <%= form.text_field :variable_list, placeholder: "topic, audience" %>
+        <p>Separate variable names with commas. Prompts refer to them as <code>{{name}}</code>. Removing a variable discards its values from every test case.</p>
+        <%= form.submit "Save test suite" %>
+      <% end %>
+      <%= button_to "Archive test suite", @test_suite, method: :delete, class: "danger-button", data: { turbo_confirm: "Archive this test suite? It will no longer be available for new trials." } %>
+    <% end %>
+  </section>
+
+  <section class="prompt-list">
+    <h2>Test cases</h2>
+    <% if @test_cases.empty? %>
+      <p>No test cases in this suite yet.</p>
+    <% else %>
+      <% @test_cases.each do |test_case| %>
+        <article class="editor-card<%= " archived-prompt-card" if @test_suite.archived_at? %>">
+          <% if @test_suite.archived_at? %>
+            <h3>Test case <%= test_case.position %></h3>
+            <dl>
+              <% @variables.each do |name| %>
+                <dt><code>{{<%= name %>}}</code></dt>
+                <dd><%= simple_format(test_case.values[name]) %></dd>
+              <% end %>
+            </dl>
+          <% else %>
+            <%= form_with model: [@test_suite, test_case] do |form| %>
+              <%= render "test_cases/fields", form: form, test_case: test_case, variables: @variables %>
+              <%= form.submit "Save test case" %>
+            <% end %>
+            <%= button_to "Delete test case", [@test_suite, test_case], method: :delete, class: "danger-button", data: { turbo_confirm: "Delete this test case?" } %>
+          <% end %>
+        </article>
+      <% end %>
+    <% end %>
+  </section>
+
+  <% unless @test_suite.archived_at? %>
+    <section class="editor-card">
+      <h2>Add test case</h2>
+      <% if @test_case %>
+        <%= form_with model: [@test_suite, @test_case] do |form| %>
+          <%= render "test_cases/fields", form: form, test_case: @test_case, variables: @variables %>
+          <%= form.submit "Add test case" %>
+        <% end %>
+      <% else %>
+        <p>Add variables to this test suite before adding test cases.</p>
+      <% end %>
+    </section>
+  <% end %>
+</main>

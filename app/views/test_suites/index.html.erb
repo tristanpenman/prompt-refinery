@@ -1,0 +1,60 @@
+<% content_for :title, "Test suites · Prompt Refinery" %>
+
+<main class="collections-page">
+  <nav><%= link_to "← Dashboard", root_path %></nav>
+  <header>
+    <p class="eyebrow">Prompt Refinery</p>
+    <h1>Test suites</h1>
+    <p>Define test cases that supply values for the variables in a prompt template.</p>
+  </header>
+
+  <section class="editor-card">
+    <h2>New test suite</h2>
+    <%= render "shared/errors", record: @test_suite %>
+    <%= form_with model: @test_suite do |form| %>
+      <%= form.label :name %>
+      <%= form.text_field :name, required: true, placeholder: "Test suite name" %>
+      <%= form.label :variable_list, "Variables" %>
+      <%= form.text_field :variable_list, placeholder: "topic, audience" %>
+      <%= form.submit "Create test suite" %>
+    <% end %>
+  </section>
+
+  <section class="collection-list">
+    <h2><%= @show_archived ? "Archived test suites" : "Test suites" %></h2>
+    <% if @test_suites.empty? %>
+      <p><%= @show_archived ? "No archived test suites." : "No test suites yet." %></p>
+    <% else %>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Variables</th>
+            <th>Test cases</th>
+            <th>Created</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @test_suites.each do |test_suite| %>
+            <tr>
+              <td><%= link_to test_suite.name, test_suite %></td>
+              <td><%= test_suite.variables.any? ? test_suite.variable_list : "None" %></td>
+              <td><%= test_suite.test_cases.size %></td>
+              <td><time datetime="<%= test_suite.created_at.iso8601 %>"><%= test_suite.created_at.to_fs(:short) %></time></td>
+              <td><time datetime="<%= test_suite.updated_at.iso8601 %>"><%= test_suite.updated_at.to_fs(:short) %></time></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </section>
+
+  <nav class="collection-filter-link">
+    <% if @show_archived %>
+      <%= link_to "View active test suites", test_suites_path %>
+    <% else %>
+      <%= link_to "View archived test suites", test_suites_path(archived: true) %>
+    <% end %>
+  </nav>
+</main>

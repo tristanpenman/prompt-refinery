@@ -58,4 +58,29 @@ class TestSuiteTest < ActiveSupport::TestCase
 
     assert_not TestCase.exists?(test_case.id)
   end
+
+  test "parses a comma-separated variable list" do
+    test_suite = TestSuite.new(variable_list: " topic, audience ,, ")
+
+    assert_equal [ "topic", "audience" ], test_suite.variables
+    assert_equal "topic, audience", test_suite.variable_list
+  end
+
+  test "keeps test cases complete when variables change" do
+    test_suite = TestSuite.create!(name: "Topics", variables: [ "topic", "tone" ])
+    test_case = test_suite.test_cases.create!(values: { "topic" => "Ruby", "tone" => "formal" })
+
+    test_suite.update!(variables: [ "topic", "audience" ])
+
+    assert_equal({ "topic" => "Ruby", "audience" => "" }, test_case.reload.values)
+    assert_predicate test_case, :valid?
+  end
+
+  test "requires variables while it has test cases" do
+    test_suite = TestSuite.create!(name: "Topics", variables: [ "topic" ])
+    test_suite.test_cases.create!(values: { "topic" => "Ruby" })
+
+    assert_not test_suite.update(variables: [])
+    assert_includes test_suite.errors[:variables], "can't be empty while the suite has test cases"
+  end
 end

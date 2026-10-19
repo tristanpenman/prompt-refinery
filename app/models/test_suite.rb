@@ -31,7 +31,10 @@ class TestSuite < ApplicationRecord
 
   validates :name, presence: true
   validate :variables_are_well_formed
+  validate :variables_present_while_cases_exist, on: :update
   validate :read_only_while_archived, on: :update
+
+  after_update :reconcile_test_case_values, if: :saved_change_to_variables?
 
   def archive!
     update!(archived_at: Time.current)
@@ -39,6 +42,14 @@ class TestSuite < ApplicationRecord
 
   def unarchive!
     reload.update!(archived_at: nil)
+  end
+
+  def variable_list
+    variables.join(", ")
+  end
+
+  def variable_list=(text)
+    self.variables = text.to_s.split(",").map(&:strip).reject(&:empty?)
   end
 
   private
@@ -50,6 +61,19 @@ class TestSuite < ApplicationRecord
     end
 
     errors.add(:variables, "must be unique") if variables.uniq.size != variables.size
+  end
+
+  def variables_present_while_cases_exist
+    errors.add(:variables, "can't be empty while the suite has test cases") if variables.empty? && test_cases.exists?
+  end
+
+  # Drops values for removed variables and adds blank values for new ones,
+  # so existing test cases stay complete when the suite's variables change.
+  def reconcile_test_case_values
+    TestCase.where(test_suite: self).find_each do |test_case|
+      values = variables.index_with { |name| test_case.values.fetch(name, "") }
+      test_case.update_columns(values: values) unless values == test_case.values
+    end
   end
 
   def read_only_while_archived

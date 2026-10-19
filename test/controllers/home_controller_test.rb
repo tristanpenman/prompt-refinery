@@ -33,7 +33,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_select ".dashboard-panel", count: 3
+    assert_select ".dashboard-panel", count: 4
     assert_select ".dashboard-panel:nth-child(1) li", count: 3
     assert_select ".dashboard-panel:nth-child(2) li", count: 3
     assert_select ".dashboard-panel:nth-child(3) li", count: 3

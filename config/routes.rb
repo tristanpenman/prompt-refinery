@@ -16,6 +16,10 @@ Rails.application.routes.draw do
     patch :unarchive, on: :member
     resources :prompts, only: %i[create update destroy], controller: "collection_prompts"
   end
+  resources :test_suites, only: %i[index show create update destroy] do
+    patch :unarchive, on: :member
+    resources :test_cases, only: %i[create update destroy]
+  end
   resources :trials, only: %i[index show create] do
     get :compare, on: :member, to: "trial_comparisons#show"
   end

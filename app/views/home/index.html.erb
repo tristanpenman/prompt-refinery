@@ -4,7 +4,7 @@
   <header>
     <p class="eyebrow">Prompt Refinery</p>
     <h1>Dashboard</h1>
-    <p>Models, prompt collections, and evaluation trials at a glance.</p>
+    <p>Models, prompt collections, evaluation trials, and test suites at a glance.</p>
     <div class="dashboard-actions">
       <%= link_to "Settings", settings_path %>
       <%= button_to "Sign out", logout_path, method: :delete, class: "text-button" %>
@@ -67,6 +67,22 @@
                   <time datetime="<%= trial.completed_at.iso8601 %>"><%= time_ago_in_words(trial.completed_at) %> ago</time>
                 <% end %>
               </small>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+
+    <section class="dashboard-panel">
+      <header><h2>Test suites</h2><%= link_to "View all", test_suites_path %></header>
+      <% if @test_suites.empty? %>
+        <p>No test suites yet.</p>
+      <% else %>
+        <ul>
+          <% @test_suites.each do |test_suite| %>
+            <li>
+              <%= link_to test_suite.name, test_suite %>
+              <small>Updated <%= time_ago_in_words(test_suite.updated_at) %> ago</small>
             </li>
           <% end %>
         </ul>

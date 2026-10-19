@@ -745,7 +745,7 @@ h1 .status { vertical-align: middle; }
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 2rem;
 }
@@ -783,6 +783,10 @@ h1 .status { vertical-align: middle; }
   display: block;
   margin-top: 0.3rem;
   color: var(--color-muted);
+}
+
+@media (max-width: 64rem) {
+  .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 48rem) {
