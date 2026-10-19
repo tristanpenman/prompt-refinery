@@ -15,8 +15,8 @@
       <p class="form-error" role="alert"><%= @ollama_error %></p>
     <% elsif @backends.empty? %>
       <p><%= link_to "Enable a backend", settings_backends_path %> before starting a trial.</p>
-    <% elsif @collections.empty? %>
-      <p><%= link_to "Create a prompt", collections_path %> before starting a trial.</p>
+    <% elsif @prompts.empty? %>
+      <p><%= link_to "Create a prompt", prompts_path %> before starting a trial.</p>
     <% elsif @test_suites.empty? %>
       <p><%= link_to "Create a test suite with test cases", test_suites_path %> before starting a trial.</p>
     <% elsif @models.empty? %>
@@ -30,7 +30,7 @@
       <%= form_with model: @trial || Trial.new do |form| %>
         <%= form.hidden_field :backend_id, value: @selected_backend.id %>
         <%= form.label :prompt_id, "Prompt" %>
-        <%= form.grouped_collection_select :prompt_id, @collections, :prompts, :name, :id, :name,
+        <%= form.collection_select :prompt_id, @prompts, :id, :name,
           { prompt: "Choose a prompt", selected: @selected_prompt_id }, required: true %>
         <%= form.label :test_suite_id, "Test suite" %>
         <%= form.collection_select :test_suite_id, @test_suites, :id, :name,

@@ -1,6 +1,6 @@
 <% content_for :title, "Test suites · Prompt Refinery" %>
 
-<main class="collections-page">
+<main class="resource-page">
   <nav><%= link_to "← Dashboard", root_path %></nav>
   <header>
     <p class="eyebrow">Prompt Refinery</p>
@@ -20,7 +20,7 @@
     <% end %>
   </section>
 
-  <section class="collection-list">
+  <section class="resource-list">
     <h2><%= @show_archived ? "Archived test suites" : "Test suites" %></h2>
     <% if @test_suite_rows.empty? %>
       <p><%= @show_archived ? "No archived test suites." : "No test suites yet." %></p>
@@ -59,7 +59,7 @@
     <% end %>
   </section>
 
-  <nav class="collection-filter-link">
+  <nav class="resource-filter-link">
     <% if @show_archived %>
       <%= link_to "View active test suites", test_suites_path %>
     <% else %>

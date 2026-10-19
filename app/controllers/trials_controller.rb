@@ -50,7 +50,7 @@ class TrialsController < ApplicationController
   end
 
   def available_prompts
-    Prompt.where(deleted_at: nil).joins(:collection).merge(Collection.active)
+    Prompt.active
   end
 
   def available_test_suites
@@ -64,7 +64,7 @@ class TrialsController < ApplicationController
 
   def load_index_data
     @trials = Trial.includes(:prompt_revision, :test_suite_revision).order(created_at: :desc)
-    @collections = Collection.active.with_prompts.includes(:prompts).order(:name, :id)
+    @prompts = available_prompts.order(:name, :id)
     @test_suites = available_test_suites.joins(:test_cases).distinct.order(:name, :id)
     @backends = Backend.enabled.order(system: :desc, name: :asc, id: :asc)
     requested_backend_id = params[:backend_id] || @trial&.backend_id

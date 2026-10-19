@@ -1,6 +1,6 @@
 <% content_for :title, "#{@test_suite.name_in_database} · Prompt Refinery" %>
 
-<main class="collections-page">
+<main class="resource-page">
   <nav><%= link_to "← Test suites", test_suites_path %></nav>
   <header>
     <p class="eyebrow">Test suite</p>
@@ -45,7 +45,7 @@
       <p>No test cases in this suite yet.</p>
     <% else %>
       <% @test_cases.each do |test_case| %>
-        <article class="editor-card<%= " archived-prompt-card" if @test_suite.archived_at? %>">
+        <article class="editor-card<%= " archived-card" if @test_suite.archived_at? %>">
           <% if @test_suite.archived_at? %>
             <h3>Test case <%= test_case.position %></h3>
             <dl>

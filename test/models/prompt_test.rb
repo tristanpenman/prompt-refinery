@@ -1,32 +1,41 @@
 require "test_helper"
 
 class PromptTest < ActiveSupport::TestCase
-  setup do
-    @collection = Collection.create!(name: "Examples")
-  end
-
-  test "requires a collection, name, and template" do
-    prompt = Prompt.new(position: 0)
+  test "requires a name and template" do
+    prompt = Prompt.new
 
     assert_not prompt.valid?
-    assert_includes prompt.errors[:collection], "must exist"
     assert_includes prompt.errors[:name], "can't be blank"
     assert_includes prompt.errors[:template], "can't be blank"
   end
 
-  test "requires a non-negative integer position" do
-    prompt = @collection.prompts.build(name: "Example", template: "Hello", position: -1)
+  test "archives a prompt without deleting it" do
+    prompt = Prompt.create!(name: "Greeting", template: "Hello")
 
-    assert_not prompt.valid?
-    assert_includes prompt.errors[:position], "must be greater than or equal to 0"
+    prompt.archive!
+
+    assert_not_nil prompt.archived_at
+    assert_not_includes Prompt.active, prompt
+    assert_includes Prompt.archived, prompt
   end
 
-  test "cannot be changed while its collection is archived" do
-    prompt = @collection.prompts.create!(name: "Example", template: "Hello", position: 0)
-    @collection.archive!
+  test "an archived prompt can only be unarchived" do
+    prompt = Prompt.create!(name: "Greeting", template: "Hello")
+    prompt.archive!
 
-    assert_not prompt.update(name: "Changed")
-    assert_includes prompt.errors[:collection], "has been archived"
-    assert_raises(ActiveRecord::RecordInvalid) { prompt.soft_delete! }
+    assert_not prompt.update(template: "Changed")
+    assert_includes prompt.errors[:base], "Archived prompts are read-only"
+
+    prompt.unarchive!
+    assert_nil prompt.archived_at
+  end
+
+  test "destroys its revisions" do
+    prompt = Prompt.create!(name: "Greeting", template: "Hello")
+    PromptRevision.capture!(prompt)
+
+    assert_difference "PromptRevision.count", -1 do
+      prompt.destroy!
+    end
   end
 end

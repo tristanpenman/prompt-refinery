@@ -97,11 +97,7 @@ class Trial < ApplicationRecord
   end
 
   def prompt_is_active
-    prompt = prompt_revision&.prompt
-    return unless prompt
-
-    errors.add(:prompt, "has been deleted") if prompt.deleted_at?
-    errors.add(:prompt, "belongs to an archived collection") if prompt.collection.archived_at?
+    errors.add(:prompt, "has been archived") if prompt_revision&.prompt&.archived_at?
   end
 
   def test_suite_is_active

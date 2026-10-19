@@ -25,7 +25,6 @@ require "digest"
 #
 class PromptRevision < ApplicationRecord
   belongs_to :prompt, inverse_of: :prompt_revisions
-  has_many :collection_revision_prompts, dependent: :restrict_with_error, inverse_of: :prompt_revision
   has_many :trials, dependent: :restrict_with_error, inverse_of: :prompt_revision
 
   validates :version, numericality: { only_integer: true, greater_than: 0 }, uniqueness: { scope: :prompt_id }
@@ -36,7 +35,7 @@ class PromptRevision < ApplicationRecord
 
   def self.capture!(prompt)
     prompt.with_lock do
-      digest = Digest::SHA256.hexdigest([ prompt.name, prompt.template ].to_json)
+      digest = content_digest_for(prompt)
       find_by(prompt: prompt, content_digest: digest) || create!(
         prompt: prompt,
         version: where(prompt: prompt).maximum(:version).to_i + 1,
@@ -45,6 +44,10 @@ class PromptRevision < ApplicationRecord
         content_digest: digest
       )
     end
+  end
+
+  def self.content_digest_for(prompt)
+    Digest::SHA256.hexdigest([ prompt.name, prompt.template ].to_json)
   end
 
   private

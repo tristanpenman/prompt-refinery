@@ -4,7 +4,6 @@ The goal of this project is to build a small local-first application for prompt 
 
 ## Prompts
 
-- Remove collection revisions now that trials no longer use them: drop `CollectionRevision` and `CollectionRevisionPrompt` with their tables, the collection revision history page, and the Revision/Draft indicators on collection pages. Keep prompt revisions, and give them their own history view.
 - Duplicate prompts.
 
 ## Templating

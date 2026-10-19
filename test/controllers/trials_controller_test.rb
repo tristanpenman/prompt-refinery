@@ -24,7 +24,7 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     get trials_path
 
     assert_response :success
-    assert_select "select[name='trial[prompt_id]'] optgroup[label=?] option", "Examples", text: "Explain"
+    assert_select "select[name='trial[prompt_id]'] option", text: "Explain"
     assert_select "select[name='trial[test_suite_id]'] option", text: "Topics"
     assert_select "select[name=backend_id] option", text: @backend.name
     assert_select "option", text: "gemma3:4b"
@@ -97,8 +97,8 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='trial[test_suite_id]'] option", text: "Empty", count: 0
   end
 
-  test "does not offer or create a trial for a prompt in an archived collection" do
-    @prompt.collection.archive!
+  test "does not offer or create a trial for an archived prompt" do
+    @prompt.archive!
 
     get trials_path
 

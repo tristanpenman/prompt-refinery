@@ -1,48 +1,78 @@
 class PromptsController < ApplicationController
-  class_attribute :client_factory, default: Inference::Client
+  before_action :set_prompt, only: %i[show update destroy unarchive]
 
-  before_action :set_model
-  before_action :set_backend
+  def index
+    load_prompts
+    @prompt = Prompt.new
+  end
 
-  def show; end
+  def show
+    prepare_show
+  end
 
   def create
-    @prompt = params[:question].to_s.strip
+    @prompt = Prompt.new(prompt_params)
 
-    if @prompt.blank?
-      @error = "Enter a question for the model."
-      render_result(status: :unprocessable_content)
+    if @prompt.save
+      redirect_to @prompt, notice: "Prompt created."
+    else
+      load_prompts
+      render :index, status: :unprocessable_content
+    end
+  end
+
+  def update
+    if @prompt.archived_at?
+      redirect_to @prompt, alert: "Archived prompts are read-only. Unarchive this prompt to make changes."
       return
     end
 
-    @answer = client_factory.for(@backend).generate(model: @model, prompt: @prompt)
-    render_result
-  rescue ::Ollama::Client::Error, Inference::Client::UnsupportedAdapter => error
-    @error = error.message
-    render_result(status: :bad_gateway)
+    if @prompt.update(prompt_params)
+      redirect_to @prompt, notice: "Prompt updated."
+    else
+      prepare_show
+      render :show, status: :unprocessable_content
+    end
+  end
+
+  def destroy
+    @prompt.archive!
+    redirect_to prompts_path, notice: "Prompt archived."
+  end
+
+  def unarchive
+    @prompt.unarchive!
+    redirect_to @prompt, notice: "Prompt unarchived."
   end
 
   private
 
-  def set_model
-    @model = params[:model].to_s.strip
-    redirect_to settings_models_path, alert: "Select a model first." if @model.blank?
+  def set_prompt
+    @prompt = Prompt.find(params[:id])
   end
 
-  def set_backend
-    @backend = if params[:backend_id].present?
-      Backend.enabled.find(params[:backend_id])
-    else
-      Backend.enabled.find_by(system: true) || Backend.enabled.first!
-    end
-  rescue ActiveRecord::RecordNotFound
-    redirect_to settings_models_path, alert: "Select an available model backend."
+  def prompt_params
+    params.expect(prompt: %i[name template])
   end
 
-  def render_result(status: :ok)
-    respond_to do |format|
-      format.turbo_stream { render :create, status: status }
-      format.html { render :show, status: status }
+  def prepare_show
+    @current_revision = @prompt.prompt_revisions.order(version: :desc).first
+    @has_unrevised_changes = @current_revision &&
+      @current_revision.content_digest != PromptRevision.content_digest_for(@prompt)
+  end
+
+  def load_prompts
+    @show_archived = params[:archived] == "true"
+    prompt_scope = @show_archived ? Prompt.archived : Prompt.active
+    @prompts = prompt_scope.includes(:prompt_revisions).order(:name, :id)
+    @prompt_rows = @prompts.map do |prompt|
+      latest_revision = prompt.prompt_revisions.max_by(&:version)
+
+      {
+        prompt: prompt,
+        revision: latest_revision&.version,
+        draft: latest_revision.nil? || latest_revision.content_digest != PromptRevision.content_digest_for(prompt)
+      }
     end
   end
 end

@@ -34,7 +34,7 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "gemma3:4b"
     assert_select ".model-backend", text: "Backend: Local Ollama"
     assert_select "li", text: /gemma3 · 4.3B · Q4_K_M/
-    assert_select "a[href=?]", prompt_path(model: "gemma3:4b", backend_id: @backend.id), text: "Select"
+    assert_select "a[href=?]", playground_path(model: "gemma3:4b", backend_id: @backend.id), text: "Select"
     assert_select "a[href=?]", evaluate_path(model: "gemma3:4b", backend_id: @backend.id), text: "Evaluate"
     language_model = @backend.language_models.find_by!(name: "gemma3:4b")
     assert_select ".model-family", text: "Family: gemma3"

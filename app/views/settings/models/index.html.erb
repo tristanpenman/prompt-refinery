@@ -49,7 +49,7 @@
             <span><%= number_to_human_size(model["size"]) %></span>
           <% end %>
           <div class="model-actions">
-            <%= link_to "Select", prompt_path(model: model["name"], backend_id: model.fetch("backend").id), class: "select-button" %>
+            <%= link_to "Select", playground_path(model: model["name"], backend_id: model.fetch("backend").id), class: "select-button" %>
             <%= link_to "Evaluate", evaluate_path(model: model["name"], backend_id: model.fetch("backend").id), class: "secondary-button" %>
             <% if model["language_model"] %>
               <%= link_to "Edit", edit_settings_model_path(model["language_model"]), class: "secondary-button" %>

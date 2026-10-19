@@ -5,23 +5,23 @@
   <header>
     <p class="eyebrow">Evaluate model</p>
     <h1><%= @model %></h1>
-    <p>Run every prompt in a collection sequentially against this model on <%= @backend.name %>.</p>
+    <p>Run a prompt against this model on <%= @backend.name %> without recording a trial. Variables such as <code>{{topic}}</code> are sent as written.</p>
   </header>
 
-  <% if @collections.empty? %>
+  <% if @prompts.empty? %>
     <section class="notice">
-      <h2>No collections available</h2>
-      <p><%= link_to "Create a prompt collection", collections_path %> before starting an evaluation.</p>
+      <h2>No prompts available</h2>
+      <p><%= link_to "Create a prompt", prompts_path %> before starting an evaluation.</p>
     </section>
   <% else %>
     <%= form_with url: evaluate_path, class: "evaluation-form", data: { controller: "evaluation", action: "turbo:submit-start->evaluation#start turbo:submit-end->evaluation#finish" } do |form| %>
       <%= form.hidden_field :model, value: @model %>
       <%= form.hidden_field :backend_id, value: @backend.id %>
-      <%= form.label :collection_id, "Prompt collection" %>
-      <%= form.collection_select :collection_id, @collections, :id, :name, { selected: @collection&.id }, required: true %>
+      <%= form.label :prompt_id, "Prompt" %>
+      <%= form.collection_select :prompt_id, @prompts, :id, :name, { selected: @prompt&.id }, required: true %>
       <%= form.submit "Run evaluation", data: { evaluation_target: "submit" } %>
       <p class="generating-status" data-evaluation-target="status" role="status" hidden>
-        Evaluating prompts one by one…
+        Evaluating the prompt…
       </p>
     <% end %>
   <% end %>

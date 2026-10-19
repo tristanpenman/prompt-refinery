@@ -93,21 +93,14 @@ class TrialTest < ActiveSupport::TestCase
     assert_includes error.record.errors[:test_suite], "has been archived"
   end
 
-  test "cannot be created for a deleted prompt or one in an archived collection" do
-    @prompt.soft_delete!
+  test "cannot be created for an archived prompt" do
+    @prompt.archive!
 
     error = assert_raises(ActiveRecord::RecordInvalid) do
       create_trial(prompt: @prompt, test_suite: @test_suite)
     end
-    assert_includes error.record.errors[:prompt], "has been deleted"
 
-    archived_prompt = create_prompt
-    archived_prompt.collection.archive!
-
-    error = assert_raises(ActiveRecord::RecordInvalid) do
-      create_trial(prompt: archived_prompt, test_suite: create_test_suite)
-    end
-    assert_includes error.record.errors[:prompt], "belongs to an archived collection"
+    assert_includes error.record.errors[:prompt], "has been archived"
   end
 
   test "cannot be created for a disabled backend" do

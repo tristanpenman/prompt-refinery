@@ -3,20 +3,16 @@ class EvaluationsController < ApplicationController
 
   before_action :set_model
   before_action :set_backend
-  before_action :set_collections
+  before_action :set_prompts
 
   def show; end
 
   def create
-    @collection = Collection.find(params[:collection_id])
-    client = client_factory.for(@backend)
-    @results = @collection.prompts.map do |prompt|
-      evaluate_prompt(client, prompt)
-    end
-
+    @prompt = @prompts.find(params[:prompt_id])
+    @result = evaluate_prompt(client_factory.for(@backend), @prompt)
     render_results
   rescue ActiveRecord::RecordNotFound
-    @error = "Choose an available collection."
+    @error = "Choose an available prompt."
     render_results(status: :unprocessable_content)
   end
 
@@ -37,8 +33,8 @@ class EvaluationsController < ApplicationController
     redirect_to settings_models_path, alert: "Select an available model backend."
   end
 
-  def set_collections
-    @collections = Collection.order(:name, :id)
+  def set_prompts
+    @prompts = Prompt.active.order(:name, :id)
   end
 
   def evaluate_prompt(client, prompt)

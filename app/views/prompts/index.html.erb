@@ -1,0 +1,68 @@
+<% content_for :title, "Prompts · Prompt Refinery" %>
+
+<main class="resource-page">
+  <nav><%= link_to "← Dashboard", root_path %></nav>
+  <header>
+    <p class="eyebrow">Prompt Refinery</p>
+    <h1>Prompts</h1>
+    <p>Write prompts and templates to evaluate against test suites.</p>
+  </header>
+
+  <section class="editor-card">
+    <h2>New prompt</h2>
+    <%= render "shared/errors", record: @prompt %>
+    <%= form_with model: @prompt do |form| %>
+      <%= form.label :name %>
+      <%= form.text_field :name, required: true, placeholder: "Prompt name" %>
+      <%= form.label :template, "Prompt text" %>
+      <%= form.text_area :template, required: true, rows: 5, placeholder: "Write a prompt or use variables such as {{topic}}" %>
+      <%= form.submit "Create prompt" %>
+    <% end %>
+  </section>
+
+  <section class="resource-list">
+    <h2><%= @show_archived ? "Archived prompts" : "Prompts" %></h2>
+    <% if @prompt_rows.empty? %>
+      <p><%= @show_archived ? "No archived prompts." : "No prompts yet." %></p>
+    <% else %>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Revision</th>
+            <th>Draft</th>
+            <th>Variables</th>
+            <th>Created</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @prompt_rows.each do |row| %>
+            <% prompt = row[:prompt] %>
+            <% variables = PromptTemplate.new(prompt.template).variables %>
+            <tr>
+              <td><%= link_to prompt.name, prompt %></td>
+              <td><%= row[:revision] ? "r#{row[:revision]}" : "N/A" %></td>
+              <td>
+                <span class="status <%= row[:draft] ? "status--running" : "status--completed" %>">
+                  <%= row[:draft] ? "Draft" : "Recorded" %>
+                </span>
+              </td>
+              <td><%= variables.any? ? variables.join(", ") : "None" %></td>
+              <td><time datetime="<%= prompt.created_at.iso8601 %>"><%= prompt.created_at.to_fs(:short) %></time></td>
+              <td><time datetime="<%= prompt.updated_at.iso8601 %>"><%= prompt.updated_at.to_fs(:short) %></time></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </section>
+
+  <nav class="resource-filter-link">
+    <% if @show_archived %>
+      <%= link_to "View active prompts", prompts_path %>
+    <% else %>
+      <%= link_to "View archived prompts", prompts_path(archived: true) %>
+    <% end %>
+  </nav>
+</main>

@@ -123,7 +123,7 @@ class TestSuitesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1 .status--archived", text: "Archived"
     assert_select "textarea", count: 0
-    assert_select ".archived-prompt-card dd", text: "Ruby"
+    assert_select ".archived-card dd", text: "Ruby"
     assert_select "h2", text: "Add test case", count: 0
 
     patch test_suite_path(test_suite), params: { test_suite: { name: "Changed" } }

@@ -1,23 +1,41 @@
-<% content_for :title, "#{@model} · Prompt Refinery" %>
+<% content_for :title, "#{@prompt.name_in_database} · Prompt Refinery" %>
 
-<main class="prompt-page">
-  <nav><%= link_to "← Models", settings_models_path %></nav>
+<main class="resource-page">
+  <nav><%= link_to "← Prompts", prompts_path %></nav>
   <header>
-    <p class="eyebrow">Prompt model</p>
-    <h1><%= @model %></h1>
-    <p>Ask a question and generate a response with this model on <%= @backend.name %>.</p>
+    <p class="eyebrow">Prompt</p>
+    <h1>
+      <%= @prompt.name_in_database %>
+      <% if @prompt.archived_at? %>
+        <span class="status status--archived">Archived</span>
+      <% end %>
+    </h1>
   </header>
 
-  <%= form_with url: prompt_path, data: { controller: "prompt", action: "turbo:submit-start->prompt#start turbo:submit-end->prompt#finish" } do |form| %>
-    <%= form.hidden_field :model, value: @model %>
-    <%= form.hidden_field :backend_id, value: @backend.id %>
-    <%= form.label :question, "Question" %>
-    <%= form.text_area :question, value: @prompt, rows: 7, required: true, autofocus: true %>
-    <%= form.submit "Ask", data: { prompt_target: "submit" } %>
-    <p class="generating-status" data-prompt-target="status" role="status" hidden>
-      Generating a response…
-    </p>
-  <% end %>
-
-  <%= render "result" %>
+  <section class="editor-card<%= " archived-card" if @prompt.archived_at? %>">
+    <h2>Prompt details</h2>
+    <% if @current_revision %>
+      <p><strong>Latest revision:</strong> r<%= @current_revision.version %> (<%= link_to "View revision history", revisions_prompt_path(@prompt) %>)</p>
+      <% if @has_unrevised_changes %>
+        <p>There are draft changes. A new revision will be created when the prompt is next used in a trial.</p>
+      <% end %>
+    <% else %>
+      <p><strong>Latest revision:</strong> Not revised yet</p>
+    <% end %>
+    <% if @prompt.archived_at? %>
+      <div class="result-content"><%= simple_format(@prompt.template) %></div>
+      <%= link_to "Unarchive prompt", unarchive_prompt_path(@prompt), data: { turbo_method: :patch } %>
+    <% else %>
+      <%= render "shared/errors", record: @prompt %>
+      <%= form_with model: @prompt do |form| %>
+        <%= form.label :name %>
+        <%= form.text_field :name, required: true %>
+        <%= form.label :template, "Prompt text" %>
+        <%= form.text_area :template, required: true, rows: 8 %>
+        <p>Use variables such as <code>{{topic}}</code>. A trial fills them in from each test case.</p>
+        <%= form.submit "Save prompt" %>
+      <% end %>
+      <%= button_to "Archive prompt", @prompt, method: :delete, class: "danger-button", data: { turbo_confirm: "Archive this prompt? It will no longer be available for new trials." } %>
+    <% end %>
+  </section>
 </main>

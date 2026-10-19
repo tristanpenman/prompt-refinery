@@ -5,121 +5,107 @@ class PromptsControllerTest < ActionDispatch::IntegrationTest
     @original_encrypted_token = ENV["RAILS_AUTH_TOKEN"]
     ENV["RAILS_AUTH_TOKEN"] = TokenAuthenticator.encrypt("test-token")
     post login_path, params: { token: "test-token" }
-    @backend = Backend.ensure_system_default!
   end
 
   teardown do
-    PromptsController.client_factory = Inference::Client
     ENV["RAILS_AUTH_TOKEN"] = @original_encrypted_token
   end
 
-  test "shows a prompt form for the selected model" do
-    get prompt_path(model: "gemma3:4b", backend_id: @backend.id)
+  test "lists prompts with their variables and revision state" do
+    recorded = create_prompt(name: "Recorded", template: "Explain {{topic}} to {{audience}}")
+    PromptRevision.capture!(recorded)
+    create_prompt(name: "Unrecorded", template: "Hello")
+
+    get prompts_path
 
     assert_response :success
-    assert_select ".prompt-page > header" do
-      assert_select ".eyebrow", text: "Prompt model"
-      assert_select "h1", text: "gemma3:4b"
-      assert_select "p", text: "Ask a question and generate a response with this model on Local Ollama."
-    end
-    assert_select "form[action=?]", prompt_path
-    assert_select "input[name=backend_id][value=?]", @backend.id.to_s
-    assert_select "textarea[name=question]"
+    assert_select "th", text: "Revision"
+    assert_select "th", text: "Variables"
+    assert_select "tr", text: /Recorded\s+r1\s+Recorded\s+topic, audience/
+    assert_select "tr", text: /Unrecorded\s+N\/A\s+Draft\s+None/
   end
 
-  test "generates and displays an answer" do
-    client = Class.new do
-      def generate(model:, prompt:)
-        <<~MARKDOWN
-          ## #{model} says
+  test "switches between active and archived prompts" do
+    active = create_prompt(name: "Active prompt")
+    archived = create_prompt(name: "Archived prompt")
+    archived.archive!
 
-          - **Answer:** #{prompt}
-          - Use `clear formatting`
-
-          <script>alert("unsafe")</script>
-        MARKDOWN
-      end
-    end
-    PromptsController.client_factory = factory_for(client)
-
-    post prompt_path,
-      params: { model: "gemma3:4b", backend_id: @backend.id, question: "Why is the sky blue?" },
-      headers: { "Accept" => "text/vnd.turbo-stream.html, text/html" }
+    get prompts_path
 
     assert_response :success
-    assert_equal "text/vnd.turbo-stream.html", response.media_type
-    assert_select "turbo-stream[action=replace][target=prompt_result]"
-    assert_select ".answer .markdown-content" do
-      assert_select "h2", text: "gemma3:4b says"
-      assert_select "ul li", count: 2
-      assert_select "strong", text: "Answer:"
-      assert_select "code", text: "clear formatting"
-      assert_select "script", count: 0
-    end
-    assert_not_includes response.body, "alert("
+    assert_select "a", text: active.name
+    assert_select "a", text: archived.name, count: 0
+
+    get prompts_path(archived: true)
+
+    assert_response :success
+    assert_select "h2", text: "Archived prompts"
+    assert_select "a", text: archived.name
+    assert_select "a", text: active.name, count: 0
   end
 
-  test "reports a generation error" do
-    client = Class.new do
-      def generate(model:, prompt:)
-        raise ::Ollama::Client::Error, "Ollama timed out"
-      end
+  test "creates and updates a prompt" do
+    assert_difference "Prompt.count", 1 do
+      post prompts_path, params: { prompt: { name: "Explain", template: "Explain {{topic}}" } }
     end
-    PromptsController.client_factory = factory_for(client)
 
-    post prompt_path, params: { model: "gemma3:4b", backend_id: @backend.id, question: "Hello" }
+    prompt = Prompt.last
+    assert_redirected_to prompt
 
-    assert_response :bad_gateway
-    assert_select "[role=alert]", text: /Ollama timed out/
+    patch prompt_path(prompt), params: { prompt: { name: "Summarize", template: "Summarize {{topic}}" } }
+
+    assert_redirected_to prompt
+    assert_equal [ "Summarize", "Summarize {{topic}}" ], prompt.reload.attributes.values_at("name", "template")
   end
 
-  test "rejects a blank question without contacting Ollama" do
-    post prompt_path, params: { model: "gemma3:4b", backend_id: @backend.id, question: "  " }
+  test "rerenders the form when a prompt is invalid" do
+    prompt = create_prompt(name: "Explain")
+
+    patch prompt_path(prompt), params: { prompt: { name: "", template: "Changed" } }
 
     assert_response :unprocessable_content
-    assert_select "[role=alert]", text: /Enter a question/
+    assert_select ".form-error", text: /Name can't be blank/
+    assert_select "h1", text: "Explain"
   end
 
-  test "supports a non-Turbo form submission" do
-    client = Class.new do
-      def generate(model:, prompt:)
-        "Answer from #{model}: #{prompt}"
-      end
-    end
-    PromptsController.client_factory = factory_for(client)
+  test "shows the latest revision and draft state" do
+    prompt = create_prompt
+    PromptRevision.capture!(prompt)
+    prompt.update!(template: "Draft edit")
 
-    post prompt_path, params: { model: "gemma3:4b", backend_id: @backend.id, question: "Hello" }
+    get prompt_path(prompt)
 
     assert_response :success
-    assert_equal "text/html", response.media_type
-    assert_select "#prompt_result .answer", text: /Answer from gemma3:4b: Hello/
+    assert_select "p", text: /Latest revision:\s+r1/
+    assert_select "a[href=?]", revisions_prompt_path(prompt), text: "View revision history"
+    assert_select "p", text: /There are draft changes/
   end
 
-  test "uses the selected backend for generation" do
-    edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
-    selected_backend = nil
-    factory = Object.new
-    factory.define_singleton_method(:for) do |backend|
-      selected_backend = backend
-      Class.new do
-        def generate(model:, prompt:)
-          "#{model}: #{prompt}"
-        end
-      end.new
+  test "archives a prompt that has been used by a trial and unarchives it" do
+    prompt = create_prompt
+    trial = create_trial(prompt: prompt)
+
+    assert_no_difference [ "Prompt.count", "Trial.count" ] do
+      delete prompt_path(prompt)
     end
-    PromptsController.client_factory = factory
 
-    post prompt_path, params: { model: "gemma3-4b", backend_id: edge.id, question: "Hello" }
+    assert_redirected_to prompts_path
+    assert_not_nil prompt.reload.archived_at
 
+    get prompt_path(prompt)
+    assert_select "h1 .status--archived", text: "Archived"
+    assert_select "textarea", count: 0
+    assert_select "a[href=?][data-turbo-method=patch]", unarchive_prompt_path(prompt), text: "Unarchive prompt"
+
+    patch prompt_path(prompt), params: { prompt: { name: "Changed" } }
+    assert_redirected_to prompt
+    assert_equal "Explain", prompt.reload.name
+
+    get trial_path(trial)
     assert_response :success
-    assert_equal edge, selected_backend
-  end
 
-  private
-
-  def factory_for(client_class)
-    Object.new.tap do |factory|
-      factory.define_singleton_method(:for) { |_backend| client_class.new }
-    end
+    patch unarchive_prompt_path(prompt)
+    assert_redirected_to prompt
+    assert_nil prompt.reload.archived_at
   end
 end

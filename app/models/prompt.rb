@@ -3,41 +3,41 @@
 # Table name: prompts
 # Database name: primary
 #
-#  id            :integer          not null, primary key
-#  deleted_at    :datetime
-#  name          :string           not null
-#  position      :integer          default(0), not null
-#  template      :text             not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  collection_id :integer          not null
+#  id          :integer          not null, primary key
+#  archived_at :datetime
+#  name        :string           not null
+#  template    :text             not null
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #
 # Indexes
 #
-#  index_prompts_on_collection_id               (collection_id)
-#  index_prompts_on_collection_id_and_position  (collection_id,position)
-#  index_prompts_on_deleted_at                  (deleted_at)
-#
-# Foreign Keys
-#
-#  collection_id  (collection_id => collections.id)
+#  index_prompts_on_archived_at  (archived_at)
 #
 class Prompt < ApplicationRecord
-  belongs_to :collection, inverse_of: :prompts
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+
   has_many :prompt_revisions, dependent: :destroy, inverse_of: :prompt
 
   validates :name, presence: true
   validates :template, presence: true
-  validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
-  validate :collection_is_active
+  validate :read_only_while_archived, on: :update
 
-  def soft_delete!
-    update!(deleted_at: Time.current)
+  def archive!
+    update!(archived_at: Time.current)
+  end
+
+  def unarchive!
+    reload.update!(archived_at: nil)
   end
 
   private
 
-  def collection_is_active
-    errors.add(:collection, "has been archived") if collection&.archived_at?
+  def read_only_while_archived
+    return unless archived_at_in_database.present?
+    return if changes_to_save.keys == [ "archived_at" ] && archived_at.nil?
+
+    errors.add(:base, "Archived prompts are read-only")
   end
 end

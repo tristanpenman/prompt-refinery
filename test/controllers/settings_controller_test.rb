@@ -50,7 +50,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
       assert_select "h2", text: "Models"
       assert_select "a[href=?]", settings_models_path, text: "View all"
       assert_select "li", count: 3
-      assert_select "a[href=?]", prompt_path(model: "model-0", backend_id: backend.id), text: "model-0"
+      assert_select "a[href=?]", playground_path(model: "model-0", backend_id: backend.id), text: "model-0"
       assert_select "a", text: "model-3", count: 0
       assert_select "small", text: /Local Ollama · Updated /
     end

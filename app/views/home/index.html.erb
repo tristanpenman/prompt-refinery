@@ -4,7 +4,7 @@
   <header>
     <p class="eyebrow">Prompt Refinery</p>
     <h1>Dashboard</h1>
-    <p>Prompt collections, evaluation trials, and test suites at a glance.</p>
+    <p>Prompts, evaluation trials, and test suites at a glance.</p>
     <div class="dashboard-actions">
       <%= link_to "Settings", settings_path %>
       <%= button_to "Sign out", logout_path, method: :delete, class: "text-button" %>
@@ -13,15 +13,15 @@
 
   <div class="dashboard-grid">
     <section class="dashboard-panel">
-      <header><h2>Collections</h2><%= link_to "View all", collections_path %></header>
-      <% if @collections.empty? %>
-        <p>No collections yet.</p>
+      <header><h2>Prompts</h2><%= link_to "View all", prompts_path %></header>
+      <% if @prompts.empty? %>
+        <p>No prompts yet.</p>
       <% else %>
         <ul>
-          <% @collections.each do |collection| %>
+          <% @prompts.each do |prompt| %>
             <li>
-              <%= link_to collection.name, collection %>
-              <small>Updated <%= time_ago_in_words(collection.updated_at) %> ago</small>
+              <%= link_to prompt.name, prompt %>
+              <small>Updated <%= time_ago_in_words(prompt.updated_at) %> ago</small>
             </li>
           <% end %>
         </ul>

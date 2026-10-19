@@ -5,7 +5,7 @@ class EvaluationsControllerTest < ActionDispatch::IntegrationTest
     @original_encrypted_token = ENV["RAILS_AUTH_TOKEN"]
     ENV["RAILS_AUTH_TOKEN"] = TokenAuthenticator.encrypt("test-token")
     post login_path, params: { token: "test-token" }
-    @collection = Collection.create!(name: "Summaries")
+    @prompt = Prompt.create!(name: "Summary", template: "Summarize {{topic}}")
     @backend = Backend.ensure_system_default!
   end
 
@@ -14,18 +14,19 @@ class EvaluationsControllerTest < ActionDispatch::IntegrationTest
     ENV["RAILS_AUTH_TOKEN"] = @original_encrypted_token
   end
 
-  test "shows the available collections" do
+  test "shows the active prompts" do
+    Prompt.create!(name: "Archived", template: "Old").archive!
+
     get evaluate_path(model: "gemma3:4b", backend_id: @backend.id)
 
     assert_response :success
     assert_select "h1", text: "gemma3:4b"
-    assert_select "option[value=?]", @collection.id.to_s, text: "Summaries"
+    assert_select "option[value=?]", @prompt.id.to_s, text: "Summary"
+    assert_select "option", text: "Archived", count: 0
     assert_select "input[name=backend_id][value=?]", @backend.id.to_s
   end
 
-  test "evaluates prompts sequentially and returns a Turbo Stream" do
-    @collection.prompts.create!(name: "First", template: "First prompt", position: 1)
-    @collection.prompts.create!(name: "Second", template: "Second prompt", position: 2)
+  test "evaluates the prompt as written and returns a Turbo Stream" do
     calls = []
     client = Class.new do
       define_method(:generate) do |model:, prompt:|
@@ -36,34 +37,37 @@ class EvaluationsControllerTest < ActionDispatch::IntegrationTest
     EvaluationsController.client_factory = factory_for(client)
 
     post evaluate_path,
-      params: { model: "gemma3:4b", backend_id: @backend.id, collection_id: @collection.id },
+      params: { model: "gemma3:4b", backend_id: @backend.id, prompt_id: @prompt.id },
       headers: { "Accept" => "text/vnd.turbo-stream.html, text/html" }
 
     assert_response :success
-    assert_equal [ [ "gemma3:4b", "First prompt" ], [ "gemma3:4b", "Second prompt" ] ], calls
+    assert_equal [ [ "gemma3:4b", "Summarize {{topic}}" ] ], calls
     assert_select "turbo-stream[action=replace][target=evaluation_results]"
-    assert_select ".evaluation-result", count: 2
-    assert_select ".evaluation-result", text: /Response to First prompt/
-    assert_select ".evaluation-result", text: /Response to Second prompt/
+    assert_select "h2", text: "Summary result"
+    assert_select ".evaluation-result", text: /Response to Summarize \{\{topic\}\}/
   end
 
-  test "continues after an individual prompt fails" do
-    @collection.prompts.create!(name: "Broken", template: "Fail", position: 0)
-    @collection.prompts.create!(name: "Working", template: "Succeed", position: 1)
+  test "shows a generation failure" do
     client = Class.new do
       def generate(model:, prompt:)
-        raise ::Ollama::Client::Error, "Generation failed" if prompt == "Fail"
-
-        "Generated successfully"
+        raise ::Ollama::Client::Error, "Generation failed"
       end
     end
     EvaluationsController.client_factory = factory_for(client)
 
-    post evaluate_path, params: { model: "gemma3:4b", backend_id: @backend.id, collection_id: @collection.id }
+    post evaluate_path, params: { model: "gemma3:4b", backend_id: @backend.id, prompt_id: @prompt.id }
 
     assert_response :success
-    assert_select "[role=alert]", text: "Generation failed"
-    assert_select ".evaluation-result", text: /Generated successfully/
+    assert_select ".evaluation-result [role=alert]", text: "Generation failed"
+  end
+
+  test "rejects an archived prompt" do
+    @prompt.archive!
+
+    post evaluate_path, params: { model: "gemma3:4b", backend_id: @backend.id, prompt_id: @prompt.id }
+
+    assert_response :unprocessable_content
+    assert_select "[role=alert]", text: /Choose an available prompt/
   end
 
   private

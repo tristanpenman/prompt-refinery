@@ -55,7 +55,7 @@
         <ul>
           <% @models.each do |model| %>
             <li>
-              <%= link_to model.fetch("name", "Unnamed model"), prompt_path(model: model["name"], backend_id: model.fetch("backend").id) %>
+              <%= link_to model.fetch("name", "Unnamed model"), playground_path(model: model["name"], backend_id: model.fetch("backend").id) %>
               <small>
                 <%= model.fetch("backend").name %>
                 <% if model["modified_at"] %>

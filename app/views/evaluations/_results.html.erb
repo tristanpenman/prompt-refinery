@@ -4,29 +4,20 @@
       <h2>Unable to run evaluation</h2>
       <p><%= @error %></p>
     </section>
-  <% elsif @results %>
+  <% elsif @result %>
     <section class="evaluation-results" aria-live="polite">
-      <h2><%= @collection.name %> results</h2>
-      <% if @results.empty? %>
-        <p>This collection has no prompts.</p>
-      <% else %>
-        <ol>
-          <% @results.each do |result| %>
-            <li class="evaluation-result">
-              <h3><%= result[:prompt].name %></h3>
-              <details>
-                <summary>Prompt</summary>
-                <div class="result-content"><%= simple_format(result[:prompt].template) %></div>
-              </details>
-              <% if result[:error] %>
-                <p class="form-error" role="alert"><%= result[:error] %></p>
-              <% else %>
-                <div class="result-content markdown-content"><%= render_markdown(result[:response]) %></div>
-              <% end %>
-            </li>
-          <% end %>
-        </ol>
-      <% end %>
+      <h2><%= @prompt.name %> result</h2>
+      <article class="evaluation-result">
+        <details>
+          <summary>Prompt</summary>
+          <div class="result-content"><%= simple_format(@prompt.template) %></div>
+        </details>
+        <% if @result[:error] %>
+          <p class="form-error" role="alert"><%= @result[:error] %></p>
+        <% else %>
+          <div class="result-content markdown-content"><%= render_markdown(@result[:response]) %></div>
+        <% end %>
+      </article>
     </section>
   <% end %>
 </div>

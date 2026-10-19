@@ -5,15 +5,14 @@ Rails.application.routes.draw do
   post "login" => "sessions#create"
   delete "logout" => "sessions#destroy", as: :logout
 
-  get "prompt" => "prompts#show", as: :prompt
-  post "prompt" => "prompts#create"
+  get "playground" => "playgrounds#show", as: :playground
+  post "playground" => "playgrounds#create"
   get "evaluate" => "evaluations#show", as: :evaluate
   post "evaluate" => "evaluations#create"
 
-  resources :collections, only: %i[index show create update destroy] do
-    get :revisions, on: :member, to: "collection_revisions#index"
+  resources :prompts, only: %i[index show create update destroy] do
+    get :revisions, on: :member, to: "prompt_revisions#index"
     patch :unarchive, on: :member
-    resources :prompts, only: %i[create update destroy], controller: "collection_prompts"
   end
   resources :test_suites, only: %i[index show create update destroy] do
     get :revisions, on: :member, to: "test_suite_revisions#index"

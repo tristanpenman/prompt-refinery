@@ -1,0 +1,51 @@
+<% content_for :title, "#{@prompt.name} revisions · Prompt Refinery" %>
+
+<main class="resource-page">
+  <nav><%= link_to "← Prompt", @prompt %></nav>
+  <header>
+    <p class="eyebrow">Prompt history</p>
+    <h1><%= @prompt.name %></h1>
+    <p>Compare the current working state with immutable revisions previously used in trials.</p>
+  </header>
+
+  <h2 class="history-heading">Current revision</h2>
+  <section class="editor-card current-revision">
+    <header class="revision-header">
+      <div>
+        <p>
+          <% if @has_unrevised_changes %>
+            Draft · Will become r<%= @current_revision_number %> when used in a trial
+          <% else %>
+            Revision <%= @latest_revision.version %> · Captured <%= time_ago_in_words(@latest_revision.created_at) %> ago · <%= pluralize(@latest_revision.trials.size, "trial") %>
+          <% end %>
+        </p>
+      </div>
+      <span class="status <%= "status--running" if @has_unrevised_changes %>"><%= @has_unrevised_changes ? "Draft" : "Current" %></span>
+    </header>
+
+    <h3><%= @prompt.name %></h3>
+    <div class="result-content"><%= simple_format(@prompt.template) %></div>
+  </section>
+
+  <h2 class="history-heading">Previous revisions</h2>
+  <% if @revisions.empty? %>
+    <section class="notice">
+      <p>No previous revisions yet.</p>
+    </section>
+  <% else %>
+    <div class="revision-list">
+      <% @revisions.each do |revision| %>
+        <section class="editor-card">
+          <header class="revision-header">
+            <div>
+              <p>Revision <%= revision.version %> · Captured <%= time_ago_in_words(revision.created_at) %> ago · <%= pluralize(revision.trials.size, "trial") %></p>
+            </div>
+          </header>
+
+          <h3><%= revision.name %></h3>
+          <div class="result-content"><%= simple_format(revision.template) %></div>
+        </section>
+      <% end %>
+    </div>
+  <% end %>
+</main>

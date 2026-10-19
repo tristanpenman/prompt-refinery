@@ -14,8 +14,8 @@ module ActiveSupport
       Trial.create_for!(prompt: prompt, test_suite: test_suite, backend: backend, model: model, **attributes)
     end
 
-    def create_prompt(template: "Explain {{topic}}", collection: Collection.create!(name: "Examples"))
-      collection.prompts.create!(name: "Explain", template: template)
+    def create_prompt(name: "Explain", template: "Explain {{topic}}")
+      Prompt.create!(name: name, template: template)
     end
 
     def create_test_suite(name: "Topics", cases: [ { "topic" => "Ruby" } ])
