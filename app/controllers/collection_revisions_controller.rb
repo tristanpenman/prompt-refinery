@@ -3,7 +3,7 @@ class CollectionRevisionsController < ApplicationController
     @collection = Collection.find(params[:id])
     @current_prompts = @collection.prompts.to_a
     revisions = @collection.collection_revisions
-      .includes(:trials, collection_revision_prompts: :prompt_revision)
+      .includes(collection_revision_prompts: :prompt_revision)
       .order(version: :desc)
       .to_a
     @latest_revision = revisions.first

@@ -14,7 +14,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
   test "lists collections" do
     collection = Collection.create!(name: "Summaries")
     collection.prompts.create!(name: "Example", template: "Original")
-    create_trial(collection: collection)
+    CollectionRevision.capture!(collection)
 
     get collections_path
 
@@ -29,7 +29,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
   test "shows the latest recorded revision for a draft collection" do
     collection = Collection.create!(name: "Draft summaries")
     prompt = collection.prompts.create!(name: "Example", template: "Original")
-    create_trial(collection: collection)
+    CollectionRevision.capture!(collection)
     prompt.update!(template: "Draft edit")
 
     get collections_path
@@ -72,7 +72,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
   test "shows the current revision and draft state" do
     collection = Collection.create!(name: "Revised")
     prompt = collection.prompts.create!(name: "Example", template: "Original")
-    create_trial(collection: collection)
+    CollectionRevision.capture!(collection)
     prompt.update!(template: "Draft edit")
 
     get collection_path(collection)
@@ -115,7 +115,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
   test "archives a collection that has been used by a trial" do
     collection = Collection.create!(name: "Retained")
     collection.prompts.create!(name: "Example", template: "Hello")
-    trial = create_trial(collection: collection)
+    trial = create_trial(prompt: collection.prompts.first)
 
     assert_no_difference [ "Collection.count", "Trial.count" ] do
       delete collection_path(collection)
@@ -126,7 +126,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
 
     get trial_path(trial)
     assert_response :success
-    assert_select "h1", text: /Retained/
+    assert_select "h1", text: "Example"
   end
 
   test "shows archived status and unarchives a collection" do

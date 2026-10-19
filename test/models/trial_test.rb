@@ -2,77 +2,151 @@ require "test_helper"
 
 class TrialTest < ActiveSupport::TestCase
   setup do
-    @collection = Collection.create!(name: "Examples")
+    @prompt = create_prompt(template: "Explain {{topic}} to {{audience}}")
+    @test_suite = create_test_suite(cases: [
+      { "topic" => "Ruby", "audience" => "beginners" },
+      { "topic" => "Rust", "audience" => "experts" }
+    ])
   end
 
-  test "requires a collection, backend, model, and valid status" do
+  test "requires revisions, a backend, a model, and a valid status" do
     trial = Trial.new(model: "", status: "unknown")
 
     assert_not trial.valid?
-    assert_includes trial.errors[:collection], "must exist"
+    assert_includes trial.errors[:prompt_revision], "must exist"
+    assert_includes trial.errors[:test_suite_revision], "must exist"
     assert_includes trial.errors[:backend], "must exist"
     assert_includes trial.errors[:model], "can't be blank"
     assert_includes trial.errors[:status], "is not included in the list"
   end
 
   test "defaults to pending" do
-    @collection.prompts.create!(name: "Example", template: "Hello")
-    trial = create_trial(collection: @collection)
-
-    assert_predicate trial, :pending?
+    assert_predicate create_trial(prompt: @prompt, test_suite: @test_suite), :pending?
   end
 
-  test "cannot be created for an archived collection" do
-    @collection.archive!
+  test "refers to the current prompt and test suite revisions" do
+    trial = create_trial(prompt: @prompt, test_suite: @test_suite)
 
-    error = assert_raises(ActiveRecord::RecordInvalid) do
-      create_trial(collection: @collection)
-    end
-
-    assert_includes error.record.errors[:collection], "has been archived"
+    assert_equal @prompt, trial.prompt_revision.prompt
+    assert_equal @test_suite, trial.test_suite_revision.test_suite
+    assert_equal [ 1, 1 ], [ trial.prompt_revision.version, trial.test_suite_revision.version ]
   end
 
-  test "cannot be created for a collection without prompts" do
+  test "creates one rendered response per test case in position order" do
+    trial = create_trial(prompt: @prompt, test_suite: @test_suite)
+
+    responses = trial.responses.joins(:test_suite_revision_case).order("test_suite_revision_cases.position")
+    assert_equal [ "Explain Ruby to beginners", "Explain Rust to experts" ], responses.map(&:rendered_prompt)
+    assert_equal trial.test_suite_revision.test_suite_revision_cases.to_a, responses.map(&:test_suite_revision_case)
+    assert responses.all?(&:pending?)
+  end
+
+  test "keeps its rendered prompts after the prompt and test cases change" do
+    trial = create_trial(prompt: @prompt, test_suite: @test_suite)
+
+    @prompt.update!(template: "Summarize {{topic}}")
+    @test_suite.test_cases.first.update!(values: { "topic" => "Go", "audience" => "everyone" })
+    later_trial = create_trial(prompt: @prompt, test_suite: @test_suite)
+
+    assert_includes trial.reload.responses.map(&:rendered_prompt), "Explain Ruby to beginners"
+    assert_equal [ 2, 2 ], [ later_trial.prompt_revision.version, later_trial.test_suite_revision.version ]
+    assert_includes later_trial.responses.map(&:rendered_prompt), "Summarize Go"
+  end
+
+  test "requires the test suite to provide every variable used by the prompt" do
+    prompt = create_prompt(template: "Explain {{topic}} in {{language}} for {{audience}}")
+
     error = assert_raises(ActiveRecord::RecordInvalid) do
-      create_trial(collection: @collection)
+      create_trial(prompt: prompt, test_suite: create_test_suite)
     end
 
-    assert_includes error.record.errors[:collection], "must contain at least one prompt"
+    assert_includes error.record.errors[:test_suite], "does not provide variables used by the prompt: language and audience"
+    assert_equal 0, Trial.count
+    assert_equal 0, TestSuiteRevision.count
+  end
+
+  test "allows a test suite to provide variables the prompt does not use" do
+    prompt = create_prompt(template: "Explain {{topic}}")
+
+    trial = create_trial(prompt: prompt, test_suite: @test_suite)
+
+    assert_equal [ "Explain Ruby", "Explain Rust" ], trial.responses.map(&:rendered_prompt).sort
+  end
+
+  test "cannot be created for a test suite without test cases" do
+    test_suite = TestSuite.create!(name: "Empty", variables: [ "topic" ])
+
+    error = assert_raises(ActiveRecord::RecordInvalid) do
+      create_trial(prompt: create_prompt, test_suite: test_suite)
+    end
+
+    assert_includes error.record.errors[:test_suite], "must contain at least one test case"
+  end
+
+  test "cannot be created for an archived test suite" do
+    @test_suite.archive!
+
+    error = assert_raises(ActiveRecord::RecordInvalid) do
+      create_trial(prompt: @prompt, test_suite: @test_suite)
+    end
+
+    assert_includes error.record.errors[:test_suite], "has been archived"
+  end
+
+  test "cannot be created for a deleted prompt or one in an archived collection" do
+    @prompt.soft_delete!
+
+    error = assert_raises(ActiveRecord::RecordInvalid) do
+      create_trial(prompt: @prompt, test_suite: @test_suite)
+    end
+    assert_includes error.record.errors[:prompt], "has been deleted"
+
+    archived_prompt = create_prompt
+    archived_prompt.collection.archive!
+
+    error = assert_raises(ActiveRecord::RecordInvalid) do
+      create_trial(prompt: archived_prompt, test_suite: create_test_suite)
+    end
+    assert_includes error.record.errors[:prompt], "belongs to an archived collection"
   end
 
   test "cannot be created for a disabled backend" do
-    @collection.prompts.create!(name: "Example", template: "Hello")
     backend = Backend.create!(name: "Disabled", base_url: "http://disabled.local:8080", enabled: false)
 
     error = assert_raises(ActiveRecord::RecordInvalid) do
-      create_trial(collection: @collection, backend: backend)
+      create_trial(prompt: @prompt, test_suite: @test_suite, backend: backend)
     end
 
     assert_includes error.record.errors[:backend], "must be enabled"
   end
 
   test "destroys its responses" do
-    prompt = @collection.prompts.create!(name: "Example", template: "Hello")
-    trial = create_trial(collection: @collection)
-    response = trial.responses.find_by!(prompt: prompt)
+    trial = create_trial(prompt: @prompt, test_suite: @test_suite)
 
-    trial.destroy!
-
-    assert_not Response.exists?(response.id)
+    assert_difference "Response.count", -2 do
+      trial.destroy!
+    end
   end
 
-  test "prevents its collection from being deleted" do
-    @collection.prompts.create!(name: "Example", template: "Hello")
-    create_trial(collection: @collection)
+  test "prevents its revisions from being deleted" do
+    trial = create_trial(prompt: @prompt, test_suite: @test_suite)
 
-    assert_not @collection.destroy
-    assert_includes @collection.errors[:base], "Cannot delete record because dependent trials exist"
+    assert_not trial.prompt_revision.destroy
+    assert_not trial.test_suite_revision.destroy
+    assert_not trial.responses.first.test_suite_revision_case.destroy
+  end
+
+  test "prevents its revisions from changing" do
+    trial = create_trial(prompt: @prompt, test_suite: @test_suite)
+    @prompt.update!(template: "Summarize {{topic}}")
+
+    assert_not trial.update(prompt_revision: PromptRevision.capture!(@prompt))
+    assert_includes trial.errors[:base], "Prompt and test suite revisions cannot be changed after the trial is created"
   end
 
   test "snapshots its backend execution input and prevents it from changing" do
-    @collection.prompts.create!(name: "Example", template: "Hello")
     backend = Backend.ensure_system_default!(base_url: "http://ollama:11434")
-    trial = create_trial(collection: @collection, backend: backend)
+    trial = create_trial(prompt: @prompt, test_suite: @test_suite, backend: backend)
 
     backend.update!(name: "Renamed Ollama")
 
@@ -85,9 +159,8 @@ class TrialTest < ActiveSupport::TestCase
   end
 
   test "prevents its backend from being deleted" do
-    @collection.prompts.create!(name: "Example", template: "Hello")
     backend = Backend.create!(name: "Edge board", base_url: "http://edge.local:8080")
-    create_trial(collection: @collection, backend: backend)
+    create_trial(prompt: @prompt, test_suite: @test_suite, backend: backend)
 
     assert_not backend.destroy
     assert_includes backend.errors[:base], "Cannot delete record because dependent trials exist"

@@ -22,23 +22,24 @@ The goal of this project is to build a small local-first application for prompt 
 - ~~Add, edit, order, and delete prompts within a collection.~~
 - ~~Store plain prompts and template text.~~
 - ~~Track revisions of prompts and collections.~~
-- Make the prompt the primary unit of evaluation. Prompts remain revision managed, and a trial refers to a prompt revision rather than a collection revision.
-- Keep collections as an organisational grouping only; they no longer define what a trial runs.
+- ~~Make the prompt the primary unit of evaluation. Prompts remain revision managed, and a trial refers to a prompt revision rather than a collection revision.~~
+- ~~Keep collections as an organisational grouping only; they no longer define what a trial runs.~~
+- Remove collection revisions now that trials no longer use them: drop `CollectionRevision` and `CollectionRevisionPrompt` with their tables, the collection revision history page, and the Revision/Draft indicators on collection pages. Keep prompt revisions, and give them their own history view.
 - Duplicate prompts.
 
 ## Templating
 
-- Render templates with named variables such as `{{topic}}`.
-- Parse the variables a template uses and validate them against the selected test suite before a trial is created.
+- ~~Render templates with named variables such as `{{topic}}`.~~
+- ~~Parse the variables a template uses and validate them against the selected test suite before a trial is created.~~
 - Preview the fully rendered prompt for a chosen test case before execution.
 
 ## Test suites
 
-- Create, edit, and archive test suites, managed centrally and independently of prompts.
-- Store test cases within a suite, each providing a value for every variable in the suite.
+- ~~Create, edit, and archive test suites, managed centrally and independently of prompts.~~
+- ~~Store test cases within a suite, each providing a value for every variable in the suite.~~
 - Import test cases from a CSV upload: the header row names the variables, and each subsequent row becomes a test case.
-- Track revisions of test suites and test cases so a trial records exactly which cases it ran, and with which values, even after the suite is edited.
-- Protect suites from deletion once they have been used in a trial.
+- ~~Track revisions of test suites and test cases so a trial records exactly which cases it ran, and with which values, even after the suite is edited.~~
+- ~~Protect suites from deletion once they have been used in a trial.~~
 
 ## Trial runs
 
@@ -49,7 +50,7 @@ The goal of this project is to build a small local-first application for prompt 
 - ~~Preserve the collection, prompt relationship, model name, response or error, status, and trial timestamps.~~
 - ~~Snapshot rendered prompts~~
 - Select a prompt revision, test suite, model, and generation settings.
-- Expand the trial into one immutable trial item per test case, each holding the rendered prompt and its response. Responses are keyed by trial and test case rather than by trial and prompt.
+- ~~Expand the trial into one immutable trial item per test case, each holding the rendered prompt and its response. Responses are keyed by trial and test case rather than by trial and prompt.~~
 - Add cancellation and more detailed progress reporting.
 - Allow failed items to be retried without rerunning successful items.
 

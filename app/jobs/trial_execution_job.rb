@@ -8,9 +8,8 @@ class TrialExecutionJob < ApplicationJob
     client = client_factory.for(trial.backend, base_url: trial.backend_base_url)
 
     trial.responses
-      .joins(:collection_revision_prompt)
-      .includes(:collection_revision_prompt)
-      .order("collection_revision_prompts.position", "responses.id")
+      .joins(:test_suite_revision_case)
+      .order("test_suite_revision_cases.position", "responses.id")
       .each do |response|
       generate_response(client, trial, response)
     end

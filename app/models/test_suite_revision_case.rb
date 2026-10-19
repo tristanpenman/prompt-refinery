@@ -25,6 +25,7 @@
 class TestSuiteRevisionCase < ApplicationRecord
   belongs_to :test_suite_revision, inverse_of: :test_suite_revision_cases
   belongs_to :test_case_revision, inverse_of: :test_suite_revision_cases
+  has_many :responses, dependent: :restrict_with_error, inverse_of: :test_suite_revision_case
 
   validates :test_case_revision_id, uniqueness: { scope: :test_suite_revision_id }
   validates :position,

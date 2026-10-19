@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_19_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_030000) do
   create_table "backends", force: :cascade do |t|
     t.string "name", null: false
     t.string "base_url", null: false
@@ -102,18 +102,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_020000) do
 
   create_table "responses", force: :cascade do |t|
     t.integer "trial_id", null: false
-    t.integer "prompt_id", null: false
     t.string "status", default: "pending", null: false
     t.text "content"
     t.text "error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "collection_revision_prompt_id", null: false
     t.text "rendered_prompt", null: false
-    t.index ["collection_revision_prompt_id"], name: "index_responses_on_collection_revision_prompt_id"
-    t.index ["prompt_id"], name: "index_responses_on_prompt_id"
-    t.index ["trial_id", "collection_revision_prompt_id"], name: "index_responses_on_trial_and_revision_prompt", unique: true
-    t.index ["trial_id", "prompt_id"], name: "index_responses_on_trial_id_and_prompt_id", unique: true
+    t.integer "test_suite_revision_case_id", null: false
+    t.index ["test_suite_revision_case_id"], name: "index_responses_on_test_suite_revision_case_id"
+    t.index ["trial_id", "test_suite_revision_case_id"], name: "index_responses_on_trial_and_revision_case", unique: true
     t.index ["trial_id"], name: "index_responses_on_trial_id"
     t.check_constraint "status IN ('pending', 'completed', 'failed')", name: "responses_status_check"
   end
@@ -177,20 +174,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_020000) do
   end
 
   create_table "trials", force: :cascade do |t|
-    t.integer "collection_id", null: false
     t.string "model", null: false
     t.string "status", default: "pending", null: false
     t.datetime "started_at"
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "collection_revision_id", null: false
     t.integer "backend_id", null: false
     t.string "backend_name", null: false
     t.string "backend_base_url", null: false
+    t.integer "prompt_revision_id", null: false
+    t.integer "test_suite_revision_id", null: false
     t.index ["backend_id"], name: "index_trials_on_backend_id"
-    t.index ["collection_id"], name: "index_trials_on_collection_id"
-    t.index ["collection_revision_id"], name: "index_trials_on_collection_revision_id"
+    t.index ["prompt_revision_id"], name: "index_trials_on_prompt_revision_id"
+    t.index ["test_suite_revision_id"], name: "index_trials_on_test_suite_revision_id"
     t.check_constraint "status IN ('pending', 'running', 'completed', 'failed')", name: "trials_status_check"
   end
 
@@ -201,8 +198,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_020000) do
   add_foreign_key "language_models", "language_model_families"
   add_foreign_key "prompt_revisions", "prompts"
   add_foreign_key "prompts", "collections"
-  add_foreign_key "responses", "collection_revision_prompts"
-  add_foreign_key "responses", "prompts"
+  add_foreign_key "responses", "test_suite_revision_cases"
   add_foreign_key "responses", "trials"
   add_foreign_key "test_case_revisions", "test_cases"
   add_foreign_key "test_cases", "test_suites"
@@ -210,6 +206,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_020000) do
   add_foreign_key "test_suite_revision_cases", "test_suite_revisions"
   add_foreign_key "test_suite_revisions", "test_suites"
   add_foreign_key "trials", "backends"
-  add_foreign_key "trials", "collection_revisions"
-  add_foreign_key "trials", "collections"
+  add_foreign_key "trials", "prompt_revisions"
+  add_foreign_key "trials", "test_suite_revisions"
 end

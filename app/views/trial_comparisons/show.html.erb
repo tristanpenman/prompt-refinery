@@ -4,37 +4,38 @@
   <nav><%= link_to "← Trial ##{@trial.id}", @trial %></nav>
   <header>
     <p class="eyebrow">Trial comparison</p>
-    <h1><%= @trial.collection_revision.name %></h1>
-    <p>Compare responses from trials that contain the same prompts.</p>
+    <h1><%= @trial.prompt_revision.name %></h1>
+    <p>Compare responses from trials that share test cases.</p>
   </header>
 
   <% if @baseline %>
     <section class="editor-card">
       <h2>Comparison details</h2>
-      <p><strong>Baseline:</strong> Trial #<%= @baseline.id %> · <%= @baseline.model %> · Revision <%= @baseline.collection_revision.version %></p>
-      <p><strong>Current:</strong> Trial #<%= @trial.id %> · <%= @trial.backend_name %> · <%= @trial.model %> · Revision <%= @trial.collection_revision.version %></p>
+      <% [ [ "Baseline", @baseline ], [ "Current", @trial ] ].each do |label, trial| %>
+        <p><strong><%= label %>:</strong> Trial #<%= trial.id %> · <%= trial.backend_name %> · <%= trial.model %> · <%= trial.prompt_revision.name %> r<%= trial.prompt_revision.version %> · <%= trial.test_suite_revision.name %> r<%= trial.test_suite_revision.version %></p>
+      <% end %>
       <%= link_to "Choose another baseline", compare_trial_path(@trial) %>
     </section>
 
     <% if @comparisons.empty? %>
       <section class="notice">
-        <h2>No prompts in common</h2>
-        <p>These trials do not contain responses for any of the same prompts.</p>
+        <h2>No test cases in common</h2>
+        <p>These trials do not contain responses for any of the same test cases.</p>
       </section>
     <% else %>
       <section class="trial-comparisons">
-        <h2>Common prompts</h2>
+        <h2>Common test cases</h2>
         <% @comparisons.each_with_index do |comparison, index| %>
           <article class="editor-card">
             <h3>
-              Prompt #<%= index + 1 %>
+              Test case #<%= index + 1 %>
               <% if comparison[:baseline_response].rendered_prompt != comparison[:current_response].rendered_prompt %>
                 <span class="prompt-change-warning" role="img" aria-label="Prompt contents changed" title="Prompt contents changed">⚠</span>
               <% end %>
             </h3>
             <div class="comparison-grid">
-              <% [ [ "Baseline", comparison[:baseline_response] ], [ "Current", comparison[:current_response] ] ].each do |label, response| %>
-                <% prompt_revision = response.collection_revision_prompt.prompt_revision %>
+              <% [ [ "Baseline", @baseline, comparison[:baseline_response] ], [ "Current", @trial, comparison[:current_response] ] ].each do |label, trial, response| %>
+                <% prompt_revision = trial.prompt_revision %>
                 <section class="comparison-response">
                   <h4>
                     <%= label %> · <%= prompt_revision.name %>
@@ -59,17 +60,18 @@
     <section class="editor-card trial-list">
       <h2>Choose a baseline</h2>
       <% if @comparison_trials.empty? %>
-        <p>No other trials share prompts with this trial.</p>
+        <p>No other trials share test cases with this trial.</p>
       <% else %>
         <table>
           <thead>
-            <tr><th>Trial</th><th>Revision</th><th>Model</th><th>Status</th><th>Created</th></tr>
+            <tr><th>Trial</th><th>Prompt</th><th>Test suite</th><th>Model</th><th>Status</th><th>Created</th></tr>
           </thead>
           <tbody>
             <% @comparison_trials.each do |trial| %>
               <tr>
                 <td><%= link_to "Trial ##{trial.id}", compare_trial_path(@trial, baseline: trial.id) %></td>
-                <td>r<%= trial.collection_revision.version %></td>
+                <td><%= trial.prompt_revision.name %> r<%= trial.prompt_revision.version %></td>
+                <td><%= trial.test_suite_revision.name %> r<%= trial.test_suite_revision.version %></td>
                 <td><%= trial.backend_name %> · <%= trial.model %></td>
                 <td><span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span></td>
                 <td><%= time_ago_in_words(trial.created_at) %> ago</td>

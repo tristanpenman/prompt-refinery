@@ -31,6 +31,7 @@ class TestSuiteRevision < ApplicationRecord
     dependent: :destroy,
     inverse_of: :test_suite_revision
   has_many :test_case_revisions, through: :test_suite_revision_cases
+  has_many :trials, dependent: :restrict_with_error, inverse_of: :test_suite_revision
 
   validates :version, numericality: { only_integer: true, greater_than: 0 }, uniqueness: { scope: :test_suite_id }
   validates :name, :content_digest, presence: true

@@ -36,7 +36,7 @@
         <ul>
           <% @trials.each do |trial| %>
             <li>
-              <%= link_to "#{trial.collection.name} · #{trial.backend_name} · #{trial.model}", trial %>
+              <%= link_to "#{trial.prompt_revision.name} · #{trial.test_suite_revision.name} · #{trial.model}", trial %>
               <small>
                 <span class="status status--<%= trial.status %>"><%= trial.status.humanize %></span>
                 <% if trial.completed? && trial.completed_at %>

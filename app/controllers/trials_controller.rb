@@ -9,31 +9,34 @@ class TrialsController < ApplicationController
 
   def show
     @responses = @trial.responses
-      .joins(:collection_revision_prompt)
-      .includes(collection_revision_prompt: :prompt_revision)
-      .order("collection_revision_prompts.position", "responses.id")
+      .joins(:test_suite_revision_case)
+      .includes(test_suite_revision_case: :test_case_revision)
+      .order("test_suite_revision_cases.position", "responses.id")
   end
 
   def create
     attributes = trial_params
-    collection = Collection.active.find(attributes[:collection_id])
-    backend = Backend.enabled.find(attributes[:backend_id])
-    @trial = Trial.create_for!(collection: collection, backend: backend, model: attributes[:model])
+    @trial = Trial.new(attributes.slice(:backend_id, :model))
+    @selected_prompt_id = attributes[:prompt_id]
+    @selected_test_suite_id = attributes[:test_suite_id]
+    prompt = available_prompts.find_by(id: attributes[:prompt_id])
+    test_suite = available_test_suites.find_by(id: attributes[:test_suite_id])
+    backend = Backend.enabled.find_by(id: attributes[:backend_id])
+    @trial.errors.add(:prompt, "must exist") unless prompt
+    @trial.errors.add(:test_suite, "must exist") unless test_suite
+    @trial.errors.add(:backend, "must exist and be enabled") unless backend
+    return render_index_with_errors if @trial.errors.any?
+
+    @trial = Trial.create_for!(prompt: prompt, test_suite: test_suite, backend: backend, model: attributes[:model])
     TrialExecutionJob.perform_later(@trial)
     redirect_to @trial, notice: "Trial queued."
   rescue ActiveRecord::RecordInvalid => error
-    @trial = error.record.is_a?(Trial) ? error.record : Trial.new(attributes)
-    load_index_data
-    render :index, status: :unprocessable_content
-  rescue ActiveRecord::RecordNotFound
-    @trial = Trial.new(attributes)
-    if Collection.active.exists?(attributes[:collection_id])
-      @trial.errors.add(:backend, "must exist and be enabled")
+    if error.record.is_a?(Trial)
+      @trial = error.record
     else
-      @trial.errors.add(:collection, "must exist")
+      @trial.errors.merge!(error.record)
     end
-    load_index_data
-    render :index, status: :unprocessable_content
+    render_index_with_errors
   end
 
   private
@@ -43,12 +46,26 @@ class TrialsController < ApplicationController
   end
 
   def trial_params
-    params.expect(trial: %i[collection_id backend_id model])
+    params.expect(trial: %i[prompt_id test_suite_id backend_id model])
+  end
+
+  def available_prompts
+    Prompt.where(deleted_at: nil).joins(:collection).merge(Collection.active)
+  end
+
+  def available_test_suites
+    TestSuite.active
+  end
+
+  def render_index_with_errors
+    load_index_data
+    render :index, status: :unprocessable_content
   end
 
   def load_index_data
-    @trials = Trial.includes(:collection, :collection_revision, :backend).order(created_at: :desc)
-    @collections = Collection.active.with_prompts.order(:name, :id)
+    @trials = Trial.includes(:prompt_revision, :test_suite_revision).order(created_at: :desc)
+    @collections = Collection.active.with_prompts.includes(:prompts).order(:name, :id)
+    @test_suites = available_test_suites.joins(:test_cases).distinct.order(:name, :id)
     @backends = Backend.enabled.order(system: :desc, name: :asc, id: :asc)
     requested_backend_id = params[:backend_id] || @trial&.backend_id
     @selected_backend = @backends.find { |backend| backend.id == requested_backend_id.to_i } || @backends.first

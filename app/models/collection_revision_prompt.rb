@@ -25,7 +25,6 @@
 class CollectionRevisionPrompt < ApplicationRecord
   belongs_to :collection_revision, inverse_of: :collection_revision_prompts
   belongs_to :prompt_revision, inverse_of: :collection_revision_prompts
-  has_many :responses, dependent: :restrict_with_error, inverse_of: :collection_revision_prompt
 
   validates :prompt_revision_id, uniqueness: { scope: :collection_revision_id }
   validates :position,

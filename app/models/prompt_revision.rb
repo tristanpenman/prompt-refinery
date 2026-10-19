@@ -26,6 +26,7 @@ require "digest"
 class PromptRevision < ApplicationRecord
   belongs_to :prompt, inverse_of: :prompt_revisions
   has_many :collection_revision_prompts, dependent: :restrict_with_error, inverse_of: :prompt_revision
+  has_many :trials, dependent: :restrict_with_error, inverse_of: :prompt_revision
 
   validates :version, numericality: { only_integer: true, greater_than: 0 }, uniqueness: { scope: :prompt_id }
   validates :name, :template, :content_digest, presence: true

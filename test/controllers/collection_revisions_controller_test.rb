@@ -14,9 +14,9 @@ class CollectionRevisionsControllerTest < ActionDispatch::IntegrationTest
   test "shows collection revisions newest first with their prompt snapshots" do
     collection = Collection.create!(name: "Examples")
     prompt = collection.prompts.create!(name: "Greeting", template: "Original prompt")
-    create_trial(collection: collection)
+    CollectionRevision.capture!(collection)
     prompt.update!(template: "Updated prompt")
-    create_trial(collection: collection)
+    CollectionRevision.capture!(collection)
 
     get revisions_collection_path(collection)
 

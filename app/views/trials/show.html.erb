@@ -9,17 +9,13 @@
   <nav><%= link_to "← Trials", trials_path %></nav>
   <header>
     <p class="eyebrow">Trial #<%= @trial.id %></p>
-    <h1>
-      <%= @trial.collection_revision.name %>
-      <% if @trial.collection.archived_at? %>
-        <span class="status status--archived">Archived</span>
-      <% end %>
-    </h1>
+    <h1><%= @trial.prompt_revision.name %></h1>
   </header>
 
   <section class="editor-card">
     <h2>Trial details</h2>
-    <p>Revision: <%= @trial.collection_revision.version %></p>
+    <p>Prompt: <%= @trial.prompt_revision.name %> r<%= @trial.prompt_revision.version %></p>
+    <p>Test suite: <%= link_to @trial.test_suite_revision.name, @trial.test_suite_revision.test_suite %> r<%= @trial.test_suite_revision.version %></p>
     <p>Backend: <%= @trial.backend_name %> (<code><%= @trial.backend_base_url %></code>)</p>
     <p>Model: <%= @trial.model %></p>
     <p>Created: <time datetime="<%= @trial.created_at.iso8601 %>"><%= @trial.created_at.to_fs(:long) %></time></p>
@@ -37,13 +33,17 @@
   <section class="trial-responses">
     <h2>Responses</h2>
     <% if @responses.empty? %>
-      <p>This collection contains no prompts.</p>
+      <p>This trial has no test cases.</p>
     <% else %>
-      <% @responses.each do |response| %>
-        <% prompt_revision = response.collection_revision_prompt.prompt_revision %>
+      <% @responses.each.with_index(1) do |response, number| %>
+        <% test_case_revision = response.test_suite_revision_case.test_case_revision %>
         <article class="evaluation-result">
-          <h3><%= prompt_revision.name %> <small>r<%= prompt_revision.version %></small></h3>
+          <h3>Test case <%= number %> <small>r<%= test_case_revision.version %></small></h3>
           <p><span class="status status--<%= response.status %>"><%= response.status.humanize %></span></p>
+          <section class="response-prompt">
+            <h4>Variables</h4>
+            <%= render "test_suite_revisions/test_case_values", variables: @trial.test_suite_revision.variables, values: test_case_revision.values %>
+          </section>
           <section class="response-prompt">
             <h4>Prompt</h4>
             <div class="result-content"><%= simple_format(response.rendered_prompt) %></div>

@@ -19,10 +19,10 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
         updated_at: Time.zone.now - index.days
       ).tap { |collection| collection.prompts.create!(name: "Prompt #{index}", template: "Hello") }
     end
-    create_trial(collection: collections.first, model: "model-a", created_at: 1.hour.ago)
-    create_trial(collection: collections.second, model: "model-b", created_at: 2.hours.ago)
-    create_trial(collection: collections.third, model: "model-c", created_at: 3.hours.ago)
-    create_trial(collection: collections.last, model: "model-d", created_at: 4.hours.ago)
+    create_trial(prompt: collections.first.prompts.first, model: "model-a", created_at: 1.hour.ago)
+    create_trial(prompt: collections.second.prompts.first, model: "model-b", created_at: 2.hours.ago)
+    create_trial(prompt: collections.third.prompts.first, model: "model-c", created_at: 3.hours.ago)
+    create_trial(prompt: collections.last.prompts.first, model: "model-d", created_at: 4.hours.ago)
     4.times do |index|
       TestSuite.create!(name: "Test suite #{index}", updated_at: Time.zone.now - index.days)
     end
@@ -64,7 +64,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     collection = Collection.create!(name: "Examples")
     collection.prompts.create!(name: "Example", template: "Hello")
     completed_at = 2.hours.ago.change(usec: 0)
-    create_trial(collection: collection, status: :completed, completed_at: completed_at)
+    create_trial(prompt: collection.prompts.first, status: :completed, completed_at: completed_at)
 
     get root_path
 
@@ -76,14 +76,14 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
   test "hides archived collections but retains their trials" do
     collection = Collection.create!(name: "Archived examples")
     collection.prompts.create!(name: "Example", template: "Hello")
-    trial = create_trial(collection: collection)
+    trial = create_trial(prompt: collection.prompts.first)
     collection.archive!
 
     get root_path
 
     assert_response :success
     assert_select ".dashboard-panel:nth-child(1) a", text: "Archived examples", count: 0
-    assert_select ".dashboard-panel:nth-child(2) a[href=?]", trial_path(trial), text: /Archived examples/
+    assert_select ".dashboard-panel:nth-child(2) a[href=?]", trial_path(trial), text: /Example · Topics · gemma3:4b/
   end
 
   test "hides archived test suites" do

@@ -15,7 +15,7 @@
 #  index_test_suites_on_archived_at  (archived_at)
 #
 class TestSuite < ApplicationRecord
-  VARIABLE_NAME = /\A[A-Za-z_][A-Za-z0-9_]*\z/
+  VARIABLE_NAME = /\A#{PromptTemplate::VARIABLE_NAME}\z/
 
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }

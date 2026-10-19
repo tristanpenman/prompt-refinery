@@ -44,7 +44,7 @@ class CollectionPromptsControllerTest < ActionDispatch::IntegrationTest
 
   test "soft deletes a prompt that has been used in a trial" do
     prompt = @collection.prompts.create!(name: "Example", template: "Hello")
-    trial = create_trial(collection: @collection)
+    trial = create_trial(prompt: prompt)
 
     assert_no_difference [ "Prompt.count", "Response.count" ] do
       delete collection_prompt_path(@collection, prompt)
@@ -52,7 +52,7 @@ class CollectionPromptsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to @collection
     assert_not_nil prompt.reload.deleted_at
-    assert_equal prompt, trial.responses.first.prompt
+    assert_equal prompt, trial.prompt_revision.prompt
   end
 
   test "does not access a prompt through another collection" do

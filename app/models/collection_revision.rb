@@ -29,7 +29,6 @@ class CollectionRevision < ApplicationRecord
     dependent: :destroy,
     inverse_of: :collection_revision
   has_many :prompt_revisions, through: :collection_revision_prompts
-  has_many :trials, dependent: :restrict_with_error, inverse_of: :collection_revision
 
   validates :version, numericality: { only_integer: true, greater_than: 0 }, uniqueness: { scope: :collection_id }
   validates :name, :content_digest, presence: true

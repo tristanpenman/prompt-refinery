@@ -16,7 +16,7 @@
           <% if @has_unrevised_changes %>
             Draft · Will become r<%= @current_revision_number %> when used in a trial
           <% else %>
-            <p>Revision <%= @latest_revision.version %> · Captured <%= time_ago_in_words(@latest_revision.created_at) %> ago · <%= pluralize(@latest_revision.trials.size, "trial") %></p>
+            <p>Revision <%= @latest_revision.version %> · Captured <%= time_ago_in_words(@latest_revision.created_at) %> ago</p>
           <% end %>
         </p>
       </div>
@@ -48,7 +48,7 @@
         <section class="editor-card">
           <header class="revision-header">
             <div>
-              <p>Revision <%= revision.version %> · Captured <%= time_ago_in_words(revision.created_at) %> ago · <%= pluralize(revision.trials.size, "trial") %></p>
+              <p>Revision <%= revision.version %> · Captured <%= time_ago_in_words(revision.created_at) %> ago</p>
             </div>
           </header>
 
