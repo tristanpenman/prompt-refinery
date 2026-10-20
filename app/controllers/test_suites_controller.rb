@@ -1,5 +1,6 @@
 class TestSuitesController < ApplicationController
   before_action :set_test_suite, only: %i[show update destroy unarchive]
+  before_action :redirect_provisional_test_suite, only: %i[show update destroy unarchive]
 
   def index
     load_test_suites
@@ -49,6 +50,10 @@ class TestSuitesController < ApplicationController
 
   def set_test_suite
     @test_suite = TestSuite.find(params[:id])
+  end
+
+  def redirect_provisional_test_suite
+    redirect_to test_suite_import_path(@test_suite) if @test_suite.provisional?
   end
 
   def test_suite_params

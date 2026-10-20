@@ -20,6 +20,20 @@
     <% end %>
   </section>
 
+  <section class="editor-card">
+    <h2>Import from CSV</h2>
+    <p>Each column becomes a variable and each row becomes a test case. You can review the test cases before the suite is created.</p>
+    <%= form_with scope: :test_suite_import, url: test_suite_imports_path do |form| %>
+      <%= form.label :file, "CSV file" %>
+      <%= form.file_field :file, accept: ".csv,text/csv", required: true %>
+      <%= form.label :header_row do %>
+        <%= form.check_box :header_row, checked: true %>
+        First row contains variable names
+      <% end %>
+      <%= form.submit "Preview import" %>
+    <% end %>
+  </section>
+
   <section class="resource-list">
     <h2><%= @show_archived ? "Archived Test Suites" : "Test Suites" %></h2>
     <% if @test_suite_rows.empty? %>

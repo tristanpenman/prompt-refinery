@@ -1,0 +1,65 @@
+<% content_for :title, "Import #{@test_suite.name_in_database} · Prompt Refinery" %>
+
+<main class="resource-page">
+  <nav><%= link_to "← Test suites", test_suites_path %></nav>
+  <header>
+    <p class="eyebrow">Test suite import</p>
+    <h1>
+      <%= @test_suite.name_in_database %>
+      <span class="status status--provisional">Provisional</span>
+    </h1>
+    <p>
+      <code><%= @test_suite.source_csv.filename %></code>
+      · <%= pluralize(@variables.size, "variable") %>
+      · <%= pluralize(@test_cases.size, "test case") %>
+      · <%= @headers ? "Variable names read from the header row" : "No header row" %>
+    </p>
+  </header>
+
+  <section class="editor-card">
+    <h2>Confirm Import</h2>
+    <p>Review the test cases below, then create the test suite. Variable names can be changed before the suite is created.</p>
+    <%= render "shared/errors", record: @test_suite %>
+    <%= form_with model: @test_suite, url: test_suite_import_path(@test_suite), method: :patch do |form| %>
+      <%= form.label :name %>
+      <%= form.text_field :name, required: true %>
+      <% @variables.each_with_index do |name, index| %>
+        <% field_id = "test_suite_variables_#{index}" %>
+        <%= label_tag field_id do %>
+          Variable <%= index + 1 %>
+          <% if @headers %>
+            from column <code><%= @headers[index] %></code>
+          <% end %>
+        <% end %>
+        <%= text_field_tag "test_suite[variables][#{name}]", @variable_names.fetch(name, name), id: field_id, required: true %>
+      <% end %>
+      <%= form.submit "Create test suite" %>
+    <% end %>
+    <%= button_to "Discard import", test_suite_import_path(@test_suite), method: :delete, class: "danger-button", data: { turbo_confirm: "Discard this import? The uploaded CSV file will be deleted." } %>
+  </section>
+
+  <section class="resource-list import-preview">
+    <h2>Test Cases</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <% @variables.each do |name| %>
+            <th><code>{{<%= name %>}}</code></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% @test_cases.each do |test_case| %>
+          <tr>
+            <td><%= test_case.position %></td>
+            <% @variables.each do |name| %>
+              <% value = test_case.values[name] %>
+              <td title="<%= value %>"><%= truncate(value, length: 120) %></td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+</main>

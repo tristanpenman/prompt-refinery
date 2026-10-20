@@ -14,6 +14,7 @@ Rails.application.routes.draw do
     get :revisions, on: :member, to: "prompt_revisions#index"
     patch :unarchive, on: :member
   end
+  resources :test_suite_imports, only: %i[create show update destroy]
   resources :test_suites, only: %i[index show create update destroy] do
     get :revisions, on: :member, to: "test_suite_revisions#index"
     patch :unarchive, on: :member

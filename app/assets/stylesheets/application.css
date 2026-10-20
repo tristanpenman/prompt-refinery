@@ -696,6 +696,9 @@ h1 .status { vertical-align: middle; }
 .status--running { color: var(--color-warning); background: var(--color-warning-bg); }
 .status--completed { color: var(--color-success); background: var(--color-success-bg); }
 .status--failed { color: var(--color-alert); background: var(--color-alert-bg); }
+.status--provisional { color: var(--color-warning); background: var(--color-warning-bg); }
+
+.import-preview td { white-space: pre-line; vertical-align: top; }
 
 .trial-comparisons > h2 { margin-top: 0; }
 .trial-comparisons > .editor-card > h3 { margin-top: 0; }

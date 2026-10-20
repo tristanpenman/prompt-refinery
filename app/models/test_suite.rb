@@ -19,8 +19,9 @@
 class TestSuite < ApplicationRecord
   VARIABLE_NAME = /\A#{PromptTemplate::VARIABLE_NAME}\z/
 
-  scope :active, -> { where(archived_at: nil) }
-  scope :archived, -> { where.not(archived_at: nil) }
+  scope :active, -> { where(archived_at: nil, provisional: false) }
+  scope :archived, -> { where.not(archived_at: nil).where(provisional: false) }
+  scope :provisional, -> { where(provisional: true) }
 
   has_many :test_suite_revisions, dependent: :destroy, inverse_of: :test_suite
   has_many :test_cases,
@@ -52,7 +53,13 @@ class TestSuite < ApplicationRecord
       name: File.basename(file.original_filename.to_s, ".*").presence || "Imported test suite",
       variables: parsed.variables,
       provisional: true,
-      source_csv: file
+      source_csv: {
+        io: file,
+        filename: file.original_filename.presence || "import.csv",
+        content_type: "text/csv",
+        # Kept so the import preview can show how the columns were read.
+        metadata: { "header_row" => header_row, "headers" => parsed.headers }
+      }
     ).tap do |test_suite|
       parsed.rows.each_with_index do |values, position|
         test_suite.test_cases.build(values: values, position: position)
@@ -78,6 +85,15 @@ class TestSuite < ApplicationRecord
       end
       update!(name: name, variables: variables.map(&mapping), provisional: false)
     end
+  end
+
+  def source_csv_header_row?
+    source_csv.attached? && source_csv.metadata["header_row"] == true
+  end
+
+  # The original header text for each variable, when the CSV had a header row.
+  def source_csv_headers
+    source_csv.metadata["headers"] if source_csv_header_row?
   end
 
   def archive!
