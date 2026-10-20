@@ -6,6 +6,7 @@
 #  id          :integer          not null, primary key
 #  archived_at :datetime
 #  name        :string           not null
+#  provisional :boolean          default(FALSE), not null
 #  variables   :json             not null
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
@@ -13,6 +14,7 @@
 # Indexes
 #
 #  index_test_suites_on_archived_at  (archived_at)
+#  index_test_suites_on_provisional  (provisional)
 #
 class TestSuite < ApplicationRecord
   VARIABLE_NAME = /\A#{PromptTemplate::VARIABLE_NAME}\z/
