@@ -5,16 +5,27 @@ The goal of this project is to build a small local-first application for prompt 
 ## Prompts
 
 - Duplicate prompts.
-
-## Templating
-
 - Preview the fully rendered prompt for a chosen test case before execution.
 
 ## Test suites
 
-- Import test cases from a CSV upload: the header row names the variables, and each subsequent row becomes a test case.
+- ~~Import test cases from a CSV upload: the header row names the variables, and each subsequent row becomes a test case.~~
 - Rename a test suite variable without discarding its values. Renaming currently counts as removing one variable and adding another.
 - Keep the entered values when adding a test case fails validation.
+- Export a test suite's current test cases as CSV, with a header row naming the variables. This differs from downloading the original CSV of an imported test suite.
+
+## CSV imports
+
+- Reject trials for provisional test suites in `Trial` validations, not only by hiding them from the trial form.
+- Make `TestSuiteRevision.capture!` refuse provisional test suites, so a failed trial can't leave a revision behind.
+- Prevent provisional test suites from being archived.
+- Refuse test case changes for provisional test suites in `TestCasesController`.
+- Redirect the revision history of a provisional test suite to its import preview.
+- Discard abandoned imports with a recurring job that destroys provisional test suites older than a day and purges their CSV files.
+- Link to the uploaded CSV file from the import preview.
+- Test that provisional test suites are hidden from the dashboard and the trial form.
+- Document CSV imports in the README, and optionally add a sample CSV to the seed demo data.
+- Update `notes/imports.md` to describe the implementation, including the redirect on upload errors and the header-row metadata stored with the CSV file.
 
 ## Trial runs
 
