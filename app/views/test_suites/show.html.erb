@@ -13,7 +13,7 @@
   </header>
 
   <section class="editor-card">
-    <h2>Test Suite Details</h2>
+    <h2>Details</h2>
     <% if @current_revision %>
       <p><strong>Latest revision:</strong> r<%= @current_revision.version %> (<%= link_to "View revision history", revisions_test_suite_path(@test_suite) %>)</p>
       <% if @has_unrevised_changes %>
@@ -38,6 +38,15 @@
       <%= button_to "Archive test suite", @test_suite, method: :delete, class: "danger-button", data: { turbo_confirm: "Archive this test suite? It will no longer be available for new trials." } %>
     <% end %>
   </section>
+
+  <% if @test_suite.source_csv.attached? %>
+    <section class="editor-card">
+      <h2>Source CSV</h2>
+      <p>This test suite was imported from <code><%= @test_suite.source_csv.filename %></code>.</p>
+      <p>Note: The original file doesn't include later changes to this test suite.</p>
+      <%= link_to "Download original CSV", csv_test_suite_path(@test_suite), data: { turbo: false } %>
+    </section>
+  <% end %>
 
   <section class="prompt-list">
     <h2>Test Cases</h2>
