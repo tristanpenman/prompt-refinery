@@ -14,6 +14,16 @@ It is intended to make prompt experimentation repeatable and easy to review. A p
 - Export trial results for further analysis.
 - Keep inference and evaluation data on the local machine.
 
+## Screenshots
+
+Prompt Refinery provides a simple dashboard for managing Prompts, Test Suites and Trials:
+
+![Dashboard](./misc/dashboard.png)
+
+The app provides a dark mode theme:
+
+![Dark Mode](./misc/dark.png)
+
 ## Model runtime
 
 Prompt Refinery uses [Ollama](https://ollama.com/) to run models locally. Ollama will use a supported GPU when one is available and otherwise fall back to CPU execution.
