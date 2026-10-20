@@ -83,4 +83,97 @@ class TestSuiteTest < ActiveSupport::TestCase
     assert_not test_suite.update(variables: [])
     assert_includes test_suite.errors[:variables], "can't be empty while the suite has test cases"
   end
+
+  test "imports a provisional test suite from a CSV file" do
+    contents = "topic,Target Audience\nRuby,beginners\nRust,experts\n"
+
+    test_suite = TestSuite.import_csv!(file: csv_upload(contents, filename: "topics.csv"), header_row: true)
+
+    assert test_suite.provisional?
+    assert_equal "topics", test_suite.name
+    assert_equal [ "topic", "Target_Audience" ], test_suite.variables
+    assert_equal [
+      [ { "topic" => "Ruby", "Target_Audience" => "beginners" }, 0 ],
+      [ { "topic" => "Rust", "Target_Audience" => "experts" }, 1 ]
+    ], test_suite.test_cases.reload.map { |test_case| [ test_case.values, test_case.position ] }
+    assert_equal "topics.csv", test_suite.source_csv.filename.to_s
+    assert_equal contents, test_suite.source_csv.download
+  end
+
+  test "imports a CSV file without a header row" do
+    test_suite = TestSuite.import_csv!(file: csv_upload("Ruby,beginners\n"), header_row: false)
+
+    assert_equal [ "column_1", "column_2" ], test_suite.variables
+    assert_equal [ { "column_1" => "Ruby", "column_2" => "beginners" } ], test_suite.test_cases.map(&:values)
+  end
+
+  test "creates nothing when a CSV file can't be imported" do
+    assert_no_difference [ "TestSuite.count", "TestCase.count", "ActiveStorage::Blob.count" ] do
+      assert_raises(TestSuiteCsv::Error) do
+        TestSuite.import_csv!(file: csv_upload("topic\nRuby,extra\n"), header_row: true)
+      end
+    end
+  end
+
+  test "a provisional test suite requires a source CSV" do
+    test_suite = TestSuite.new(name: "Topics", provisional: true)
+
+    assert_not test_suite.valid?
+    assert_includes test_suite.errors[:source_csv], "must be attached to a provisional test suite"
+  end
+
+  test "confirming an import renames variables without losing values" do
+    test_suite = TestSuite.import_csv!(file: csv_upload("a,b\nRuby,beginners\n"), header_row: true)
+
+    test_suite.confirm_import!(name: "Topics", variable_names: { "a" => "topic", "b" => " audience " })
+
+    test_suite.reload
+    assert_not test_suite.provisional?
+    assert_equal "Topics", test_suite.name
+    assert_equal [ "topic", "audience" ], test_suite.variables
+    assert_equal [ { "topic" => "Ruby", "audience" => "beginners" } ], test_suite.test_cases.map(&:values)
+    assert test_suite.source_csv.attached?
+  end
+
+  test "confirming an import can swap variable names" do
+    test_suite = TestSuite.import_csv!(file: csv_upload("a,b\nRuby,beginners\n"), header_row: true)
+
+    test_suite.confirm_import!(name: "Topics", variable_names: { "a" => "b", "b" => "a" })
+
+    assert_equal [ { "b" => "Ruby", "a" => "beginners" } ], test_suite.test_cases.reload.map(&:values)
+  end
+
+  test "confirming an import with invalid variable names changes nothing" do
+    test_suite = TestSuite.import_csv!(file: csv_upload("a,b\nRuby,beginners\n"), header_row: true)
+
+    assert_raises(ActiveRecord::RecordInvalid) do
+      test_suite.confirm_import!(name: "Topics", variable_names: { "a" => "topic", "b" => "topic" })
+    end
+
+    test_suite.reload
+    assert test_suite.provisional?
+    assert_equal [ "a", "b" ], test_suite.variables
+    assert_equal [ { "a" => "Ruby", "b" => "beginners" } ], test_suite.test_cases.map(&:values)
+  end
+
+  test "only provisional test suites can be confirmed" do
+    test_suite = TestSuite.create!(name: "Topics", variables: [ "topic" ])
+
+    error = assert_raises(ActiveRecord::RecordInvalid) { test_suite.confirm_import!(name: "Topics") }
+    assert_includes error.record.errors[:base], "Only provisional test suites can be confirmed"
+  end
+
+  test "a confirmed test suite can't become provisional again" do
+    test_suite = TestSuite.import_csv!(file: csv_upload("topic\nRuby\n"), header_row: true)
+    test_suite.confirm_import!(name: "Topics")
+
+    assert_not test_suite.update(provisional: true)
+    assert_includes test_suite.errors[:provisional], "can't be restored once the import is confirmed"
+  end
+
+  private
+
+  def csv_upload(contents, filename: "import.csv")
+    Rack::Test::UploadedFile.new(StringIO.new(contents), "text/csv", original_filename: filename)
+  end
 end

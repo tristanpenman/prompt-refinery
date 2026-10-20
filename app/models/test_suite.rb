@@ -31,13 +31,54 @@ class TestSuite < ApplicationRecord
     -> { where.not(deleted_at: nil).order(:position, :id) },
     class_name: "TestCase",
     dependent: :destroy
+  has_one_attached :source_csv
 
   validates :name, presence: true
   validate :variables_are_well_formed
   validate :variables_present_while_cases_exist, on: :update
   validate :read_only_while_archived, on: :update
+  validate :source_csv_attached_while_provisional
+  validate :provisional_only_until_confirmed, on: :update
 
   after_update :reconcile_test_case_values, if: :saved_change_to_variables?
+
+  # Creates a provisional test suite from an uploaded CSV file, with a test
+  # case for each row. Raises TestSuiteCsv::Error if the file can't be imported.
+  def self.import_csv!(file:, header_row:)
+    parsed = TestSuiteCsv.parse(file, header_row: header_row)
+    file.rewind
+
+    new(
+      name: File.basename(file.original_filename.to_s, ".*").presence || "Imported test suite",
+      variables: parsed.variables,
+      provisional: true,
+      source_csv: file
+    ).tap do |test_suite|
+      parsed.rows.each_with_index do |values, position|
+        test_suite.test_cases.build(values: values, position: position)
+      end
+      test_suite.save!
+    end
+  end
+
+  # Finishes an import, applying the chosen name and any variable renames
+  # given as a hash of current names to new names.
+  def confirm_import!(name:, variable_names: {})
+    unless provisional?
+      errors.add(:base, "Only provisional test suites can be confirmed")
+      raise ActiveRecord::RecordInvalid, self
+    end
+
+    mapping = variables.index_with { |variable| variable_names.fetch(variable, variable).to_s.strip }
+
+    transaction do
+      # Rename values before the variables, so reconcile_test_case_values keeps them.
+      TestCase.where(test_suite: self).find_each do |test_case|
+        test_case.update_columns(values: test_case.values.transform_keys(mapping))
+      end
+      update!(name: name, variables: variables.map(&mapping), provisional: false)
+    end
+  end
 
   def archive!
     update!(archived_at: Time.current)
@@ -77,6 +118,14 @@ class TestSuite < ApplicationRecord
       values = variables.index_with { |name| test_case.values.fetch(name, "") }
       test_case.update_columns(values: values) unless values == test_case.values
     end
+  end
+
+  def source_csv_attached_while_provisional
+    errors.add(:source_csv, "must be attached to a provisional test suite") if provisional? && !source_csv.attached?
+  end
+
+  def provisional_only_until_confirmed
+    errors.add(:provisional, "can't be restored once the import is confirmed") if provisional_changed?(from: false, to: true)
   end
 
   def read_only_while_archived
