@@ -19,6 +19,8 @@ class Prompt < ApplicationRecord
   scope :archived, -> { where.not(archived_at: nil) }
 
   has_many :prompt_revisions, dependent: :destroy, inverse_of: :prompt
+  # Set when this is the working prompt of a refinement.
+  has_one :refinement, class_name: "PromptRefinement", dependent: :restrict_with_error, inverse_of: :prompt
 
   validates :name, presence: true
   validates :template, presence: true

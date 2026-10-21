@@ -40,6 +40,16 @@ class Trial < ApplicationRecord
   belongs_to :test_suite_revision, inverse_of: :trials
   belongs_to :backend, inverse_of: :trials
   has_many :responses, dependent: :destroy, inverse_of: :trial
+  has_one :reference_refinement,
+    class_name: "PromptRefinement",
+    foreign_key: :reference_trial_id,
+    dependent: :restrict_with_error,
+    inverse_of: :reference_trial
+  has_one :refinement_iteration,
+    class_name: "PromptRefinementIteration",
+    foreign_key: :student_trial_id,
+    dependent: :restrict_with_error,
+    inverse_of: :student_trial
 
   enum :status, STATUSES, validate: true
 

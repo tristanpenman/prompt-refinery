@@ -5,6 +5,8 @@ namespace :prompt_refinery do
       ActiveStorage::VariantRecord
       ActiveStorage::Attachment
       ActiveStorage::Blob
+      PromptRefinementIteration
+      PromptRefinement
       Response
       Trial
       TestSuiteRevisionCase

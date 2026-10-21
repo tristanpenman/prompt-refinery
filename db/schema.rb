@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_050100) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -71,6 +71,69 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_040000) do
     t.index ["backend_id", "name"], name: "index_language_models_on_backend_id_and_name", unique: true
     t.index ["backend_id"], name: "index_language_models_on_backend_id"
     t.index ["language_model_family_id"], name: "index_language_models_on_language_model_family_id"
+  end
+
+  create_table "prompt_refinement_iterations", force: :cascade do |t|
+    t.integer "refinement_id", null: false
+    t.integer "number", null: false
+    t.integer "prompt_revision_id", null: false
+    t.integer "student_trial_id"
+    t.string "status", default: "pending", null: false
+    t.text "evaluation_prompt"
+    t.text "evaluation_response"
+    t.json "case_evaluations", default: {}, null: false
+    t.decimal "agreement", precision: 4, scale: 3
+    t.text "summary"
+    t.text "change_summary"
+    t.text "proposed_template"
+    t.text "error"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["prompt_revision_id"], name: "index_prompt_refinement_iterations_on_prompt_revision_id"
+    t.index ["refinement_id", "number"], name: "index_prompt_refinement_iterations_on_refinement_id_and_number", unique: true
+    t.index ["refinement_id"], name: "index_prompt_refinement_iterations_on_refinement_id"
+    t.index ["student_trial_id"], name: "index_prompt_refinement_iterations_on_student_trial_id", unique: true
+    t.check_constraint "agreement IS NULL OR agreement BETWEEN 0 AND 1", name: "prompt_refinement_iterations_agreement_check"
+    t.check_constraint "status IN ('pending', 'running_trial', 'evaluating', 'completed', 'failed')", name: "prompt_refinement_iterations_status_check"
+  end
+
+  create_table "prompt_refinements", force: :cascade do |t|
+    t.string "name", null: false
+    t.integer "prompt_id", null: false
+    t.integer "starting_prompt_revision_id", null: false
+    t.integer "test_suite_revision_id", null: false
+    t.integer "student_backend_id", null: false
+    t.string "student_model", null: false
+    t.string "student_backend_name", null: false
+    t.string "student_backend_base_url", null: false
+    t.integer "teacher_backend_id", null: false
+    t.string "teacher_model", null: false
+    t.string "teacher_backend_name", null: false
+    t.string "teacher_backend_base_url", null: false
+    t.integer "reference_trial_id"
+    t.text "instructions", null: false
+    t.integer "max_iterations", default: 3, null: false
+    t.decimal "target_agreement", precision: 4, scale: 3, default: "1.0", null: false
+    t.integer "context_size", default: 16384, null: false
+    t.string "status", default: "pending", null: false
+    t.string "stop_reason"
+    t.datetime "stop_requested_at"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["prompt_id"], name: "index_prompt_refinements_on_prompt_id", unique: true
+    t.index ["reference_trial_id"], name: "index_prompt_refinements_on_reference_trial_id", unique: true
+    t.index ["starting_prompt_revision_id"], name: "index_prompt_refinements_on_starting_prompt_revision_id"
+    t.index ["student_backend_id"], name: "index_prompt_refinements_on_student_backend_id"
+    t.index ["teacher_backend_id"], name: "index_prompt_refinements_on_teacher_backend_id"
+    t.index ["test_suite_revision_id"], name: "index_prompt_refinements_on_test_suite_revision_id"
+    t.check_constraint "max_iterations BETWEEN 1 AND 10", name: "prompt_refinements_max_iterations_check"
+    t.check_constraint "status IN ('pending', 'running', 'completed', 'stopped', 'failed')", name: "prompt_refinements_status_check"
+    t.check_constraint "stop_reason IS NULL OR stop_reason IN ('max_iterations', 'target_reached', 'converged', 'cancelled', 'failed')", name: "prompt_refinements_stop_reason_check"
+    t.check_constraint "target_agreement BETWEEN 0 AND 1", name: "prompt_refinements_target_agreement_check"
   end
 
   create_table "prompt_revisions", force: :cascade do |t|
@@ -192,6 +255,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_040000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "language_models", "backends"
   add_foreign_key "language_models", "language_model_families"
+  add_foreign_key "prompt_refinement_iterations", "prompt_refinements", column: "refinement_id"
+  add_foreign_key "prompt_refinement_iterations", "prompt_revisions"
+  add_foreign_key "prompt_refinement_iterations", "trials", column: "student_trial_id"
+  add_foreign_key "prompt_refinements", "backends", column: "student_backend_id"
+  add_foreign_key "prompt_refinements", "backends", column: "teacher_backend_id"
+  add_foreign_key "prompt_refinements", "prompt_revisions", column: "starting_prompt_revision_id"
+  add_foreign_key "prompt_refinements", "prompts"
+  add_foreign_key "prompt_refinements", "test_suite_revisions"
+  add_foreign_key "prompt_refinements", "trials", column: "reference_trial_id"
   add_foreign_key "prompt_revisions", "prompts"
   add_foreign_key "responses", "test_suite_revision_cases"
   add_foreign_key "responses", "trials"

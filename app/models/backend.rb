@@ -27,6 +27,16 @@ class Backend < ApplicationRecord
   scope :enabled, -> { where(enabled: true) }
 
   has_many :trials, dependent: :restrict_with_error, inverse_of: :backend
+  has_many :student_refinements,
+    class_name: "PromptRefinement",
+    foreign_key: :student_backend_id,
+    dependent: :restrict_with_error,
+    inverse_of: :student_backend
+  has_many :teacher_refinements,
+    class_name: "PromptRefinement",
+    foreign_key: :teacher_backend_id,
+    dependent: :restrict_with_error,
+    inverse_of: :teacher_backend
   has_many :language_models, dependent: :destroy, inverse_of: :backend
 
   before_validation :normalize_base_url
