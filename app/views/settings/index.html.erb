@@ -57,10 +57,13 @@
               <% else %>
                 <%= language_model.name %>
               <% end %>
-              <small><%= language_model.backend.name %> · Added <%= time_ago_in_words(language_model.created_at) %> ago</small>
+              <small><%= language_model.backend.name %> · Refreshed <%= time_ago_in_words(language_model.refreshed_at) %> ago</small>
             </li>
           <% end %>
         </ul>
+        <% if @more_language_models_count.positive? %>
+          <p class="dashboard-more">...and <%= @more_language_models_count %> more.</p>
+        <% end %>
       <% end %>
     </section>
   </div>

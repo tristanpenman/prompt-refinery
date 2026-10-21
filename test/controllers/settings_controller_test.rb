@@ -33,10 +33,12 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", settings_backends_path, text: "View all"
   end
 
-  test "shows the three most recently added models after model families" do
+  test "shows the three most recently refreshed models after model families" do
     backend = Backend.ensure_system_default!
-    4.times do |index|
-      travel_to(index.days.ago) { LanguageModel.create!(backend: backend, name: "model-#{index}") }
+    # Created together in a shuffled order, so only refreshed_at decides the order shown.
+    [ 2, 0, 3, 1 ].each do |days_ago|
+      travel_to(10.days.ago) { LanguageModel.create!(backend: backend, name: "model-#{days_ago}") }
+        .update!(refreshed_at: days_ago.days.ago)
     end
 
     get settings_path
@@ -48,10 +50,22 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
       assert_select "a[href=?]", settings_models_path, text: "View all"
       assert_select "li", count: 3
       assert_select "li:nth-child(1) a[href=?]", playground_path(model: "model-0", backend_id: backend.id), text: "model-0"
-      assert_select "li:nth-child(1) small", text: "Local Ollama · Added less than a minute ago"
-      assert_select "li:nth-child(3) small", text: "Local Ollama · Added 2 days ago"
+      assert_select "li:nth-child(1) small", text: "Local Ollama · Refreshed less than a minute ago"
+      assert_select "li:nth-child(2)", text: /model-1/
+      assert_select "li:nth-child(3) small", text: "Local Ollama · Refreshed 2 days ago"
       assert_select "li", text: /model-3/, count: 0
+      assert_select "p.dashboard-more", text: "...and 1 more."
     end
+  end
+
+  test "doesn't mention more models when there are three or fewer" do
+    backend = Backend.ensure_system_default!
+    3.times { |index| LanguageModel.create!(backend: backend, name: "model-#{index}") }
+
+    get settings_path
+
+    assert_select "#models li", count: 3
+    assert_select "#models .dashboard-more", count: 0
   end
 
   test "doesn't link models on disabled backends to the playground" do
@@ -60,7 +74,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
     get settings_path
 
-    assert_select "#models li", text: /llama3:8b\s+Old server · Added/
+    assert_select "#models li", text: /llama3:8b\s+Old server · Refreshed/
     assert_select "#models li a", count: 0
   end
 
