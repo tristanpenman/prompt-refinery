@@ -16,8 +16,8 @@ The goal of this project is to build a small local-first application for prompt 
 
 ## CSV imports
 
-- Reject trials for provisional test suites in `Trial` validations, not only by hiding them from the trial form.
-- Make `TestSuiteRevision.capture!` refuse provisional test suites, so a failed trial can't leave a revision behind.
+- ~~Reject trials for provisional test suites in `Trial` validations, not only by hiding them from the trial form.~~
+- ~~Make `TestSuiteRevision.capture!` refuse provisional test suites. `Trial.create_for!` already rolls back the revision when a trial is rejected, so this only guards direct calls to `capture!`.~~
 - Prevent provisional test suites from being archived.
 - Refuse test case changes for provisional test suites in `TestCasesController`.
 - Redirect the revision history of a provisional test suite to its import preview.

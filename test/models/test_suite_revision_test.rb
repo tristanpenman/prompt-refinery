@@ -67,6 +67,27 @@ class TestSuiteRevisionTest < ActiveSupport::TestCase
     assert_not revision.test_case_revisions.first.update(values: { "topic" => "Changed" })
   end
 
+  test "cannot be captured for a provisional test suite" do
+    file = Rack::Test::UploadedFile.new(StringIO.new("topic\nRuby\n"), "text/csv", original_filename: "topics.csv")
+    test_suite = TestSuite.import_csv!(file: file, header_row: true)
+
+    error = assert_no_difference [ "TestSuiteRevision.count", "TestCaseRevision.count" ] do
+      assert_raises(ActiveRecord::RecordInvalid) { TestSuiteRevision.capture!(test_suite) }
+    end
+
+    assert_includes error.record.errors[:test_suite], "has not finished importing"
+  end
+
+  test "can be captured once an import is confirmed" do
+    file = Rack::Test::UploadedFile.new(StringIO.new("topic\nRuby\n"), "text/csv", original_filename: "topics.csv")
+    test_suite = TestSuite.import_csv!(file: file, header_row: true)
+    test_suite.confirm_import!(name: "Topics")
+
+    revision = TestSuiteRevision.capture!(test_suite)
+
+    assert_equal [ { "topic" => "Ruby" } ], revision.test_case_revisions.map(&:values)
+  end
+
   test "is destroyed with its test suite" do
     TestSuiteRevision.capture!(@test_suite)
 

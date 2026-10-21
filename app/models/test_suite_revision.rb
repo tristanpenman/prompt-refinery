@@ -36,6 +36,7 @@ class TestSuiteRevision < ApplicationRecord
   validates :version, numericality: { only_integer: true, greater_than: 0 }, uniqueness: { scope: :test_suite_id }
   validates :name, :content_digest, presence: true
   validates :content_digest, uniqueness: { scope: :test_suite_id }
+  validate :test_suite_is_confirmed, on: :create
 
   before_update :prevent_changes
 
@@ -74,6 +75,10 @@ class TestSuiteRevision < ApplicationRecord
   end
 
   private
+
+  def test_suite_is_confirmed
+    errors.add(:test_suite, "has not finished importing") if test_suite&.provisional?
+  end
 
   def prevent_changes
     errors.add(:base, "Test suite revisions are immutable")
