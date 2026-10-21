@@ -24,6 +24,25 @@ The app provides a dark mode theme:
 
 ![Dark Mode](./misc/dark.png)
 
+## Importing test suites from CSV
+
+A test suite can be created from a CSV file, such as a spreadsheet export. Each column becomes a variable and each row becomes a test case.
+
+1. On the **Test Suites** page, choose a file under **Import from CSV**. Leave **First row contains variable names** ticked if the file has a header row.
+2. Review the preview. It shows every test case that was read from the file, and lets you change the suite's name and its variable names before anything is final.
+3. Click **Create test suite**, or **Discard import** to delete the suite and the uploaded file.
+
+Until it is confirmed, an imported suite is _provisional_: it doesn't appear in test suite lists and can't be used for trials. After it is confirmed, the original file can be downloaded from the test suite's page. The download is the file as uploaded, so it doesn't reflect later edits to the suite.
+
+How files are read:
+
+- Headers become variable names. Characters other than letters, digits, and underscores are replaced with `_`, accents are removed, and duplicates get a numeric suffix, so `Ticket ID` becomes `Ticket_ID`. Without a header row, columns are named `column_1`, `column_2`, and so on.
+- Blank rows, and trailing columns with no header and no values, are ignored. Short rows are padded with empty values. A row with more values than there are columns is rejected.
+- Values can span several lines if they are quoted.
+- Files must be UTF-8 (a byte order mark is fine), at most 5 MB, with up to 50 columns and 1,000 test cases.
+
+The uploaded files are stored with Active Storage in `storage/`, next to the SQLite databases.
+
 ## Model runtime
 
 Prompt Refinery uses [Ollama](https://ollama.com/) to run models locally. Ollama will use a supported GPU when one is available and otherwise fall back to CPU execution.
