@@ -13,15 +13,14 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     ENV["RAILS_AUTH_TOKEN"] = @original_encrypted_token
   end
 
-  test "lists models returned by Ollama" do
-    models = [
-      {
-        "name" => "gemma3:4b",
-        "size" => 3_300_000_000,
-        "details" => { "family" => "gemma3", "parameter_size" => "4.3B", "quantization_level" => "Q4_K_M" }
-      }
-    ]
-    Settings::ModelsController.client_factory = client_factory(models:)
+  test "lists recorded models without contacting backends" do
+    Settings::ModelsController.client_factory = unreachable_client_factory
+    language_model = LanguageModel.create!(
+      backend: @backend,
+      name: "gemma3:4b",
+      size: 3_300_000_000,
+      details: { "family" => "gemma3", "parameter_size" => "4.3B", "quantization_level" => "Q4_K_M" }
+    )
 
     get settings_models_path
 
@@ -29,27 +28,45 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".models-page > header" do
       assert_select ".eyebrow", text: "Settings"
       assert_select "h1", text: "Models"
-      assert_select "p", text: "Models currently available from enabled inference backends."
+      assert_select "p", text: "Models found on inference backends. A model stays listed after it is removed from its backend."
     end
     assert_select "h2", text: "gemma3:4b"
     assert_select ".model-backend", text: "Backend: Local Ollama"
+    assert_select ".model-family", text: "Family: gemma3"
     assert_select "li", text: /gemma3 · 4.3B · Q4_K_M/
+    assert_select "li span", text: "3.07 GB"
     assert_select "a[href=?]", playground_path(model: "gemma3:4b", backend_id: @backend.id), text: "Select"
     assert_select "a[href=?]", evaluate_path(model: "gemma3:4b", backend_id: @backend.id), text: "Evaluate"
-    language_model = @backend.language_models.find_by!(name: "gemma3:4b")
-    assert_select ".model-family", text: "Family: gemma3"
+    assert_select "a[href=?]", edit_settings_model_path(language_model), text: "Edit"
+  end
+
+  test "shows a refresh panel above the models" do
+    get settings_models_path
+
+    assert_select ".models-page > header + section.model-refresh" do
+      assert_select "h2", text: "Refresh models"
+      assert_select "form[action=?][method=post] button", refresh_settings_models_path, text: "Refresh"
+    end
+    assert_select ".notice h2", text: "No models recorded"
+  end
+
+  test "marks models on disabled backends and doesn't offer to use them" do
+    disabled = Backend.create!(name: "Old server", base_url: "http://old.test:11434", enabled: false)
+    language_model = LanguageModel.create!(backend: disabled, name: "llama3:8b")
+
+    get settings_models_path
+
+    assert_select ".model-backend", text: /Backend: Old server\s+Disabled/
+    assert_select "a", text: "Select", count: 0
+    assert_select "a", text: "Evaluate", count: 0
     assert_select "a[href=?]", edit_settings_model_path(language_model), text: "Edit"
   end
 
   test "filters models by family" do
     edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
-    Settings::ModelsController.client_factory = changing_client_factory(
-      calls: Hash.new(0),
-      responses: {
-        @backend.id => [ { "name" => "gemma3:4b" }, { "name" => "llama3:8b" } ],
-        edge.id => [ { "name" => "gemma3:1b" } ]
-      }
-    )
+    LanguageModel.create!(backend: @backend, name: "gemma3:4b")
+    LanguageModel.create!(backend: @backend, name: "llama3:8b")
+    LanguageModel.create!(backend: edge, name: "gemma3:1b")
 
     get settings_models_path
 
@@ -72,7 +89,7 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "ignores an unknown family filter" do
-    Settings::ModelsController.client_factory = client_factory(models: [ { "name" => "gemma3:4b" } ])
+    LanguageModel.create!(backend: @backend, name: "gemma3:4b")
 
     get settings_models_path(family: "missing")
 
@@ -80,13 +97,91 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Clear", count: 0
   end
 
-  test "records discovered models once per backend" do
-    Settings::ModelsController.client_factory = client_factory(models: [ { "name" => "gemma3:4b" } ])
+  test "refresh records new models and their families from every enabled backend" do
+    edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
+    disabled = Backend.create!(name: "Disabled", base_url: "http://disabled.test:8080", enabled: false)
+    calls = Hash.new(0)
+    Settings::ModelsController.client_factory = changing_client_factory(calls:, responses: {
+      @backend.id => [
+        { "name" => "gemma3:4b", "size" => 3_300_000_000, "details" => { "parameter_size" => "4.3B" } },
+        { "name" => "qwen2.5:7b" }
+      ],
+      edge.id => [ { "name" => "gemma3:1b" } ]
+    })
+    LanguageModelFamily.create!(name: "gemma3")
 
-    get settings_models_path
-    get settings_models_path
+    assert_difference -> { LanguageModel.count } => 3, -> { LanguageModelFamily.count } => 1 do
+      post refresh_settings_models_path
+    end
 
-    assert_equal [ "gemma3:4b" ], @backend.language_models.pluck(:name)
+    assert_redirected_to settings_models_path
+    assert_equal "Checked 2 backends and found 3 models, including 3 new: gemma3:4b, qwen2.5:7b, and gemma3:1b.", flash[:notice]
+    assert_nil flash[:alert]
+    gemma = @backend.language_models.find_by!(name: "gemma3:4b")
+    assert_equal "gemma3", gemma.language_model_family.name
+    assert_equal 3_300_000_000, gemma.size
+    assert_equal({ "parameter_size" => "4.3B" }, gemma.details)
+    assert_equal "qwen2.5", @backend.language_models.find_by!(name: "qwen2.5:7b").language_model_family.name
+    assert_equal [ "gemma3:1b" ], edge.language_models.pluck(:name)
+    assert_not calls.key?(disabled.id)
+  end
+
+  test "refresh keeps models that are no longer available and updates known ones" do
+    family = LanguageModelFamily.create!(name: "Gemma")
+    known = LanguageModel.create!(backend: @backend, name: "gemma3:4b", language_model_family: family, size: 1)
+    removed = LanguageModel.create!(backend: @backend, name: "llama3:8b")
+    Settings::ModelsController.client_factory = client_factory(models: [ { "name" => "gemma3:4b", "size" => 2 } ])
+
+    assert_no_difference -> { LanguageModel.count } do
+      post refresh_settings_models_path
+    end
+
+    assert_equal "Checked 1 backend and found 1 model. No new models.", flash[:notice]
+    assert_equal 2, known.reload.size
+    assert_equal family, known.language_model_family
+    assert LanguageModel.exists?(removed.id)
+
+    follow_redirect!
+    assert_select "h2", text: "llama3:8b"
+  end
+
+  test "refresh reports backends that couldn't be checked and keeps the rest" do
+    edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
+    factory = Object.new
+    factory.define_singleton_method(:for) do |backend|
+      Object.new.tap do |client|
+        client.define_singleton_method(:models) do
+          raise Ollama::Client::Error, "connection refused" if backend == edge
+
+          [ { "name" => "local-model" } ]
+        end
+      end
+    end
+    Settings::ModelsController.client_factory = factory
+
+    post refresh_settings_models_path
+
+    assert_equal "Checked 1 backend and found 1 model, including 1 new: local-model.", flash[:notice]
+    assert_equal "Could not check RK3588: connection refused", flash[:alert]
+    assert @backend.language_models.exists?(name: "local-model")
+  end
+
+  test "refresh without enabled backends" do
+    @backend.update!(enabled: false)
+    Settings::ModelsController.client_factory = unreachable_client_factory
+
+    post refresh_settings_models_path
+
+    assert_redirected_to settings_models_path
+    assert_equal "There are no enabled backends to check.", flash[:alert]
+  end
+
+  test "refresh requires authentication" do
+    delete logout_path
+
+    post refresh_settings_models_path
+
+    assert_redirected_to login_path(return_to: refresh_settings_models_path)
   end
 
   test "edits a model's family" do
@@ -135,72 +230,16 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".form-error", text: /Language model family must exist/
   end
 
-  test "reports an Ollama connection error" do
-    Settings::ModelsController.client_factory = client_factory(error: "Could not connect to Ollama")
-
-    get settings_models_path
-
-    assert_response :success
-    assert_select "[role=alert]", text: /Local Ollama is unavailable.*Could not connect to Ollama/m
-  end
-
-  test "lists models from all enabled backends and refreshes them on every load" do
-    edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
-    disabled = Backend.create!(name: "Disabled", base_url: "http://disabled.test:8080", enabled: false)
-    calls = Hash.new(0)
-    responses = {
-      @backend.id => [ { "name" => "local-model" } ],
-      edge.id => [ { "name" => "edge-model" } ]
-    }
-    Settings::ModelsController.client_factory = changing_client_factory(calls:, responses:)
-
-    get settings_models_path
-
-    assert_select "h2", text: "local-model"
-    assert_select "h2", text: "edge-model"
-    assert_select ".model-backend", text: "Backend: Local Ollama"
-    assert_select ".model-backend", text: "Backend: RK3588"
-
-    responses[edge.id] = [ { "name" => "updated-edge-model" } ]
-    get settings_models_path
-
-    assert_select "h2", text: "updated-edge-model"
-    assert_select "h2", text: "edge-model", count: 0
-    assert_equal 2, calls[@backend.id]
-    assert_equal 2, calls[edge.id]
-    assert_not calls.key?(disabled.id)
-  end
-
-  test "keeps models from available backends when another backend fails" do
-    edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
-    factory = Object.new
-    factory.define_singleton_method(:for) do |backend|
-      Object.new.tap do |client|
-        client.define_singleton_method(:models) do
-          raise Ollama::Client::Error, "connection refused" if backend == edge
-
-          [ { "name" => "local-model" } ]
-        end
-      end
-    end
-    Settings::ModelsController.client_factory = factory
-
-    get settings_models_path
-
-    assert_select "h2", text: "local-model"
-    assert_select "[role=alert]", text: /RK3588 is unavailable.*connection refused/m
-  end
-
   private
 
-  def client_factory(models: nil, error: nil)
+  def client_factory(models:)
     client = Object.new
-    client.define_singleton_method(:models) do
-      raise Ollama::Client::Error, error if error
-
-      models
-    end
+    client.define_singleton_method(:models) { models }
     Object.new.tap { |factory| factory.define_singleton_method(:for) { |_backend| client } }
+  end
+
+  def unreachable_client_factory
+    Object.new.tap { |factory| factory.define_singleton_method(:for) { |_backend| raise "backends should not be contacted" } }
   end
 
   def changing_client_factory(calls:, responses:)

@@ -27,7 +27,9 @@ Rails.application.routes.draw do
 
   get "settings" => "settings#index", as: :settings
   namespace :settings do
-    resources :models, only: %i[index edit update]
+    resources :models, only: %i[index edit update] do
+      post :refresh, on: :collection
+    end
     resources :backends, only: %i[index create edit update destroy] do
       post :test_connection, on: :member
     end

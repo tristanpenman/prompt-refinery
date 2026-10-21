@@ -191,6 +191,18 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
 
 .model-list .model-family { margin-top: 0.25rem; }
 
+.model-list .model-backend .status {
+  margin: 0 0 0 0.4rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.model-refresh { margin-bottom: 2rem; }
+
+.model-refresh .primary-button { margin: 1rem 0 0; }
+
+.model-refresh + .model-list { margin-top: 0; }
+
 .model-filter {
   display: flex;
   flex-wrap: wrap;

@@ -5,8 +5,14 @@
   <header>
     <p class="eyebrow">Settings</p>
     <h1>Models</h1>
-    <p>Models currently available from enabled inference backends.</p>
+    <p>Models found on inference backends. A model stays listed after it is removed from its backend.</p>
   </header>
+
+  <section class="notice model-refresh">
+    <h2>Refresh models</h2>
+    <p>Check every enabled backend for models, and record any that are new.</p>
+    <%= button_to "Refresh", refresh_settings_models_path, class: "primary-button" %>
+  </section>
 
   <% if @families.any? %>
     <%= form_with url: settings_models_path, method: :get, class: "model-filter", role: "search" do |form| %>
@@ -21,39 +27,37 @@
     <% end %>
   <% end %>
 
-  <% @backend_errors.each do |error| %>
-    <section class="notice notice--error" role="alert">
-      <h2><%= error.backend.name %> is unavailable</h2>
-      <p><%= error.message %></p>
-    </section>
-  <% end %>
-
-  <% if @models.empty? %>
+  <% if @language_models.empty? %>
     <section class="notice">
-      <h2>No models installed</h2>
-      <p>Install a model on an enabled inference backend.</p>
+      <h2>No models recorded</h2>
+      <p>Install a model on an enabled inference backend, then refresh.</p>
     </section>
   <% else %>
     <ul class="model-list">
-      <% @models.each do |model| %>
+      <% @language_models.each do |language_model| %>
+        <% backend = language_model.backend %>
         <li>
-          <h2><%= model.fetch("name", "Unnamed model") %></h2>
-          <p class="model-backend">Backend: <%= model.fetch("backend").name %></p>
-          <% if model["language_model"] %>
-            <p class="model-family">Family: <%= model["language_model"].language_model_family.name %></p>
+          <h2><%= language_model.name %></h2>
+          <p class="model-backend">
+            Backend: <%= backend.name %>
+            <% unless backend.enabled? %>
+              <span class="status">Disabled</span>
+            <% end %>
+          </p>
+          <p class="model-family">Family: <%= language_model.language_model_family.name %></p>
+          <% details = language_model.details.values_at("family", "parameter_size", "quantization_level").compact %>
+          <% if details.any? %>
+            <p><%= details.join(" · ") %></p>
           <% end %>
-          <% if model["details"].present? %>
-            <p><%= [model.dig("details", "family"), model.dig("details", "parameter_size"), model.dig("details", "quantization_level")].compact.join(" · ") %></p>
-          <% end %>
-          <% if model["size"] %>
-            <span><%= number_to_human_size(model["size"]) %></span>
+          <% if language_model.size %>
+            <span><%= number_to_human_size(language_model.size) %></span>
           <% end %>
           <div class="model-actions">
-            <%= link_to "Select", playground_path(model: model["name"], backend_id: model.fetch("backend").id), class: "select-button" %>
-            <%= link_to "Evaluate", evaluate_path(model: model["name"], backend_id: model.fetch("backend").id), class: "secondary-button" %>
-            <% if model["language_model"] %>
-              <%= link_to "Edit", edit_settings_model_path(model["language_model"]), class: "secondary-button" %>
+            <% if backend.enabled? %>
+              <%= link_to "Select", playground_path(model: language_model.name, backend_id: backend.id), class: "select-button" %>
+              <%= link_to "Evaluate", evaluate_path(model: language_model.name, backend_id: backend.id), class: "secondary-button" %>
             <% end %>
+            <%= link_to "Edit", edit_settings_model_path(language_model), class: "secondary-button" %>
           </div>
         </li>
       <% end %>

@@ -4,7 +4,9 @@
 # Database name: primary
 #
 #  id                       :integer          not null, primary key
+#  details                  :json             not null
 #  name                     :string           not null
+#  size                     :bigint
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  backend_id               :integer          not null
