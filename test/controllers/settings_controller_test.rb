@@ -5,11 +5,9 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     @original_encrypted_token = ENV["RAILS_AUTH_TOKEN"]
     ENV["RAILS_AUTH_TOKEN"] = TokenAuthenticator.encrypt("test-token")
     post login_path, params: { token: "test-token" }
-    SettingsController.client_factory = client_factory(models: [])
   end
 
   teardown do
-    SettingsController.client_factory = Inference::Client
     ENV["RAILS_AUTH_TOKEN"] = @original_encrypted_token
   end
 
@@ -35,12 +33,11 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", settings_backends_path, text: "View all"
   end
 
-  test "shows the three most recent models after model families" do
+  test "shows the three most recently added models after model families" do
     backend = Backend.ensure_system_default!
-    models = 4.times.map do |index|
-      { "name" => "model-#{index}", "modified_at" => (Time.zone.now - index.days).iso8601 }
+    4.times do |index|
+      travel_to(index.days.ago) { LanguageModel.create!(backend: backend, name: "model-#{index}") }
     end
-    SettingsController.client_factory = client_factory(models:)
 
     get settings_path
 
@@ -50,47 +47,30 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
       assert_select "h2", text: "Models"
       assert_select "a[href=?]", settings_models_path, text: "View all"
       assert_select "li", count: 3
-      assert_select "a[href=?]", playground_path(model: "model-0", backend_id: backend.id), text: "model-0"
-      assert_select "a", text: "model-3", count: 0
-      assert_select "small", text: /Local Ollama · Updated /
+      assert_select "li:nth-child(1) a[href=?]", playground_path(model: "model-0", backend_id: backend.id), text: "model-0"
+      assert_select "li:nth-child(1) small", text: "Local Ollama · Added less than a minute ago"
+      assert_select "li:nth-child(3) small", text: "Local Ollama · Added 2 days ago"
+      assert_select "li", text: /model-3/, count: 0
     end
   end
 
-  test "refreshes models from every enabled backend on each load" do
-    local = Backend.ensure_system_default!
-    edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
-    calls = Hash.new(0)
-    responses = {
-      local.id => [ { "name" => "local-model", "modified_at" => 2.hours.ago.iso8601 } ],
-      edge.id => [ { "name" => "edge-model", "modified_at" => 1.hour.ago.iso8601 } ]
-    }
-    SettingsController.client_factory = changing_client_factory(calls:, responses:)
+  test "doesn't link models on disabled backends to the playground" do
+    disabled = Backend.create!(name: "Old server", base_url: "http://old.test:11434", enabled: false)
+    LanguageModel.create!(backend: disabled, name: "llama3:8b")
 
     get settings_path
 
-    assert_select "#models li", count: 2
-    assert_select "#models a", text: "local-model"
-    assert_select "#models a", text: "edge-model"
-
-    responses[edge.id] = [ { "name" => "edge-model-new", "modified_at" => Time.current.iso8601 } ]
-    get settings_path
-
-    assert_select "#models a", text: "edge-model-new"
-    assert_select "#models a", text: "edge-model", count: 0
-    assert_equal 2, calls[local.id]
-    assert_equal 2, calls[edge.id]
+    assert_select "#models li", text: /llama3:8b\s+Old server · Added/
+    assert_select "#models li a", count: 0
   end
 
-  test "still shows settings when a backend is unavailable" do
+  test "shows an empty models panel without contacting backends" do
     Backend.ensure_system_default!
-    SettingsController.client_factory = client_factory(error: "Could not connect to Ollama")
 
     get settings_path
 
-    assert_response :success
-    assert_select "#models [role=alert]", text: /Local Ollama: Could not connect to Ollama/
-    assert_select "#models p", text: "No models installed."
-    assert_select ".dashboard-panel h2", text: "Backends"
+    assert_select "#models p", text: "No models recorded. Refresh models to find them on your backends."
+    assert_select "#models p a[href=?]", settings_models_path, text: "Refresh models"
   end
 
   test "lists model families with their model counts" do
@@ -122,30 +102,5 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     get settings_path
 
     assert_redirected_to login_path(return_to: settings_path)
-  end
-
-  private
-
-  def client_factory(models: nil, error: nil)
-    client = Object.new
-    client.define_singleton_method(:models) do
-      raise Ollama::Client::Error, error if error
-
-      models
-    end
-    Object.new.tap { |factory| factory.define_singleton_method(:for) { |_backend| client } }
-  end
-
-  def changing_client_factory(calls:, responses:)
-    Object.new.tap do |factory|
-      factory.define_singleton_method(:for) do |backend|
-        Object.new.tap do |client|
-          client.define_singleton_method(:models) do
-            calls[backend.id] += 1
-            responses.fetch(backend.id)
-          end
-        end
-      end
-    end
   end
 end

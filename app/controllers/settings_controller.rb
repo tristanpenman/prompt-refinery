@@ -1,13 +1,6 @@
 class SettingsController < ApplicationController
-  class_attribute :client_factory, default: Inference::Client
-
   def index
-    catalog = Inference::ModelCatalog.new(client_factory:).call
-    @models = catalog.models
-      .sort_by { |model| model["modified_at"].to_s }
-      .reverse
-      .first(3)
-    @backend_errors = catalog.errors
+    @language_models = LanguageModel.includes(:backend).order(created_at: :desc, id: :desc).limit(3)
     @backends = Backend.order(system: :desc, name: :asc, id: :asc)
     @language_model_families = LanguageModelFamily
       .left_joins(:language_models)

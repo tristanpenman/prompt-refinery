@@ -46,22 +46,18 @@
 
     <section class="dashboard-panel" id="models">
       <header><h2>Models</h2><%= link_to "View all", settings_models_path %></header>
-      <% @backend_errors.each do |error| %>
-        <p class="form-error" role="alert"><%= error.backend.name %>: <%= error.message %></p>
-      <% end %>
-      <% if @models.empty? %>
-        <p>No models installed.</p>
+      <% if @language_models.empty? %>
+        <p>No models recorded. <%= link_to "Refresh models", settings_models_path %> to find them on your backends.</p>
       <% else %>
         <ul>
-          <% @models.each do |model| %>
+          <% @language_models.each do |language_model| %>
             <li>
-              <%= link_to model.fetch("name", "Unnamed model"), playground_path(model: model["name"], backend_id: model.fetch("backend").id) %>
-              <small>
-                <%= model.fetch("backend").name %>
-                <% if model["modified_at"] %>
-                  · Updated <%= time_ago_in_words(Time.zone.parse(model["modified_at"])) %> ago
-                <% end %>
-              </small>
+              <% if language_model.backend.enabled? %>
+                <%= link_to language_model.name, playground_path(model: language_model.name, backend_id: language_model.backend.id) %>
+              <% else %>
+                <%= language_model.name %>
+              <% end %>
+              <small><%= language_model.backend.name %> · Added <%= time_ago_in_words(language_model.created_at) %> ago</small>
             </li>
           <% end %>
         </ul>
