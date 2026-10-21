@@ -47,6 +47,7 @@ class Trial < ApplicationRecord
   validates :backend_name, :backend_base_url, presence: true
   validate :prompt_is_active, on: :create
   validate :test_suite_is_active, on: :create
+  validate :test_suite_is_confirmed, on: :create
   validate :test_suite_has_test_cases, on: :create
   validate :test_suite_provides_prompt_variables, on: :create
   validate :backend_is_enabled, on: :create
@@ -102,6 +103,10 @@ class Trial < ApplicationRecord
 
   def test_suite_is_active
     errors.add(:test_suite, "has been archived") if test_suite_revision&.test_suite&.archived_at?
+  end
+
+  def test_suite_is_confirmed
+    errors.add(:test_suite, "has not finished importing") if test_suite_revision&.test_suite&.provisional?
   end
 
   def test_suite_has_test_cases

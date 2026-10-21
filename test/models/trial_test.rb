@@ -93,6 +93,19 @@ class TrialTest < ActiveSupport::TestCase
     assert_includes error.record.errors[:test_suite], "has been archived"
   end
 
+  test "cannot be created for a provisional test suite" do
+    file = Rack::Test::UploadedFile.new(StringIO.new("topic\nRuby\n"), "text/csv", original_filename: "topics.csv")
+    test_suite = TestSuite.import_csv!(file: file, header_row: true)
+
+    error = assert_no_difference [ "Trial.count", "TestSuiteRevision.count" ] do
+      assert_raises(ActiveRecord::RecordInvalid) do
+        create_trial(prompt: @prompt, test_suite: test_suite)
+      end
+    end
+
+    assert_includes error.record.errors[:test_suite], "has not finished importing"
+  end
+
   test "cannot be created for an archived prompt" do
     @prompt.archive!
 
