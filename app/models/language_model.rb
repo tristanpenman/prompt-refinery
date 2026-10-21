@@ -6,6 +6,7 @@
 #  id                       :integer          not null, primary key
 #  details                  :json             not null
 #  name                     :string           not null
+#  refreshed_at             :datetime         not null
 #  size                     :bigint
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
@@ -28,6 +29,7 @@ class LanguageModel < ApplicationRecord
   belongs_to :language_model_family, inverse_of: :language_models
 
   before_validation :assign_derived_family, if: -> { language_model_family.nil? }
+  before_validation -> { self.refreshed_at ||= Time.current }, on: :create
   after_update -> { destroy_family_if_empty(language_model_family_id_before_last_save) },
     if: :saved_change_to_language_model_family_id?
   after_destroy -> { destroy_family_if_empty(language_model_family_id) }

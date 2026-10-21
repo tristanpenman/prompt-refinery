@@ -31,14 +31,18 @@ module Inference
 
     attr_reader :backends, :client_factory
 
-    # Creates a record for a newly discovered model and keeps the size and
-    # details current. The family is only derived for new records, so a family
-    # chosen in settings is kept.
+    # Creates a record for a newly discovered model, keeps the size and
+    # details current, and records when the model was last seen. The family is
+    # only derived for new records, so a family chosen in settings is kept.
     def record(backend, model)
       return if model["name"].blank?
 
       language_model = backend.language_models.find_or_initialize_by(name: model["name"])
-      language_model.assign_attributes(size: model["size"], details: model["details"].presence || {})
+      language_model.assign_attributes(
+        size: model["size"],
+        details: model["details"].presence || {},
+        refreshed_at: Time.current
+      )
       language_model if language_model.save
     end
   end

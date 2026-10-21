@@ -121,4 +121,12 @@ class LanguageModelTest < ActiveSupport::TestCase
     assert_not LanguageModelFamily.exists?(gemma.id)
     assert LanguageModelFamily.exists?(llama.id)
   end
+
+  test "is marked as refreshed when it is created" do
+    freeze_time do
+      language_model = LanguageModel.create!(backend: @backend, name: "gemma3:4b")
+
+      assert_equal Time.current, language_model.refreshed_at
+    end
+  end
 end

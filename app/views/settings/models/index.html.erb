@@ -52,6 +52,10 @@
           <% if language_model.size %>
             <span><%= number_to_human_size(language_model.size) %></span>
           <% end %>
+          <p class="model-refreshed">
+            Last refreshed
+            <time datetime="<%= language_model.refreshed_at.iso8601 %>" title="<%= language_model.refreshed_at.to_fs(:long) %>"><%= time_ago_in_words(language_model.refreshed_at) %> ago</time>
+          </p>
           <div class="model-actions">
             <% if backend.enabled? %>
               <%= link_to "Select", playground_path(model: language_model.name, backend_id: backend.id), class: "select-button" %>

@@ -35,6 +35,7 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".model-family", text: "Family: gemma3"
     assert_select "li", text: /gemma3 · 4.3B · Q4_K_M/
     assert_select "li span", text: "3.07 GB"
+    assert_select ".model-refreshed time[datetime=?]", language_model.refreshed_at.iso8601, text: "less than a minute ago"
     assert_select "a[href=?]", playground_path(model: "gemma3:4b", backend_id: @backend.id), text: "Select"
     assert_select "a[href=?]", evaluate_path(model: "gemma3:4b", backend_id: @backend.id), text: "Evaluate"
     assert_select "a[href=?]", edit_settings_model_path(language_model), text: "Edit"
@@ -128,8 +129,13 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
 
   test "refresh keeps models that are no longer available and updates known ones" do
     family = LanguageModelFamily.create!(name: "Gemma")
-    known = LanguageModel.create!(backend: @backend, name: "gemma3:4b", language_model_family: family, size: 1)
-    removed = LanguageModel.create!(backend: @backend, name: "llama3:8b")
+    known, removed = travel_to(3.days.ago) do
+      [
+        LanguageModel.create!(backend: @backend, name: "gemma3:4b", language_model_family: family, size: 1),
+        LanguageModel.create!(backend: @backend, name: "llama3:8b")
+      ]
+    end
+    removed_refreshed_at = removed.refreshed_at
     Settings::ModelsController.client_factory = client_factory(models: [ { "name" => "gemma3:4b", "size" => 2 } ])
 
     assert_no_difference -> { LanguageModel.count } do
@@ -139,10 +145,21 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Checked 1 backend and found 1 model. No new models.", flash[:notice]
     assert_equal 2, known.reload.size
     assert_equal family, known.language_model_family
-    assert LanguageModel.exists?(removed.id)
+    assert_in_delta Time.current, known.refreshed_at, 5.seconds
+    assert_equal removed_refreshed_at, removed.reload.refreshed_at
 
     follow_redirect!
-    assert_select "h2", text: "llama3:8b"
+    assert_select "li", text: /gemma3:4b.*Last refreshed\s+less than a minute ago/m
+    assert_select "li", text: /llama3:8b.*Last refreshed\s+3 days ago/m
+  end
+
+  test "refresh updates when a model was last seen even if nothing else changed" do
+    language_model = travel_to(1.day.ago) { LanguageModel.create!(backend: @backend, name: "gemma3:4b") }
+    Settings::ModelsController.client_factory = client_factory(models: [ { "name" => "gemma3:4b" } ])
+
+    post refresh_settings_models_path
+
+    assert_in_delta Time.current, language_model.reload.refreshed_at, 5.seconds
   end
 
   test "refresh reports backends that couldn't be checked and keeps the rest" do
