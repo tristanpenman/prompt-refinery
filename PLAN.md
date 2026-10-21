@@ -24,7 +24,7 @@ The goal of this project is to build a small local-first application for prompt 
 - Discard abandoned imports with a recurring job that destroys provisional test suites older than a day and purges their CSV files.
 - Link to the uploaded CSV file from the import preview.
 - Test that provisional test suites are hidden from the dashboard and the trial form.
-- Document CSV imports in the README, and optionally add a sample CSV to the seed demo data.
+- ~~Document CSV imports in the README, and optionally add a sample CSV to the seed demo data.~~
 - Update `notes/imports.md` to describe the implementation, including the redirect on upload errors and the header-row metadata stored with the CSV file.
 
 ## Trial runs

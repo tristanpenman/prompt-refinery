@@ -49,23 +49,31 @@ class TestSuite < ApplicationRecord
     parsed = TestSuiteCsv.parse(file, header_row: header_row)
     file.rewind
 
+    # Upload before saving. An attachment assigned from an IO is only uploaded
+    # when the transaction commits, and reloading the suite first (as
+    # TestSuiteRevision.capture! does) would silently discard it.
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: file,
+      filename: file.original_filename.presence || "import.csv",
+      content_type: "text/csv",
+      # Kept so the import preview can show how the columns were read.
+      metadata: { "header_row" => header_row, "headers" => parsed.headers }
+    )
+
     new(
       name: File.basename(file.original_filename.to_s, ".*").presence || "Imported test suite",
       variables: parsed.variables,
       provisional: true,
-      source_csv: {
-        io: file,
-        filename: file.original_filename.presence || "import.csv",
-        content_type: "text/csv",
-        # Kept so the import preview can show how the columns were read.
-        metadata: { "header_row" => header_row, "headers" => parsed.headers }
-      }
+      source_csv: blob
     ).tap do |test_suite|
       parsed.rows.each_with_index do |values, position|
         test_suite.test_cases.build(values: values, position: position)
       end
       test_suite.save!
     end
+  rescue ActiveRecord::RecordInvalid
+    blob&.purge
+    raise
   end
 
   # Finishes an import, applying the chosen name and any variable renames

@@ -1,0 +1,7 @@
+Ticket ID,Subject,Message
+4102,Invoice shows the wrong company name,"Our invoices for September and October are addressed to our old company name. We changed it in account settings in August. Our finance team can't process them until they're corrected."
+4117,Can't invite new team members,"When I click ""Invite"" nothing happens. No error, no email sent. I've tried Chrome and Firefox. We have three new starters on Monday who need access."
+4121,Export to PDF cuts off tables,"Any table wider than the page gets cut off on the right when I export a report to PDF. Exporting to Excel works fine.
+
+Is there a way to make it shrink to fit?"
+4130,Website down?,"Your status page says everything is fine but none of us can log in. We get a 502 error. This is affecting our whole team of 40 people."

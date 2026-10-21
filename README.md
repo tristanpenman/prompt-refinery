@@ -88,7 +88,7 @@ To load sample data for product demos, run:
 docker compose run --rm app bin/rails prompt_refinery:demo:reset
 ```
 
-This **deletes all existing data**, including prompts, test suites, trials, models, and backends. It then recreates the default Ollama backend and loads the demo data. You will be asked to type `yes` first. Set `CONFIRM=1` to skip the prompt, for example in scripts:
+This **deletes all existing data**, including prompts, test suites, trials, models, backends, and uploaded CSV files. It then recreates the default Ollama backend and loads the demo data. You will be asked to type `yes` first. Set `CONFIRM=1` to skip the prompt, for example in scripts:
 
 ```sh
 docker compose run --rm -e CONFIRM=1 app bin/rails prompt_refinery:demo:reset
@@ -97,12 +97,12 @@ docker compose run --rm -e CONFIRM=1 app bin/rails prompt_refinery:demo:reset
 The demo data includes:
 
 - **Prompts:** "Positive or negative?" (sentiment analysis), "Summarise customer issue", "Triage ticket priority", and one archived prompt. Each refined prompt has a loose first revision and an improved second one.
-- **Test suites:** "Product reviews", with a second revision that adds sarcastic and misleading reviews, and "Support tickets".
+- **Test suites:** "Product reviews", with a second revision that adds sarcastic and misleading reviews, "Support tickets", and "Helpdesk export", imported from [`db/seeds/files/helpdesk_export.csv`](db/seeds/files/helpdesk_export.csv) with its headers renamed to `ticket_id`, `subject`, and `message`. That file is also handy for trying the CSV import yourself.
 - **Trials:** completed trials comparing `llama3.2:3b`, `qwen2.5:7b`, and `gemma3:4b`, plus one failed trial for a model that isn't installed.
 
 The responses are pre-written, so loading the demo doesn't call Ollama. The demo models appear in the model list, but new trials on them need the models pulled into Ollama first.
 
-To change the demo data, edit [`db/seeds/demo.rb`](db/seeds/demo.rb) and run the task again. Test suites, prompts, and trials are defined in the order they would be created in the app. Each trial's `outputs` must have one entry per test case in its suite, in order. Use a string for a completed response or `{ error: "..." }` for a failed one.
+To change the demo data, edit [`db/seeds/demo.rb`](db/seeds/demo.rb) and run the task again. Test suites, prompts, and trials are defined in the order they would be created in the app. Each trial's `outputs` must have one entry per test case in its suite, in order. Use a string for a completed response or `{ error: "..." }` for a failed one. CSV files for imported test suites go in `db/seeds/files/`.
 
 ## Other commands
 

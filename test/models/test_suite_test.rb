@@ -100,6 +100,14 @@ class TestSuiteTest < ActiveSupport::TestCase
     assert_equal contents, test_suite.source_csv.download
   end
 
+  test "stores the CSV file even if the test suite is reloaded before the transaction commits" do
+    test_suite = TestSuite.transaction do
+      TestSuite.import_csv!(file: csv_upload("topic\nRuby\n"), header_row: true).tap(&:reload)
+    end
+
+    assert_equal "topic\nRuby\n", test_suite.source_csv.download
+  end
+
   test "imports a CSV file without a header row" do
     test_suite = TestSuite.import_csv!(file: csv_upload("Ruby,beginners\n"), header_row: false)
 

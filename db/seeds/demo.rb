@@ -5,6 +5,7 @@
 # The data tells a short story: a sentiment prompt and a support-ticket summary
 # prompt are each refined after a first, loose revision, then compared across
 # a few local models. One trial fails because its model was never pulled.
+# A batch of tickets is later imported from a helpdesk CSV export.
 
 require "active_support/testing/time_helpers"
 
@@ -197,6 +198,19 @@ class DemoSeeds
       "P2 – Account cancellation and data deletion request."
     ])
 
+    # Imported as the app's preview would, renaming the spreadsheet headers to template variables.
+    helpdesk = at(1.day.ago) { import_suite("helpdesk_export.csv") }
+    at(1.day.ago + 5.minutes) do
+      helpdesk.confirm_import!(name: "Helpdesk export", variable_names: helpdesk.variables.index_with(&:underscore))
+    end
+
+    run_trial(triage, helpdesk, "qwen2.5:7b", at: 1.day.ago + 10.minutes, pace: 1.6, outputs: [
+      "P3 – invoices need the company name corrected; finance can wait for reissued copies",
+      "P2 – invites are failing ahead of new starters joining on Monday",
+      "P3 – PDF export cuts off wide tables; exporting to Excel works",
+      "P1 – login returns 502 for a whole team while the status page shows no incident"
+    ])
+
     translate = at(7.days.ago) { Prompt.create!(name: "Translate review to English", template: TRANSLATE) }
     at(3.days.ago) { translate.archive! }
   end
@@ -209,6 +223,15 @@ class DemoSeeds
 
   def create_suite(name, variables, cases)
     TestSuite.create!(name: name, variables: variables).tap { |suite| add_cases(suite, cases) }
+  end
+
+  # Creates a provisional test suite from a CSV in db/seeds/files, as if it
+  # had been uploaded through the app.
+  def import_suite(filename)
+    File.open(Rails.root.join("db/seeds/files", filename)) do |io|
+      file = ActionDispatch::Http::UploadedFile.new(tempfile: io, filename: filename, type: "text/csv")
+      TestSuite.import_csv!(file: file, header_row: true)
+    end
   end
 
   def add_cases(suite, cases)
