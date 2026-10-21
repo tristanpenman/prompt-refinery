@@ -6,6 +6,7 @@
     <h1>Dashboard</h1>
     <p>Prompts, test suites, and evaluation trials at a glance.</p>
     <div class="dashboard-actions">
+      <%= link_to "Refinements", refinements_path %>
       <%= link_to "Settings", settings_path %>
       <%= button_to "Sign out", logout_path, method: :delete, class: "text-button" %>
     </div>

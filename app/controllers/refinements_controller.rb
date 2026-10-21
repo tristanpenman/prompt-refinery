@@ -1,0 +1,65 @@
+class RefinementsController < ApplicationController
+  def index
+    @refinement = PromptRefinement.new
+    load_index_data
+  end
+
+  def create
+    attributes = refinement_params
+    @selected = attributes.slice(:prompt_id, :test_suite_id, :student_language_model_id, :teacher_language_model_id)
+    @refinement = PromptRefinement.new(attributes.slice(:max_iterations, :target_agreement, :context_size, :instructions))
+    prompt = Prompt.active.find_by(id: attributes[:prompt_id])
+    test_suite = TestSuite.active.find_by(id: attributes[:test_suite_id])
+    student = available_language_models.find_by(id: attributes[:student_language_model_id])
+    teacher = available_language_models.find_by(id: attributes[:teacher_language_model_id])
+    @refinement.errors.add(:prompt, "must exist") unless prompt
+    @refinement.errors.add(:test_suite, "must exist") unless test_suite
+    @refinement.errors.add(:student_model, "must be a model on an enabled backend") unless student
+    @refinement.errors.add(:teacher_model, "must be a model on an enabled backend") unless teacher
+    return render_index_with_errors if @refinement.errors.any?
+
+    PromptRefinement.create_for!(
+      prompt: prompt,
+      test_suite: test_suite,
+      student: student,
+      teacher: teacher,
+      **attributes.slice(:max_iterations, :target_agreement, :context_size, :instructions).to_h.symbolize_keys
+    )
+    redirect_to refinements_path, notice: "Refinement created. Running refinements isn't available yet, so it will stay pending."
+  rescue ActiveRecord::RecordInvalid => error
+    @refinement.errors.merge!(error.record)
+    render_index_with_errors
+  end
+
+  private
+
+  def refinement_params
+    params.expect(refinement: %i[
+      prompt_id test_suite_id student_language_model_id teacher_language_model_id
+      max_iterations target_agreement context_size instructions
+    ])
+  end
+
+  def available_language_models
+    LanguageModel.joins(:backend).merge(Backend.enabled)
+  end
+
+  def render_index_with_errors
+    load_index_data
+    render :index, status: :unprocessable_content
+  end
+
+  def load_index_data
+    @refinements = PromptRefinement
+      .includes(:starting_prompt_revision, :test_suite_revision, :iterations)
+      .order(created_at: :desc, id: :desc)
+    @prompts = Prompt.active.where.missing(:refinement).order(:name, :id)
+    @test_suites = TestSuite.active.joins(:test_cases).distinct.order(:name, :id)
+    @model_options = available_language_models
+      .includes(:backend)
+      .order("backends.system DESC", "backends.name", "language_models.name")
+      .group_by(&:backend)
+      .to_h { |backend, language_models| [ backend.name, language_models.map { |language_model| [ language_model.name, language_model.id ] } ] }
+    @selected ||= {}
+  end
+end

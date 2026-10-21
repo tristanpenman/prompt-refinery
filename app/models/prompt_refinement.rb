@@ -115,6 +115,30 @@ class PromptRefinement < ApplicationRecord
     DEFAULT_INSTRUCTIONS_PATH.read
   end
 
+  # Records the current revisions of the prompt and test suite, and creates a
+  # working prompt for the refinement to write its revisions to. The student
+  # and teacher are LanguageModel records.
+  def self.create_for!(prompt:, test_suite:, student:, teacher:, **attributes)
+    transaction do
+      starting_prompt_revision = PromptRevision.capture!(prompt)
+      number = PromptRefinement.where(starting_prompt_revision: prompt.prompt_revisions).count + 1
+      working_prompt = Prompt.create!(name: "#{prompt.name} (refinement #{number})", template: starting_prompt_revision.template)
+
+      create!(
+        attributes.merge(
+          name: prompt.name,
+          prompt: working_prompt,
+          starting_prompt_revision: starting_prompt_revision,
+          test_suite_revision: TestSuiteRevision.capture!(test_suite),
+          student_backend: student.backend,
+          student_model: student.name,
+          teacher_backend: teacher.backend,
+          teacher_model: teacher.name
+        )
+      )
+    end
+  end
+
   private
 
   def snapshot_backends

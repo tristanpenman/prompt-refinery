@@ -1,0 +1,91 @@
+<% content_for :title, "Refinements · Prompt Refinery" %>
+
+<main class="resource-page">
+  <nav><%= link_to "← Dashboard", root_path %></nav>
+  <header>
+    <p class="eyebrow">Prompt Refinery</p>
+    <h1>Refinements</h1>
+    <p>Use a stronger teacher model to improve a prompt for a smaller student model.</p>
+  </header>
+
+  <section class="editor-card">
+    <h2>New Refinement</h2>
+    <%= render "shared/errors", record: @refinement %>
+    <% if @model_options.empty? %>
+      <p><%= link_to "Refresh models", settings_models_path %> on an enabled backend before starting a refinement.</p>
+    <% elsif @prompts.empty? %>
+      <p><%= link_to "Create a prompt", prompts_path %> before starting a refinement.</p>
+    <% elsif @test_suites.empty? %>
+      <p><%= link_to "Create a test suite with test cases", test_suites_path %> before starting a refinement.</p>
+    <% else %>
+      <%= form_with scope: :refinement, url: refinements_path do |form| %>
+        <%= form.label :prompt_id, "Prompt" %>
+        <%= form.collection_select :prompt_id, @prompts, :id, :name,
+          { prompt: "Choose a prompt", selected: @selected[:prompt_id] }, required: true %>
+        <%= form.label :test_suite_id, "Test suite" %>
+        <%= form.collection_select :test_suite_id, @test_suites, :id, :name,
+          { prompt: "Choose a test suite", selected: @selected[:test_suite_id] }, required: true %>
+        <%= form.label :student_language_model_id, "Student model" %>
+        <%= form.select :student_language_model_id,
+          grouped_options_for_select(@model_options, @selected[:student_language_model_id]),
+          { prompt: "Choose the model to improve the prompt for" }, required: true %>
+        <%= form.label :teacher_language_model_id, "Teacher model" %>
+        <%= form.select :teacher_language_model_id,
+          grouped_options_for_select(@model_options, @selected[:teacher_language_model_id]),
+          { prompt: "Choose a stronger model" }, required: true %>
+        <%= form.label :max_iterations, "Maximum iterations" %>
+        <%= form.number_field :max_iterations, value: @refinement.max_iterations,
+          min: PromptRefinement::MAX_ITERATIONS.min, max: PromptRefinement::MAX_ITERATIONS.max, required: true %>
+        <%= form.label :target_agreement, "Target agreement" %>
+        <%= form.number_field :target_agreement, value: @refinement.target_agreement, min: 0, max: 1, step: 0.05, required: true %>
+        <p class="field-hint">Stop once the teacher judges this share of the student's outputs to match its own (0 to 1).</p>
+        <%= form.label :context_size, "Teacher context size (tokens)" %>
+        <%= form.number_field :context_size, value: @refinement.context_size, min: 1, required: true %>
+        <%= form.label :instructions, "Teacher instructions" %>
+        <%= form.text_area :instructions, value: @refinement.instructions || PromptRefinement.default_instructions, rows: 16, required: true %>
+        <p class="field-hint">
+          Available variables:
+          <% PromptRefinement::INSTRUCTION_VARIABLES.each do |name| %><code>{{<%= name %>}}</code> <% end %>
+        </p>
+        <%= form.submit "Create refinement" %>
+      <% end %>
+    <% end %>
+  </section>
+
+  <section class="resource-list">
+    <h2>Refinements</h2>
+    <% if @refinements.empty? %>
+      <p>No refinements yet.</p>
+    <% else %>
+      <table>
+        <thead>
+          <tr>
+            <th>Prompt</th>
+            <th>Test suite</th>
+            <th>Student</th>
+            <th>Teacher</th>
+            <th>Status</th>
+            <th>Iterations</th>
+            <th>Best agreement</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @refinements.each do |refinement| %>
+            <% best_agreement = refinement.iterations.filter_map(&:agreement).max %>
+            <tr>
+              <td><%= refinement.starting_prompt_revision.name %> r<%= refinement.starting_prompt_revision.version %></td>
+              <td><%= refinement.test_suite_revision.name %> r<%= refinement.test_suite_revision.version %></td>
+              <td><%= refinement.student_model %> <small>(<%= refinement.student_backend_name %>)</small></td>
+              <td><%= refinement.teacher_model %> <small>(<%= refinement.teacher_backend_name %>)</small></td>
+              <td><span class="status status--<%= refinement.status %>"><%= refinement.status.humanize %></span></td>
+              <td><%= refinement.iterations.size %> of <%= refinement.max_iterations %></td>
+              <td><%= best_agreement ? number_to_percentage(best_agreement * 100, precision: 0) : "N/A" %></td>
+              <td><time datetime="<%= refinement.created_at.iso8601 %>"><%= time_ago_in_words(refinement.created_at) %> ago</time></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </section>
+</main>

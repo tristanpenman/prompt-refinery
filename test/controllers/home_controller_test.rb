@@ -43,6 +43,13 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select ".dashboard-panel:nth-child(1) small", text: /^Updated /
   end
 
+  test "links to refinements above settings" do
+    get root_path
+
+    assert_select ".dashboard-actions a:nth-child(1)[href=?]", refinements_path, text: "Refinements"
+    assert_select ".dashboard-actions a:nth-child(2)[href=?]", settings_path, text: "Settings"
+  end
+
   test "does not show models" do
     get root_path
 
