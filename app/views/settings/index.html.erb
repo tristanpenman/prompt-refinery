@@ -45,9 +45,9 @@
     </section>
 
     <section class="dashboard-panel" id="models">
-      <header><h2>Models</h2><%= link_to "View all", settings_models_path %></header>
+      <header><h2>Available Models</h2><%= link_to "View all", settings_models_path %></header>
       <% if @language_models.empty? %>
-        <p>No models recorded. <%= link_to "Refresh models", settings_models_path %> to find them on your backends.</p>
+        <p>No available models. <%= link_to "Refresh models", settings_models_path %> to find them on your backends.</p>
       <% else %>
         <ul>
           <% @language_models.each do |language_model| %>

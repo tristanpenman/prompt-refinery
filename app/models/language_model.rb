@@ -37,6 +37,8 @@ class LanguageModel < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { scope: :backend_id }
 
+  scope :available, -> { where(available: true) }
+
   def language_model_family_name
     language_model_family&.name
   end

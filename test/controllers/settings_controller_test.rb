@@ -46,7 +46,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".dashboard-panel:nth-child(2)#model-families"
     assert_select ".dashboard-panel:nth-child(3)#models" do
-      assert_select "h2", text: "Models"
+      assert_select "h2", text: "Available Models"
       assert_select "a[href=?]", settings_models_path, text: "View all"
       assert_select "li", count: 3
       assert_select "li:nth-child(1) a[href=?]", playground_path(model: "model-0", backend_id: backend.id), text: "model-0"
@@ -78,12 +78,33 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#models li a", count: 0
   end
 
+  test "only shows available models" do
+    backend = Backend.ensure_system_default!
+    LanguageModel.create!(backend: backend, name: "gemma3:4b")
+    3.times { |index| LanguageModel.create!(backend: backend, name: "removed-#{index}", available: false) }
+
+    get settings_path
+
+    assert_select "#models li", count: 1
+    assert_select "#models li", text: /gemma3:4b/
+    assert_select "#models .dashboard-more", count: 0
+  end
+
+  test "shows an empty models panel when no models are available" do
+    LanguageModel.create!(backend: Backend.ensure_system_default!, name: "gemma3:4b", available: false)
+
+    get settings_path
+
+    assert_select "#models li", count: 0
+    assert_select "#models p", text: "No available models. Refresh models to find them on your backends."
+  end
+
   test "shows an empty models panel without contacting backends" do
     Backend.ensure_system_default!
 
     get settings_path
 
-    assert_select "#models p", text: "No models recorded. Refresh models to find them on your backends."
+    assert_select "#models p", text: "No available models. Refresh models to find them on your backends."
     assert_select "#models p a[href=?]", settings_models_path, text: "Refresh models"
   end
 
