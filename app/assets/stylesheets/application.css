@@ -155,10 +155,22 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
   text-transform: uppercase;
 }
 
+.model-group { margin: 2rem 0 0; }
+
+.model-group > h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.model-group > p {
+  margin: -0.5rem 0 1rem;
+  color: var(--color-muted);
+}
+
 .model-list {
   display: grid;
   gap: 1rem;
-  margin: 2rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -171,7 +183,7 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
   background: var(--color-surface);
 }
 
-.model-list h2,
+.model-list h3,
 .notice h2 {
   margin: 0;
   font-size: 1.1rem;
@@ -201,7 +213,7 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
 
 .model-refresh .primary-button { margin: 1rem 0 0; }
 
-.model-refresh + .model-list { margin-top: 0; }
+.model-refresh + .model-group { margin-top: 0; }
 
 .model-filter {
   display: flex;
@@ -229,7 +241,7 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
   cursor: pointer;
 }
 
-.model-filter + .model-list { margin-top: 0; }
+.model-filter + .model-group { margin-top: 0; }
 
 .field-hint {
   margin: -0.6rem 0 1rem;

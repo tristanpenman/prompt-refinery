@@ -7,11 +7,12 @@ module Settings
     def index
       @families = LanguageModelFamily.where(id: LanguageModel.select(:language_model_family_id)).order(:name)
       @family = @families.find_by(id: params[:family])
-      @language_models = LanguageModel
+      language_models = LanguageModel
         .includes(:backend, :language_model_family)
         .joins(:backend)
         .order("backends.system DESC", "backends.name", "language_models.name", "language_models.id")
-      @language_models = @language_models.where(language_model_family: @family) if @family
+      language_models = language_models.where(language_model_family: @family) if @family
+      @available_models, @unavailable_models = language_models.partition(&:available?)
     end
 
     def refresh

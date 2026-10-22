@@ -1,0 +1,29 @@
+<% backend = language_model.backend %>
+<li>
+  <h3><%= language_model.name %></h3>
+  <p class="model-backend">
+    Backend: <%= backend.name %>
+    <% unless backend.enabled? %>
+      <span class="status">Disabled</span>
+    <% end %>
+  </p>
+  <p class="model-family">Family: <%= language_model.language_model_family.name %></p>
+  <% details = language_model.details.values_at("family", "parameter_size", "quantization_level").compact %>
+  <% if details.any? %>
+    <p><%= details.join(" · ") %></p>
+  <% end %>
+  <% if language_model.size %>
+    <span><%= number_to_human_size(language_model.size) %></span>
+  <% end %>
+  <p class="model-refreshed">
+    Last refreshed
+    <time datetime="<%= language_model.refreshed_at.iso8601 %>" title="<%= language_model.refreshed_at.to_fs(:long) %>"><%= time_ago_in_words(language_model.refreshed_at) %> ago</time>
+  </p>
+  <div class="model-actions">
+    <% if language_model.available? && backend.enabled? %>
+      <%= link_to "Select", playground_path(model: language_model.name, backend_id: backend.id), class: "select-button" %>
+      <%= link_to "Evaluate", evaluate_path(model: language_model.name, backend_id: backend.id), class: "secondary-button" %>
+    <% end %>
+    <%= link_to "Edit", edit_settings_model_path(language_model), class: "secondary-button" %>
+  </div>
+</li>

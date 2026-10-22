@@ -28,9 +28,9 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".models-page > header" do
       assert_select ".eyebrow", text: "Settings"
       assert_select "h1", text: "Models"
-      assert_select "p", text: "Models found on inference backends. A model stays listed after it is removed from its backend."
+      assert_select "p", text: "Models found on inference backends. A model stays listed as unavailable after it is removed from its backend."
     end
-    assert_select "h2", text: "gemma3:4b"
+    assert_select "h3", text: "gemma3:4b"
     assert_select ".model-backend", text: "Backend: Local Ollama"
     assert_select ".model-family", text: "Family: gemma3"
     assert_select "li", text: /gemma3 · 4.3B · Q4_K_M/
@@ -63,6 +63,40 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_settings_model_path(language_model), text: "Edit"
   end
 
+  test "groups unavailable models beneath available ones and only offers to edit them" do
+    available = LanguageModel.create!(backend: @backend, name: "gemma3:4b")
+    unavailable = LanguageModel.create!(backend: @backend, name: "llama3:8b", available: false)
+
+    get settings_models_path
+
+    assert_select ".model-group", count: 2
+    assert_select ".model-group:first-of-type" do
+      assert_select "h2", text: "Available"
+      assert_select ".model-list li h3", text: "gemma3:4b"
+      assert_select ".model-list li", count: 1
+      assert_select "a[href=?]", playground_path(model: "gemma3:4b", backend_id: @backend.id), text: "Select"
+      assert_select "a[href=?]", evaluate_path(model: "gemma3:4b", backend_id: @backend.id), text: "Evaluate"
+      assert_select "a[href=?]", edit_settings_model_path(available), text: "Edit"
+    end
+    assert_select ".model-group:last-of-type" do
+      assert_select "h2", text: "Unavailable"
+      assert_select ".model-list li h3", text: "llama3:8b"
+      assert_select ".model-list li", count: 1
+      assert_select "a", text: "Select", count: 0
+      assert_select "a", text: "Evaluate", count: 0
+      assert_select "a[href=?]", edit_settings_model_path(unavailable), text: "Edit"
+    end
+  end
+
+  test "leaves out the unavailable group when every model is available" do
+    LanguageModel.create!(backend: @backend, name: "gemma3:4b")
+
+    get settings_models_path
+
+    assert_select ".model-group", count: 1
+    assert_select ".model-group h2", text: "Available"
+  end
+
   test "filters models by family" do
     edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
     LanguageModel.create!(backend: @backend, name: "gemma3:4b")
@@ -82,9 +116,9 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     get settings_models_path(family: gemma.id)
 
     assert_select ".model-list li", count: 2
-    assert_select "h2", text: "gemma3:4b"
-    assert_select "h2", text: "gemma3:1b"
-    assert_select "h2", text: "llama3:8b", count: 0
+    assert_select "h3", text: "gemma3:4b"
+    assert_select "h3", text: "gemma3:1b"
+    assert_select "h3", text: "llama3:8b", count: 0
     assert_select "select[name=family] option[selected][value=?]", gemma.id.to_s
     assert_select "a[href=?]", settings_models_path, text: "Clear"
   end
