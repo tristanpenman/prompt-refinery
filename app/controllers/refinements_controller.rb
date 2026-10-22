@@ -4,6 +4,15 @@ class RefinementsController < ApplicationController
     load_index_data
   end
 
+  def show
+    @refinement = PromptRefinement
+      .includes(:prompt, :starting_prompt_revision, :reference_trial, test_suite_revision: :test_suite_revision_cases,
+        iterations: %i[prompt_revision student_trial])
+      .find(params[:id])
+    # Case evaluations are keyed by test suite revision case id; number them as the trial pages do.
+    @case_numbers = @refinement.test_suite_revision.test_suite_revision_cases.each.with_index(1).to_h { |test_case, number| [ test_case.id.to_s, number ] }
+  end
+
   def create
     attributes = refinement_params
     @selected = attributes.slice(:prompt_id, :test_suite_id, :student_language_model_id, :teacher_language_model_id)
@@ -51,7 +60,7 @@ class RefinementsController < ApplicationController
 
   def load_index_data
     @refinements = PromptRefinement
-      .includes(:starting_prompt_revision, :test_suite_revision, :iterations)
+      .includes(:starting_prompt_revision, :test_suite_revision)
       .order(created_at: :desc, id: :desc)
     @prompts = Prompt.active.where.missing(:refinement).order(:name, :id)
     @test_suites = TestSuite.active.joins(:test_cases).distinct.order(:name, :id)

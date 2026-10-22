@@ -65,23 +65,20 @@
             <th>Student</th>
             <th>Teacher</th>
             <th>Status</th>
-            <th>Iterations</th>
-            <th>Best agreement</th>
             <th>Created</th>
+            <th><span class="visually-hidden">Actions</span></th>
           </tr>
         </thead>
         <tbody>
           <% @refinements.each do |refinement| %>
-            <% best_agreement = refinement.iterations.filter_map(&:agreement).max %>
             <tr>
               <td><%= refinement.starting_prompt_revision.name %> r<%= refinement.starting_prompt_revision.version %></td>
               <td><%= refinement.test_suite_revision.name %> r<%= refinement.test_suite_revision.version %></td>
               <td><%= refinement.student_model %> <small>(<%= refinement.student_backend_name %>)</small></td>
               <td><%= refinement.teacher_model %> <small>(<%= refinement.teacher_backend_name %>)</small></td>
               <td><span class="status status--<%= refinement.status %>"><%= refinement.status.humanize %></span></td>
-              <td><%= refinement.iterations.size %> of <%= refinement.max_iterations %></td>
-              <td><%= best_agreement ? number_to_percentage(best_agreement * 100, precision: 0) : "N/A" %></td>
               <td><time datetime="<%= refinement.created_at.iso8601 %>"><%= time_ago_in_words(refinement.created_at) %> ago</time></td>
+              <td><%= link_to "Manage", refinement_path(refinement), class: "secondary-button" %></td>
             </tr>
           <% end %>
         </tbody>

@@ -78,16 +78,84 @@ class RefinementsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0.9, refinement.target_agreement
   end
 
-  test "lists existing refinements" do
+  test "lists existing refinements with a link to manage them" do
     refinement = create_refinement
-    revision = PromptRevision.capture!(refinement.prompt)
-    refinement.iterations.create!(number: 1, prompt_revision: revision, agreement: 0.5)
 
     get refinements_path
 
+    assert_select ".resource-list th", text: "Iterations", count: 0
+    assert_select ".resource-list th", text: "Best agreement", count: 0
     assert_select ".resource-list tbody tr", count: 1
     assert_select ".resource-list tbody tr",
-      text: /Explain r1\s+Topics r1\s+llama3.2:3b \(Local Ollama\)\s+qwen2.5:7b \(Local Ollama\)\s+Pending\s+1 of 3\s+50%/
+      text: /Explain r1\s+Topics r1\s+llama3.2:3b \(Local Ollama\)\s+qwen2.5:7b \(Local Ollama\)\s+Pending\s+less than a minute ago\s+Manage/
+    assert_select ".resource-list tbody tr a[href=?]", refinement_path(refinement), text: "Manage"
+  end
+
+  test "shows a refinement's details" do
+    refinement = create_refinement
+
+    get refinement_path(refinement)
+
+    assert_response :success
+    assert_select "h1", text: /Explain\s+Pending/
+    assert_select ".refinement-details" do
+      assert_select "a[href=?]", prompt_path(@prompt), text: "Explain"
+      assert_select "a[href=?]", prompt_path(refinement.prompt), text: "Explain (refinement 1)"
+      assert_select "a[href=?]", test_suite_path(@test_suite), text: "Topics"
+      assert_select "dd", text: "llama3.2:3b (Local Ollama)"
+      assert_select "dd", text: "qwen2.5:7b (Local Ollama)"
+      assert_select "dd", text: "Not run yet"
+      assert_select "dd", text: "3"
+      assert_select "dd", text: "100%"
+      assert_select "dd", text: "16,384 tokens"
+      assert_select "details summary", text: "Teacher instructions"
+    end
+    assert_select ".refinement-iterations p", text: "No iterations yet."
+  end
+
+  test "shows the results of each iteration" do
+    refinement = create_refinement
+    test_cases = refinement.test_suite_revision.test_suite_revision_cases.to_a
+    revision = PromptRevision.capture!(refinement.prompt)
+    refinement.iterations.create!(
+      number: 1,
+      prompt_revision: revision,
+      status: "completed",
+      agreement: 0.5,
+      summary: "Too verbose.",
+      change_summary: "Asked for one sentence.",
+      proposed_template: "Explain {{topic}} in one sentence",
+      case_evaluations: test_cases.each_with_index.to_h { |test_case, index|
+        [ test_case.id.to_s, { "verdict" => index.zero? ? "match" : "miss", "notes" => "Note #{index + 1}" } ]
+      }
+    )
+    refinement.iterations.create!(number: 2, prompt_revision: revision, status: "failed", error: "Teacher reply was not JSON")
+
+    get refinement_path(refinement)
+
+    assert_select ".refinement-iterations article", count: 2
+    assert_select ".refinement-iterations article:nth-of-type(1)" do
+      assert_select "h3", text: "Iteration 1"
+      assert_select ".status--completed", text: "Completed"
+      assert_select "p", text: /Agreement: 50%/
+      assert_select "p", text: /Prompt: r#{revision.version}/
+      assert_select ".result-content", text: "Too verbose."
+      assert_select ".result-content", text: "Asked for one sentence."
+      assert_select ".case-evaluations li", count: test_cases.size
+      assert_select ".case-evaluations li:first-child", text: /Test case 1\s+Match\s+Note 1/
+      assert_select "details summary", text: "Proposed prompt"
+    end
+    assert_select ".refinement-iterations article:nth-of-type(2)" do
+      assert_select "h3", text: "Iteration 2"
+      assert_select "p", text: /Agreement: N\/A/
+      assert_select ".form-error", text: "Teacher reply was not JSON"
+    end
+  end
+
+  test "shows a missing refinement as not found" do
+    get refinement_path(id: 0)
+
+    assert_response :not_found
   end
 
   test "shows errors when the refinement can't be created" do

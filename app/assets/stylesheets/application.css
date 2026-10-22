@@ -722,6 +722,37 @@ h1 .status { vertical-align: middle; }
 .status--failed { color: var(--color-alert); background: var(--color-alert-bg); }
 .status--provisional { color: var(--color-warning); background: var(--color-warning-bg); }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.refinement-details dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0;
+}
+
+.refinement-details dt { font-weight: 600; }
+.refinement-details dd { margin: 0; }
+.refinement-details details { margin-top: 1rem; }
+
+.case-evaluations {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.case-evaluations li { margin: 0.4rem 0; }
+
+.status--match { color: var(--color-success); background: var(--color-success-bg); }
+.status--partial { color: var(--color-warning); background: var(--color-warning-bg); }
+.status--miss { color: var(--color-alert); background: var(--color-alert-bg); }
+
 .import-preview td { white-space: pre-line; vertical-align: top; }
 
 .trial-comparisons > h2 { margin-top: 0; }

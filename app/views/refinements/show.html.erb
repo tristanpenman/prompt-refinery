@@ -1,0 +1,123 @@
+<% content_for :title, "#{@refinement.name} · Refinements · Prompt Refinery" %>
+
+<main class="trials-page">
+  <nav><%= link_to "← Refinements", refinements_path %></nav>
+  <header>
+    <p class="eyebrow">Refinement #<%= @refinement.id %></p>
+    <h1><%= @refinement.name %> <span class="status status--<%= @refinement.status %>"><%= @refinement.status.humanize %></span></h1>
+  </header>
+
+  <section class="editor-card refinement-details">
+    <h2>Refinement details</h2>
+    <dl>
+      <dt>Prompt</dt>
+      <dd><%= link_to @refinement.starting_prompt_revision.name, @refinement.starting_prompt_revision.prompt %> r<%= @refinement.starting_prompt_revision.version %></dd>
+      <dt>Working prompt</dt>
+      <dd><%= link_to @refinement.prompt.name, @refinement.prompt %></dd>
+      <dt>Test suite</dt>
+      <dd><%= link_to @refinement.test_suite_revision.name, @refinement.test_suite_revision.test_suite %> r<%= @refinement.test_suite_revision.version %></dd>
+      <dt>Student</dt>
+      <dd><%= @refinement.student_model %> <small>(<%= @refinement.student_backend_name %>)</small></dd>
+      <dt>Teacher</dt>
+      <dd><%= @refinement.teacher_model %> <small>(<%= @refinement.teacher_backend_name %>)</small></dd>
+      <dt>Reference trial</dt>
+      <dd><%= @refinement.reference_trial ? link_to("Trial ##{@refinement.reference_trial.id}", @refinement.reference_trial) : "Not run yet" %></dd>
+      <dt>Maximum iterations</dt>
+      <dd><%= @refinement.max_iterations %></dd>
+      <dt>Target agreement</dt>
+      <dd><%= number_to_percentage(@refinement.target_agreement * 100, precision: 0) %></dd>
+      <dt>Teacher context size</dt>
+      <dd><%= number_with_delimiter(@refinement.context_size) %> tokens</dd>
+      <% if @refinement.stop_reason %>
+        <dt>Stop reason</dt>
+        <dd><%= @refinement.stop_reason.humanize %></dd>
+      <% end %>
+      <dt>Created</dt>
+      <dd><time datetime="<%= @refinement.created_at.iso8601 %>"><%= @refinement.created_at.to_fs(:long) %></time></dd>
+      <% if @refinement.started_at %>
+        <dt>Started</dt>
+        <dd><time datetime="<%= @refinement.started_at.iso8601 %>"><%= @refinement.started_at.to_fs(:long) %></time></dd>
+      <% end %>
+      <% if @refinement.completed_at %>
+        <dt>Completed</dt>
+        <dd><time datetime="<%= @refinement.completed_at.iso8601 %>"><%= @refinement.completed_at.to_fs(:long) %></time></dd>
+      <% end %>
+    </dl>
+    <details>
+      <summary>Teacher instructions</summary>
+      <div class="result-content"><%= simple_format(@refinement.instructions) %></div>
+    </details>
+  </section>
+
+  <section class="refinement-iterations">
+    <h2>Iterations</h2>
+    <% if @refinement.iterations.empty? %>
+      <p>No iterations yet.</p>
+    <% else %>
+      <% @refinement.iterations.each do |iteration| %>
+        <article class="evaluation-result" id="<%= dom_id(iteration) %>">
+          <h3>Iteration <%= iteration.number %></h3>
+          <p>
+            <span class="status status--<%= iteration.status %>"><%= iteration.status.humanize %></span>
+            Agreement: <%= iteration.agreement ? number_to_percentage(iteration.agreement * 100, precision: 0) : "N/A" %>
+          </p>
+          <p>
+            Prompt: r<%= iteration.prompt_revision.version %>
+            <% if iteration.student_trial %>
+              · Student trial: <%= link_to "Trial ##{iteration.student_trial.id}", iteration.student_trial %>
+            <% end %>
+          </p>
+          <% if iteration.error? %>
+            <p class="form-error" role="alert"><%= iteration.error %></p>
+          <% end %>
+          <% if iteration.summary? %>
+            <section class="response-prompt">
+              <h4>Summary</h4>
+              <div class="result-content"><%= simple_format(iteration.summary) %></div>
+            </section>
+          <% end %>
+          <% if iteration.case_evaluations.any? %>
+            <section class="response-prompt">
+              <h4>Test cases</h4>
+              <ul class="case-evaluations">
+                <% iteration.case_evaluations.sort_by { |case_id, _| @case_numbers.fetch(case_id, Float::INFINITY) }.each do |case_id, evaluation| %>
+                  <li>
+                    Test case <%= @case_numbers.fetch(case_id, "?") %>
+                    <span class="status status--<%= evaluation["verdict"] %>"><%= evaluation["verdict"].humanize %></span>
+                    <% if evaluation["notes"].present? %>
+                      <%= evaluation["notes"] %>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            </section>
+          <% end %>
+          <% if iteration.change_summary? %>
+            <section class="response-prompt">
+              <h4>Changes</h4>
+              <div class="result-content"><%= simple_format(iteration.change_summary) %></div>
+            </section>
+          <% end %>
+          <% if iteration.proposed_template? %>
+            <details>
+              <summary>Proposed prompt</summary>
+              <div class="result-content"><%= simple_format(iteration.proposed_template) %></div>
+            </details>
+          <% end %>
+          <% if iteration.evaluation_prompt? %>
+            <details>
+              <summary>Evaluation request</summary>
+              <div class="result-content"><%= simple_format(iteration.evaluation_prompt) %></div>
+            </details>
+          <% end %>
+          <% if iteration.evaluation_response? %>
+            <details>
+              <summary>Evaluation response</summary>
+              <div class="result-content"><%= simple_format(iteration.evaluation_response) %></div>
+            </details>
+          <% end %>
+        </article>
+      <% end %>
+    <% end %>
+  </section>
+</main>
