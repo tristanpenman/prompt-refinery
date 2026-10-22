@@ -1,3 +1,7 @@
 services:
   ollama:
+    environment:
+      OLLAMA_CONTEXT_LENGTH: "16384"
+      OLLAMA_FLASH_ATTENTION: "1"
+      OLLAMA_KV_CACHE_TYPE: q8_0
     gpus: all
