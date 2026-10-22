@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_050100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_010000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_050100) do
     t.bigint "size"
     t.json "details", default: {}, null: false
     t.datetime "refreshed_at", null: false
+    t.boolean "available", default: true, null: false
     t.index ["backend_id", "name"], name: "index_language_models_on_backend_id_and_name", unique: true
     t.index ["backend_id"], name: "index_language_models_on_backend_id"
     t.index ["language_model_family_id"], name: "index_language_models_on_language_model_family_id"

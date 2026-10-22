@@ -4,6 +4,7 @@
 # Database name: primary
 #
 #  id                       :integer          not null, primary key
+#  available                :boolean          default(TRUE), not null
 #  details                  :json             not null
 #  name                     :string           not null
 #  refreshed_at             :datetime         not null

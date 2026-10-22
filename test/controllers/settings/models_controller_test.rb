@@ -146,7 +146,9 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, known.reload.size
     assert_equal family, known.language_model_family
     assert_in_delta Time.current, known.refreshed_at, 5.seconds
+    assert known.available
     assert_equal removed_refreshed_at, removed.reload.refreshed_at
+    assert_not removed.available
 
     follow_redirect!
     assert_select "li", text: /gemma3:4b.*Last refreshed\s+less than a minute ago/m
@@ -160,6 +162,15 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     post refresh_settings_models_path
 
     assert_in_delta Time.current, language_model.reload.refreshed_at, 5.seconds
+  end
+
+  test "refresh marks a model available again when it reappears" do
+    language_model = LanguageModel.create!(backend: @backend, name: "gemma3:4b", available: false)
+    Settings::ModelsController.client_factory = client_factory(models: [ { "name" => "gemma3:4b" } ])
+
+    post refresh_settings_models_path
+
+    assert language_model.reload.available
   end
 
   test "refresh reports backends that couldn't be checked and keeps the rest" do
@@ -181,6 +192,26 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Checked 1 backend and found 1 model, including 1 new: local-model.", flash[:notice]
     assert_equal "Could not check RK3588: connection refused", flash[:alert]
     assert @backend.language_models.exists?(name: "local-model")
+  end
+
+  test "refresh leaves models available on backends that couldn't be checked" do
+    edge = Backend.create!(name: "RK3588", base_url: "http://edge.test:8080")
+    edge_model = LanguageModel.create!(backend: edge, name: "qwen3:1.7b")
+    factory = Object.new
+    factory.define_singleton_method(:for) do |backend|
+      Object.new.tap do |client|
+        client.define_singleton_method(:models) do
+          raise Ollama::Client::Error, "connection refused" if backend == edge
+
+          []
+        end
+      end
+    end
+    Settings::ModelsController.client_factory = factory
+
+    post refresh_settings_models_path
+
+    assert edge_model.reload.available
   end
 
   test "refresh without enabled backends" do

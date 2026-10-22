@@ -20,6 +20,7 @@ module Inference
           new_models << language_model if language_model&.previously_new_record?
           model.merge("backend" => backend, "language_model" => language_model)
         end)
+        mark_missing_unavailable(backend, backend_models)
       rescue Ollama::Client::Error, Inference::Client::UnsupportedAdapter => error
         errors << Error.new(backend:, message: error.message)
       end
@@ -32,7 +33,8 @@ module Inference
     attr_reader :backends, :client_factory
 
     # Creates a record for a newly discovered model, keeps the size and
-    # details current, and records when the model was last seen. The family is
+    # details current, and records when the model was last seen and that it is
+    # available. The family is
     # only derived for new records, so a family chosen in settings is kept.
     def record(backend, model)
       return if model["name"].blank?
@@ -41,9 +43,19 @@ module Inference
       language_model.assign_attributes(
         size: model["size"],
         details: model["details"].presence || {},
-        refreshed_at: Time.current
+        refreshed_at: Time.current,
+        available: true
       )
       language_model if language_model.save
+    end
+
+    # Models are only marked unavailable for backends that were checked, so a
+    # backend that couldn't be reached leaves its models as they were.
+    def mark_missing_unavailable(backend, backend_models)
+      backend.language_models
+        .where(available: true)
+        .where.not(name: backend_models.map { |model| model["name"] })
+        .update_all(available: false, updated_at: Time.current)
     end
   end
 end
