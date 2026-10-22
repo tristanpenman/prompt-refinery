@@ -2,7 +2,7 @@
 
 A refinement uses a stronger _teacher_ model to improve a prompt for a weaker _student_ model. The teacher runs the starting prompt once, and its outputs become the reference. On each iteration the student runs the current prompt, and the teacher compares the student's outputs with the reference and proposes a revised prompt. Every iteration is recorded, so you can review how the prompt changed.
 
-The data model is implemented. Execution and the user interface are not yet. See also [versioning.md](versioning.md).
+The data model, the refinement pages, and running one iteration at a time are implemented. Stopping rules, **Stop**, and **Apply to original** are not yet. See also [versioning.md](versioning.md).
 
 ## How it works
 
@@ -73,7 +73,7 @@ PromptRefinement ─┬─ starting PromptRevision (original prompt)
 
 ## Execution
 
-A `RefinementJob` performs one step and then enqueues the next. Trials run inline through `TrialExecutionJob.perform_now`, so they appear on the normal trial pages. Each step does nothing if the refinement has already finished, so a duplicate enqueue is harmless. **Stop** takes effect between steps. Tests use a fake client through the existing `client_factory` pattern.
+For now, **Run iteration** on the refinement page marks the refinement as running and enqueues a `RefinementJob`, which runs one whole iteration and returns the refinement to pending. A failure is recorded on the iteration, and failed iterations don't count towards the limit. Eventually a `RefinementJob` will perform one step and then enqueue the next. Trials run inline through `TrialExecutionJob.perform_now`, so they appear on the normal trial pages. Each step does nothing if the refinement has already finished, so a duplicate enqueue is harmless. **Stop** takes effect between steps. Tests use a fake client through the existing `client_factory` pattern.
 
 - **Failures:**
   - If the reference trial fails, or a student trial fails entirely, the refinement fails.

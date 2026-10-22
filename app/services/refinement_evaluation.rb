@@ -27,6 +27,24 @@ class RefinementEvaluation
     required: %w[cases summary changes done prompt]
   }.freeze
 
+  # Delimiters that models sometimes copy from the request into the proposed
+  # template, as opening and closing patterns.
+  TEMPLATE_WRAPPERS = [
+    [ /\A---[ \t]*\n/, /\n[ \t]*---\z/ ],
+    [ /\A<template>\s*/, /\s*<\/template>\z/ ]
+  ].freeze
+
+  # Removes delimiters that wrap the whole template, however deeply nested.
+  def self.unwrap_template(template)
+    template = template.strip
+    loop do
+      opening, closing = TEMPLATE_WRAPPERS.find { |opening, closing| template.match?(opening) && template.match?(closing) }
+      return template unless opening
+
+      template = template.sub(opening, "").sub(closing, "").strip
+    end
+  end
+
   def initialize(refinement:, iteration:)
     @refinement = refinement
     @iteration = iteration
@@ -57,6 +75,7 @@ class RefinementEvaluation
     summary, changes, proposed_template = %w[summary changes prompt].map do |key|
       data[key].is_a?(String) ? data[key].strip : raise(Invalid, "\"#{key}\" must be a string")
     end
+    proposed_template = self.class.unwrap_template(proposed_template)
     raise Invalid, "\"prompt\" must not be empty" if proposed_template.empty?
     raise Invalid, "\"done\" must be true or false" unless [ true, false ].include?(data["done"])
 
@@ -89,17 +108,16 @@ class RefinementEvaluation
     test_cases.each.with_index(1).map do |test_case, number|
       values = test_case.test_case_revision.values
       <<~CASE.strip
-        Test case #{number}
+        <test_case number="#{number}">
         Variables:
         #{variables.map { |name| "- #{name}: #{values[name]}" }.join("\n")}
-        Reference output:
-        ---
+        <reference_output>
         #{output(reference_responses[test_case.id])}
-        ---
-        Student output:
-        ---
+        </reference_output>
+        <student_output>
         #{output(student_responses[test_case.id])}
-        ---
+        </student_output>
+        </test_case>
       CASE
     end.join("\n\n")
   end
@@ -125,7 +143,7 @@ class RefinementEvaluation
       - "summary": the student's main shortcomings
       - "changes": what you changed in the template, and why
       - "done": true if the template can't be improved further, otherwise false
-      - "prompt": the complete improved template
+      - "prompt": the complete improved template only, without the <template> tags or any other delimiters around it
     TEXT
   end
 

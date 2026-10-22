@@ -3,9 +3,9 @@ You are improving a prompt template so that a smaller "student" model produces t
 The template uses these variables: {{variables}}. Each variable appears in the template as a placeholder, written as the variable name inside double braces, and is replaced with a test case's value before the prompt is sent. Keep every placeholder the current template uses, and don't add new ones.
 
 Current template:
----
+<template>
 {{current_prompt}}
----
+</template>
 
 Earlier attempts:
 {{history}}

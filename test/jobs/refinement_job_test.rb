@@ -54,21 +54,20 @@ class RefinementJobTest < ActiveJob::TestCase
     assert_equal RefinementEvaluation::FORMAT, evaluation[:format]
     assert_equal({ temperature: 0, num_ctx: 16384 }, evaluation[:options])
     assert_equal evaluation[:prompt], iteration.evaluation_prompt
-    assert_includes evaluation[:prompt], "Current template:\n---\nExplain {{topic}}\n---"
+    assert_includes evaluation[:prompt], "Current template:\n<template>\nExplain {{topic}}\n</template>"
     assert_includes evaluation[:prompt], "The template uses these variables: topic."
     assert_includes evaluation[:prompt], "Earlier attempts:\nNone. This is the first attempt."
     assert_includes evaluation[:prompt], <<~CASE.strip
-      Test case 1
+      <test_case number="1">
       Variables:
       - topic: Ruby
-      Reference output:
-      ---
+      <reference_output>
       Teacher: Explain Ruby
-      ---
-      Student output:
-      ---
+      </reference_output>
+      <student_output>
       Student: Explain Ruby
-      ---
+      </student_output>
+      </test_case>
     CASE
   end
 
@@ -90,6 +89,15 @@ class RefinementJobTest < ActiveJob::TestCase
     assert_equal 1.0, second.agreement
     assert_includes @evaluations.last[:prompt],
       "Iteration 1 (prompt r#{first.prompt_revision.version}): agreement 0%. Too long. Changes made: Asked for brevity."
+  end
+
+  test "removes delimiters copied around the proposed prompt" do
+    use_client(evaluation_replies: [ evaluation_reply(verdicts: %w[match match], prompt: "---\n<template>\n---\nBriefly explain {{topic}}\n---\n</template>\n---") ])
+
+    RefinementJob.perform_now(@refinement)
+
+    assert_equal "Briefly explain {{topic}}", @refinement.iterations.sole.proposed_template
+    assert_equal "Briefly explain {{topic}}", @refinement.prompt.reload.template
   end
 
   test "retries a rejected evaluation once with the reason" do
@@ -147,7 +155,7 @@ class RefinementJobTest < ActiveJob::TestCase
     iteration = @refinement.iterations.sole
     assert_predicate iteration, :completed?
     assert_equal 0.5, iteration.agreement
-    assert_includes @evaluations.sole[:prompt], "Student output:\n---\n(No output: the request failed.)\n---"
+    assert_includes @evaluations.sole[:prompt], "<student_output>\n(No output: the request failed.)\n</student_output>"
     assert_equal [ "match", "miss" ], iteration.case_evaluations.values.map { |evaluation| evaluation["verdict"] }
   end
 
