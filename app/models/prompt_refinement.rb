@@ -139,6 +139,23 @@ class PromptRefinement < ApplicationRecord
     end
   end
 
+  # Failed iterations don't count towards the limit, so they can be retried.
+  def can_run_iteration?
+    pending? && iterations.completed.count < max_iterations
+  end
+
+  # Marks the refinement as running, so only one iteration runs at a time.
+  # Returns false if it can't run another iteration.
+  def start_iteration!
+    with_lock do
+      if can_run_iteration?
+        update!(status: :running, started_at: started_at || Time.current)
+      else
+        false
+      end
+    end
+  end
+
   private
 
   def snapshot_backends

@@ -1,6 +1,8 @@
 require "test_helper"
 
 class RefinementsControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
     @original_encrypted_token = ENV["RAILS_AUTH_TOKEN"]
     ENV["RAILS_AUTH_TOKEN"] = TokenAuthenticator.encrypt("test-token")
@@ -63,9 +65,9 @@ class RefinementsControllerTest < ActionDispatch::IntegrationTest
       post refinements_path, params: { refinement: refinement_params(max_iterations: "5", target_agreement: "0.9") }
     end
 
-    assert_redirected_to refinements_path
-    assert_equal "Refinement created. Running refinements isn't available yet, so it will stay pending.", flash[:notice]
     refinement = PromptRefinement.last
+    assert_redirected_to refinement_path(refinement)
+    assert_equal "Refinement created.", flash[:notice]
     assert_predicate refinement, :pending?
     assert_equal "Explain", refinement.name
     assert_equal @prompt, refinement.starting_prompt_revision.prompt
@@ -105,12 +107,60 @@ class RefinementsControllerTest < ActionDispatch::IntegrationTest
       assert_select "dd", text: "llama3.2:3b (Local Ollama)"
       assert_select "dd", text: "qwen2.5:7b (Local Ollama)"
       assert_select "dd", text: "Not run yet"
-      assert_select "dd", text: "3"
+      assert_select "dd", text: "0 of 3"
       assert_select "dd", text: "100%"
       assert_select "dd", text: "16,384 tokens"
       assert_select "details summary", text: "Teacher instructions"
     end
     assert_select ".refinement-iterations p", text: "No iterations yet."
+    assert_select "form[action=?][method=post] button", run_refinement_path(refinement), text: "Run iteration"
+    assert_select "meta[http-equiv=refresh]", count: 0
+  end
+
+  test "queues an iteration and marks the refinement as running" do
+    refinement = create_refinement
+
+    assert_enqueued_with(job: RefinementJob, args: [ refinement ]) do
+      post run_refinement_path(refinement)
+    end
+
+    assert_redirected_to refinement_path(refinement)
+    assert_equal "Iteration queued.", flash[:notice]
+    assert_predicate refinement.reload, :running?
+    assert_not_nil refinement.started_at
+
+    follow_redirect!
+    assert_select ".notice h2", text: "Running an iteration…"
+    assert_select "meta[http-equiv=refresh][content='2']"
+    assert_select "button", text: "Run iteration", count: 0
+  end
+
+  test "doesn't queue an iteration while one is running" do
+    refinement = create_refinement
+    refinement.update!(status: :running)
+
+    assert_no_enqueued_jobs do
+      post run_refinement_path(refinement)
+    end
+
+    assert_redirected_to refinement_path(refinement)
+    assert_equal "This refinement can't run another iteration.", flash[:alert]
+  end
+
+  test "doesn't offer another iteration once the limit is reached" do
+    refinement = create_refinement
+    refinement.update!(max_iterations: 1)
+    revision = PromptRevision.capture!(refinement.prompt)
+    refinement.iterations.create!(number: 1, prompt_revision: revision, status: "completed")
+
+    get refinement_path(refinement)
+    assert_select "button", text: "Run iteration", count: 0
+    assert_select "dd", text: "1 of 1"
+
+    assert_no_enqueued_jobs do
+      post run_refinement_path(refinement)
+    end
+    assert_equal "This refinement can't run another iteration.", flash[:alert]
   end
 
   test "shows the results of each iteration" do

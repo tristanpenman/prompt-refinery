@@ -21,7 +21,9 @@ Rails.application.routes.draw do
     patch :unarchive, on: :member
     resources :test_cases, only: %i[create update destroy]
   end
-  resources :refinements, only: %i[index show create]
+  resources :refinements, only: %i[index show create] do
+    post :run, on: :member
+  end
   resources :trials, only: %i[index show create] do
     get :compare, on: :member, to: "trial_comparisons#show"
   end

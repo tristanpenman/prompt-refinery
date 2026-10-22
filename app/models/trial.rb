@@ -67,8 +67,20 @@ class Trial < ApplicationRecord
 
   def self.create_for!(prompt:, test_suite:, backend:, model:, **attributes)
     transaction do
-      prompt_revision = PromptRevision.capture!(prompt)
-      test_suite_revision = TestSuiteRevision.capture!(test_suite)
+      create_from_revisions!(
+        prompt_revision: PromptRevision.capture!(prompt),
+        test_suite_revision: TestSuiteRevision.capture!(test_suite),
+        backend: backend,
+        model: model,
+        **attributes
+      )
+    end
+  end
+
+  # Creates a trial of revisions that were already captured, with a pending
+  # response for each test case.
+  def self.create_from_revisions!(prompt_revision:, test_suite_revision:, backend:, model:, **attributes)
+    transaction do
       trial = create!(
         attributes.merge(
           prompt_revision: prompt_revision,

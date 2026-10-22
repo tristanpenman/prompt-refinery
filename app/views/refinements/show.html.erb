@@ -1,4 +1,9 @@
 <% content_for :title, "#{@refinement.name} · Refinements · Prompt Refinery" %>
+<% content_for :head do %>
+  <% if @refinement.running? %>
+    <meta http-equiv="refresh" content="2">
+  <% end %>
+<% end %>
 
 <main class="trials-page">
   <nav><%= link_to "← Refinements", refinements_path %></nav>
@@ -22,8 +27,8 @@
       <dd><%= @refinement.teacher_model %> <small>(<%= @refinement.teacher_backend_name %>)</small></dd>
       <dt>Reference trial</dt>
       <dd><%= @refinement.reference_trial ? link_to("Trial ##{@refinement.reference_trial.id}", @refinement.reference_trial) : "Not run yet" %></dd>
-      <dt>Maximum iterations</dt>
-      <dd><%= @refinement.max_iterations %></dd>
+      <dt>Completed iterations</dt>
+      <dd><%= @refinement.iterations.to_a.count(&:completed?) %> of <%= @refinement.max_iterations %></dd>
       <dt>Target agreement</dt>
       <dd><%= number_to_percentage(@refinement.target_agreement * 100, precision: 0) %></dd>
       <dt>Teacher context size</dt>
@@ -48,6 +53,19 @@
       <div class="result-content"><%= simple_format(@refinement.instructions) %></div>
     </details>
   </section>
+
+  <% if @refinement.running? %>
+    <section class="notice" role="status">
+      <h2>Running an iteration…</h2>
+      <p>This page refreshes automatically while the background job is running.</p>
+    </section>
+  <% elsif @refinement.can_run_iteration? %>
+    <section class="editor-card">
+      <h2>Next iteration</h2>
+      <p>Run the student on the working prompt, and ask the teacher to evaluate it and propose a revision.</p>
+      <%= button_to "Run iteration", run_refinement_path(@refinement), class: "primary-button" %>
+    </section>
+  <% end %>
 
   <section class="refinement-iterations">
     <h2>Iterations</h2>

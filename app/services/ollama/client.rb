@@ -16,10 +16,12 @@ module Ollama
       parse(request("api/tags"), key: "models", description: "model list")
     end
 
-    def generate(model:, prompt:)
+    # format is "json" or a JSON schema for structured output, and options are
+    # model parameters such as temperature and num_ctx.
+    def generate(model:, prompt:, format: nil, options: nil)
       response = request(
         "api/chat",
-        body: { model: model, messages: [ { role: "user", content: prompt } ], stream: false },
+        body: { model: model, messages: [ { role: "user", content: prompt } ], stream: false, format: format, options: options }.compact,
         read_timeout: GENERATION_TIMEOUT
       )
       parse(response, key: "message", description: "generation response").fetch("content")

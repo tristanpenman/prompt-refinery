@@ -717,7 +717,9 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
 
 h1 .status { vertical-align: middle; }
 
-.status--running { color: var(--color-warning); background: var(--color-warning-bg); }
+.status--running,
+.status--running_trial,
+.status--evaluating { color: var(--color-warning); background: var(--color-warning-bg); }
 .status--completed { color: var(--color-success); background: var(--color-success-bg); }
 .status--failed { color: var(--color-alert); background: var(--color-alert-bg); }
 .status--provisional { color: var(--color-warning); background: var(--color-warning-bg); }

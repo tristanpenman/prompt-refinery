@@ -13,6 +13,16 @@ class RefinementsController < ApplicationController
     @case_numbers = @refinement.test_suite_revision.test_suite_revision_cases.each.with_index(1).to_h { |test_case, number| [ test_case.id.to_s, number ] }
   end
 
+  def run
+    refinement = PromptRefinement.find(params[:id])
+    if refinement.start_iteration!
+      RefinementJob.perform_later(refinement)
+      redirect_to refinement_path(refinement), notice: "Iteration queued."
+    else
+      redirect_to refinement_path(refinement), alert: "This refinement can't run another iteration."
+    end
+  end
+
   def create
     attributes = refinement_params
     @selected = attributes.slice(:prompt_id, :test_suite_id, :student_language_model_id, :teacher_language_model_id)
@@ -27,14 +37,14 @@ class RefinementsController < ApplicationController
     @refinement.errors.add(:teacher_model, "must be a model on an enabled backend") unless teacher
     return render_index_with_errors if @refinement.errors.any?
 
-    PromptRefinement.create_for!(
+    refinement = PromptRefinement.create_for!(
       prompt: prompt,
       test_suite: test_suite,
       student: student,
       teacher: teacher,
       **attributes.slice(:max_iterations, :target_agreement, :context_size, :instructions).to_h.symbolize_keys
     )
-    redirect_to refinements_path, notice: "Refinement created. Running refinements isn't available yet, so it will stay pending."
+    redirect_to refinement_path(refinement), notice: "Refinement created."
   rescue ActiveRecord::RecordInvalid => error
     @refinement.errors.merge!(error.record)
     render_index_with_errors
