@@ -49,6 +49,8 @@
                 · <%= number_with_precision(response.tokens_per_second, precision: 1) %> tokens/s
               <% end %>
             </p>
+          <% elsif response.completed? %>
+            <p class="response-metrics">Metrics not recorded</p>
           <% end %>
           <section class="response-prompt">
             <h4>Variables</h4>

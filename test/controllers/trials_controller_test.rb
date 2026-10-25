@@ -146,6 +146,16 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".trial-responses article:nth-of-type(2) .response-metrics", count: 0
   end
 
+  test "notes completed responses without metrics" do
+    trial = create_trial(prompt: @prompt, test_suite: @test_suite, status: :completed)
+    trial.responses.find_by!(rendered_prompt: "Explain Ruby").update!(status: :completed, content: "Generated")
+
+    get trial_path(trial)
+
+    assert_select ".trial-responses article:nth-of-type(1) .response-metrics", text: "Metrics not recorded"
+    assert_select ".trial-responses article:nth-of-type(2) .response-metrics", count: 0
+  end
+
   private
 
   def trial_params(**overrides)
