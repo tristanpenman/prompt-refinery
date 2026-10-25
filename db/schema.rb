@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_22_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_24_010000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -168,6 +168,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_010000) do
     t.datetime "updated_at", null: false
     t.text "rendered_prompt", null: false
     t.integer "test_suite_revision_case_id", null: false
+    t.integer "prompt_eval_count"
+    t.integer "eval_count"
+    t.bigint "load_duration"
+    t.bigint "prompt_eval_duration"
+    t.bigint "eval_duration"
+    t.bigint "total_duration"
     t.index ["test_suite_revision_case_id"], name: "index_responses_on_test_suite_revision_case_id"
     t.index ["trial_id", "test_suite_revision_case_id"], name: "index_responses_on_trial_and_revision_case", unique: true
     t.index ["trial_id"], name: "index_responses_on_trial_id"

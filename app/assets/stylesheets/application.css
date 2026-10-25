@@ -590,6 +590,7 @@ main > nav + header > h1 + p { margin: 0.75rem 0 0; }
 
 .evaluation-result h3 { display: inline; }
 .evaluation-result details { margin: 1rem 0; }
+.response-metrics { color: var(--color-muted); font-size: 0.9rem; }
 
 .response-prompt { margin: 1rem 0; }
 .response-prompt h4 { margin: 0 0 0.5rem; }

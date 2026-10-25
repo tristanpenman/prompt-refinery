@@ -7,6 +7,11 @@ module Ollama
     OPEN_TIMEOUT = 2
     READ_TIMEOUT = 5
     GENERATION_TIMEOUT = 300
+    METRICS = %w[prompt_eval_count eval_count load_duration prompt_eval_duration eval_duration total_duration].freeze
+
+    # The generated content, and the token counts and timings Ollama reported
+    # for it, keyed by the names in METRICS. Durations are in nanoseconds.
+    Completion = Data.define(:content, :metrics)
 
     def initialize(base_url: ENV.fetch("OLLAMA_URL", "http://localhost:11434"))
       @base_url = base_url
@@ -19,12 +24,18 @@ module Ollama
     # format is "json" or a JSON schema for structured output, and options are
     # model parameters such as temperature and num_ctx.
     def generate(model:, prompt:, format: nil, options: nil)
+      complete(model: model, prompt: prompt, format: format, options: options).content
+    end
+
+    # Like generate, but returns a Completion that includes Ollama's metrics.
+    def complete(model:, prompt:, format: nil, options: nil)
       response = request(
         "api/chat",
         body: { model: model, messages: [ { role: "user", content: prompt } ], stream: false, format: format, options: options }.compact,
         read_timeout: GENERATION_TIMEOUT
       )
-      parse(response, key: "message", description: "generation response").fetch("content")
+      body = parse(response, key: nil, description: "generation response")
+      Completion.new(content: body.fetch("message").fetch("content"), metrics: body.slice(*METRICS))
     rescue KeyError => error
       raise Error, "Ollama returned an invalid generation response: #{error.message}"
     end
@@ -62,7 +73,8 @@ module Ollama
     end
 
     def parse(response, key:, description:)
-      JSON.parse(response.body).fetch(key)
+      body = JSON.parse(response.body)
+      key ? body.fetch(key) : body
     rescue JSON::ParserError, KeyError => error
       raise Error, "Ollama returned an invalid #{description}: #{error.message}"
     end

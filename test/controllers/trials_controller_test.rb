@@ -116,7 +116,10 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
   test "shows a response for each test case" do
     created_at = Time.zone.local(2026, 10, 16, 14, 30)
     trial = create_trial(prompt: @prompt, test_suite: @test_suite, status: :completed, created_at: created_at)
-    trial.responses.find_by!(rendered_prompt: "Explain Ruby").update!(status: :completed, content: "**Generated** response")
+    trial.responses.find_by!(rendered_prompt: "Explain Ruby").update!(
+      status: :completed, content: "**Generated** response",
+      prompt_eval_count: 12, eval_count: 50, eval_duration: 2_000_000_000, total_duration: 2_500_000_000
+    )
 
     get trial_path(trial)
 
@@ -137,8 +140,10 @@ class TrialsControllerTest < ActionDispatch::IntegrationTest
       assert_select "dd", text: "Ruby"
       assert_select ".response-prompt", text: /Prompt\s+Explain Ruby/
       assert_select ".result-content.markdown-content strong", text: "Generated"
+      assert_select ".response-metrics", text: /12 prompt tokens\s+·\s+50 response tokens\s+·\s+2.5 s total\s+·\s+25.0 tokens\/s/
     end
     assert_select ".trial-responses article:nth-of-type(2) .response-prompt", text: /Prompt\s+Explain Rust/
+    assert_select ".trial-responses article:nth-of-type(2) .response-metrics", count: 0
   end
 
   private

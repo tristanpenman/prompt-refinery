@@ -40,6 +40,16 @@
         <article class="evaluation-result">
           <h3>Test case <%= number %> <small>r<%= test_case_revision.version %></small></h3>
           <p><span class="status status--<%= response.status %>"><%= response.status.humanize %></span></p>
+          <% if response.total_duration %>
+            <p class="response-metrics">
+              <%= pluralize(response.prompt_eval_count.to_i, "prompt token") %> ·
+              <%= pluralize(response.eval_count.to_i, "response token") %> ·
+              <%= number_with_precision(response.total_duration / 1_000_000_000.0, precision: 1) %> s total
+              <% if response.tokens_per_second %>
+                · <%= number_with_precision(response.tokens_per_second, precision: 1) %> tokens/s
+              <% end %>
+            </p>
+          <% end %>
           <section class="response-prompt">
             <h4>Variables</h4>
             <%= render "test_suite_revisions/test_case_values", variables: @trial.test_suite_revision.variables, values: test_case_revision.values %>

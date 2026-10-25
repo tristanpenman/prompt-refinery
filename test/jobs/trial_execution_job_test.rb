@@ -14,9 +14,9 @@ class TrialExecutionJobTest < ActiveJob::TestCase
   test "records responses sequentially and completes the trial" do
     calls = []
     client_class = Class.new do
-      define_method(:generate) do |model:, prompt:|
+      define_method(:complete) do |model:, prompt:|
         calls << [ model, prompt ]
-        "Response to #{prompt}"
+        Ollama::Client::Completion.new(content: "Response to #{prompt}", metrics: { "prompt_eval_count" => 12, "eval_count" => 34, "total_duration" => 2_000_000_000 })
       end
     end
     TrialExecutionJob.client_factory = factory_for(client_class)
@@ -31,14 +31,15 @@ class TrialExecutionJobTest < ActiveJob::TestCase
     assert_not_nil @trial.completed_at
     assert_equal [ "Response to First prompt", "Response to Second prompt" ], ordered_responses.map(&:content)
     assert ordered_responses.all?(&:completed?)
+    assert_equal [ [ 12, 34, 2_000_000_000 ] ] * 2, ordered_responses.pluck(:prompt_eval_count, :eval_count, :total_duration)
   end
 
   test "records an individual failure and continues the trial" do
     client_class = Class.new do
-      def generate(model:, prompt:)
+      def complete(model:, prompt:)
         raise ::Ollama::Client::Error, "Generation failed" if prompt == "First prompt"
 
-        "Generated successfully"
+        Ollama::Client::Completion.new(content: "Generated successfully", metrics: {})
       end
     end
     TrialExecutionJob.client_factory = factory_for(client_class)

@@ -18,13 +18,13 @@ The goal of this project is to build a small local-first application for prompt 
 
 - ~~Reject trials for provisional test suites in `Trial` validations, not only by hiding them from the trial form.~~
 - ~~Make `TestSuiteRevision.capture!` refuse provisional test suites. `Trial.create_for!` already rolls back the revision when a trial is rejected, so this only guards direct calls to `capture!`.~~
+- ~~Document CSV imports in the README, and optionally add a sample CSV to the seed demo data.~~
 - Prevent provisional test suites from being archived.
 - Refuse test case changes for provisional test suites in `TestCasesController`.
 - Redirect the revision history of a provisional test suite to its import preview.
 - Discard abandoned imports with a recurring job that destroys provisional test suites older than a day and purges their CSV files.
 - Link to the uploaded CSV file from the import preview.
 - Test that provisional test suites are hidden from the dashboard and the trial form.
-- ~~Document CSV imports in the README, and optionally add a sample CSV to the seed demo data.~~
 - Update `notes/imports.md` to describe the implementation, including the redirect on upload errors and the header-row metadata stored with the CSV file.
 
 ## Trial runs
@@ -34,9 +34,9 @@ The goal of this project is to build a small local-first application for prompt 
 
 ## Generation settings
 
+- ~~Capture Ollama's token counts and timings for each response.~~
 - Choose generation parameters such as temperature, seed, and `num_ctx` when creating a trial.
 - Record the parameters on the trial so reruns can be reproduced exactly.
-- Capture Ollama's token counts and timings for each response.
 
 ## Review and scoring
 

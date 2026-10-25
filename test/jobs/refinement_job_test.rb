@@ -207,6 +207,10 @@ class RefinementJobTest < ActiveJob::TestCase
           "#{model.start_with?("teacher") ? "Teacher" : "Student"}: #{prompt}"
         end
       end
+
+      define_method(:complete) do |model:, prompt:|
+        Ollama::Client::Completion.new(content: generate(model: model, prompt: prompt), metrics: {})
+      end
     end
     factory = Class.new do
       define_singleton_method(:for) { |_backend, **_options| client_class.new }

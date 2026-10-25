@@ -6,8 +6,14 @@
 #  id                          :integer          not null, primary key
 #  content                     :text
 #  error                       :text
+#  eval_count                  :integer
+#  eval_duration               :bigint
+#  load_duration               :bigint
+#  prompt_eval_count           :integer
+#  prompt_eval_duration        :bigint
 #  rendered_prompt             :text             not null
 #  status                      :string           default("pending"), not null
+#  total_duration              :bigint
 #  created_at                  :datetime         not null
 #  updated_at                  :datetime         not null
 #  test_suite_revision_case_id :integer          not null
@@ -40,6 +46,13 @@ class Response < ApplicationRecord
   validates :test_suite_revision_case_id, uniqueness: { scope: :trial_id }
   validates :rendered_prompt, presence: true
   validate :revision_case_belongs_to_trial_revision
+
+  # Generation speed in tokens per second, excluding prompt processing.
+  def tokens_per_second
+    return unless eval_count && eval_duration&.positive?
+
+    eval_count / (eval_duration / 1_000_000_000.0)
+  end
 
   private
 

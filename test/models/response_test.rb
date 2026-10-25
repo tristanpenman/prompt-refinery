@@ -43,4 +43,14 @@ class ResponseTest < ActiveSupport::TestCase
   test "reaches the test case revision it was rendered from" do
     assert_equal({ "topic" => "Ruby" }, @response.test_case_revision.values)
   end
+
+  test "calculates tokens per second from the eval count and duration" do
+    assert_nil @response.tokens_per_second
+
+    @response.assign_attributes(eval_count: 50, eval_duration: 0)
+    assert_nil @response.tokens_per_second
+
+    @response.eval_duration = 2_000_000_000
+    assert_equal 25.0, @response.tokens_per_second
+  end
 end
