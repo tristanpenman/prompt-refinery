@@ -58,6 +58,17 @@ class TrialComparisonsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "shows each rendered prompt in a collapsed section" do
+    @trial.responses.first.update!(rendered_prompt: "Say hello differently")
+
+    get compare_trial_path(@trial, baseline: @baseline.id)
+
+    assert_response :success
+    assert_select ".comparison-response details.comparison-prompt:not([open])", count: 2
+    assert_select ".comparison-response:nth-child(1) .comparison-prompt", text: /Prompt.*#{Regexp.escape(@baseline.responses.first.rendered_prompt)}/m
+    assert_select ".comparison-response:nth-child(2) .comparison-prompt", text: /Prompt.*Say hello differently/m
+  end
+
   test "warns when the prompt contents differ" do
     @trial.responses.first.update!(rendered_prompt: "Say hello differently")
 

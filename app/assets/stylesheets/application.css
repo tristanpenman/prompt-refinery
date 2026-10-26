@@ -774,6 +774,7 @@ h1 .status { vertical-align: middle; }
 
 .comparison-response { min-width: 0; }
 .comparison-response h4 { margin: 0; }
+.comparison-prompt { margin: 1rem 0; }
 .revision-badge { vertical-align: middle; }
 
 @media (max-width: 48rem) {

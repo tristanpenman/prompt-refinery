@@ -42,6 +42,10 @@
                     <span class="status revision-badge">r<%= prompt_revision.version %></span>
                   </h4>
                   <p><span class="status status--<%= response.status %>"><%= response.status.humanize %></span></p>
+                  <details class="comparison-prompt">
+                    <summary>Prompt</summary>
+                    <div class="result-content"><%= simple_format(response.rendered_prompt) %></div>
+                  </details>
                   <% if response.error? %>
                     <p class="form-error" role="alert"><%= response.error %></p>
                   <% elsif response.content? %>
