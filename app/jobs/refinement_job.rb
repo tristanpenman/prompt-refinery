@@ -1,5 +1,5 @@
 # Runs one iteration of a refinement that was started with
-# PromptRefinement#start_iteration!, then returns the refinement to pending.
+# PromptRefinement#start_iteration!, optionally queuing subsequent iterations.
 class RefinementJob < ApplicationJob
   queue_as :default
 
@@ -8,7 +8,30 @@ class RefinementJob < ApplicationJob
 
   class_attribute :client_factory, default: Inference::Client
 
-  def perform(refinement)
+  def perform(refinement, run_to_completion: false)
+    result = execute_iteration(refinement)
+    return unless run_to_completion && result
+
+    refinement.with_lock do
+      reason = if result.agreement >= refinement.target_agreement
+        :target_reached
+      elsif result.done
+        :converged
+      elsif refinement.iterations.completed.count >= refinement.max_iterations
+        :max_iterations
+      end
+
+      if reason
+        refinement.update!(status: :completed, stop_reason: reason, completed_at: Time.current)
+      elsif refinement.start_iteration!
+        self.class.perform_later(refinement, run_to_completion: true)
+      end
+    end
+  end
+
+  private
+
+  def execute_iteration(refinement)
     return unless refinement.running?
 
     iteration = refinement.iterations.create!(
@@ -20,14 +43,14 @@ class RefinementJob < ApplicationJob
     run_iteration(refinement, iteration)
   rescue IterationFailed, ::Ollama::Client::Error, Inference::Client::UnsupportedAdapter => error
     iteration&.update!(status: :failed, error: error.message, completed_at: Time.current)
+    nil
   rescue StandardError => error
     iteration&.update!(status: :failed, error: "Unexpected error: #{error.message}", completed_at: Time.current) unless iteration&.completed?
     Rails.error.report(error, handled: true)
+    nil
   ensure
     refinement.update!(status: :pending) if refinement.reload.running?
   end
-
-  private
 
   def run_iteration(refinement, iteration)
     ensure_reference_trial(refinement)
@@ -50,6 +73,7 @@ class RefinementJob < ApplicationJob
     )
     # The next iteration captures the proposed prompt as a new revision.
     refinement.prompt.update!(template: result.proposed_template)
+    result
   end
 
   # The teacher's outputs for the starting prompt are the target for every

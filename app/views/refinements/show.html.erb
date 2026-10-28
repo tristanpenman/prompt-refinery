@@ -64,6 +64,8 @@
       <h2>Next iteration</h2>
       <p>Run the student on the working prompt, and ask the teacher to evaluate it and propose a revision.</p>
       <%= button_to "Run iteration", run_refinement_path(@refinement), class: "primary-button" %>
+      <%= button_to "Run to completion", run_refinement_path(@refinement), params: { run_to_completion: true }, class: "primary-button" %>
+      <p>Automatically run subsequent iterations until the target agreement or iteration limit is reached, or the teacher reports completion. Pauses if an iteration fails.</p>
     </section>
   <% end %>
 

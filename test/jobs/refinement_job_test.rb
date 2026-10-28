@@ -176,6 +176,54 @@ class RefinementJobTest < ActiveJob::TestCase
     end
   end
 
+  test "automatically runs subsequent iterations until the target is reached" do
+    use_client(evaluation_replies: [ evaluation_reply(verdicts: %w[miss miss]), evaluation_reply(verdicts: %w[match match]) ])
+
+    perform_enqueued_jobs(only: RefinementJob) do
+      RefinementJob.perform_now(@refinement, run_to_completion: true)
+    end
+
+    assert_equal 2, @refinement.iterations.count
+    assert_predicate @refinement.reload, :completed?
+    assert_predicate @refinement, :stopped_by_target_reached?
+    assert_not_nil @refinement.completed_at
+    assert_equal "Briefly explain {{topic}}", @refinement.iterations.last.prompt_revision.template
+  end
+
+  test "automatic execution stops at the iteration limit" do
+    @refinement.update!(max_iterations: 1)
+    use_client(evaluation_replies: [ evaluation_reply(verdicts: %w[miss miss]) ])
+
+    assert_no_enqueued_jobs do
+      RefinementJob.perform_now(@refinement, run_to_completion: true)
+    end
+
+    assert_predicate @refinement.reload, :completed?
+    assert_predicate @refinement, :stopped_by_max_iterations?
+  end
+
+  test "automatic execution stops when the teacher reports completion" do
+    reply = JSON.parse(evaluation_reply(verdicts: %w[miss miss])).merge("done" => true).to_json
+    use_client(evaluation_replies: [ reply ])
+
+    assert_no_enqueued_jobs do
+      RefinementJob.perform_now(@refinement, run_to_completion: true)
+    end
+
+    assert_predicate @refinement.reload, :stopped_by_converged?
+  end
+
+  test "automatic execution pauses after a failed iteration" do
+    use_client(evaluation_replies: [], failing_models: [ "teacher:8b" ])
+
+    assert_no_enqueued_jobs do
+      RefinementJob.perform_now(@refinement, run_to_completion: true)
+    end
+
+    assert_predicate @refinement.reload, :pending?
+    assert_predicate @refinement.iterations.sole, :failed?
+  end
+
   private
 
   def evaluation_reply(verdicts:, prompt: "Briefly explain {{topic}}")

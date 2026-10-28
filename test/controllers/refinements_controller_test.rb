@@ -135,6 +135,20 @@ class RefinementsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button", text: "Run iteration", count: 0
   end
 
+  test "queues a refinement to run to completion" do
+    refinement = create_refinement
+
+    get refinement_path(refinement)
+    assert_select "button", text: "Run to completion"
+
+    assert_enqueued_with(job: RefinementJob, args: [ refinement, { run_to_completion: true } ]) do
+      post run_refinement_path(refinement), params: { run_to_completion: "true" }
+    end
+
+    assert_redirected_to refinement_path(refinement)
+    assert_predicate refinement.reload, :running?
+  end
+
   test "doesn't queue an iteration while one is running" do
     refinement = create_refinement
     refinement.update!(status: :running)

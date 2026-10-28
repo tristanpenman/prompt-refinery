@@ -16,8 +16,14 @@ class RefinementsController < ApplicationController
   def run
     refinement = PromptRefinement.find(params[:id])
     if refinement.start_iteration!
-      RefinementJob.perform_later(refinement)
-      redirect_to refinement_path(refinement), notice: "Iteration queued."
+      if params[:run_to_completion] == "true"
+        RefinementJob.perform_later(refinement, run_to_completion: true)
+        notice = "Refinement queued to run to completion."
+      else
+        RefinementJob.perform_later(refinement)
+        notice = "Iteration queued."
+      end
+      redirect_to refinement_path(refinement), notice: notice
     else
       redirect_to refinement_path(refinement), alert: "This refinement can't run another iteration."
     end
