@@ -47,6 +47,20 @@ The goal of this project is to build a small local-first application for prompt 
 - Show aggregate metrics for a trial and highlight regressions between prompt revisions.
 - Export trial data and reviews as JSON and CSV.
 
+## Amazon Bedrock
+
+Implementation details: [notes/bedrock.md](notes/bedrock.md).
+
+- Add shared inference errors and completion results, preserving Ollama behavior.
+- Add the `bedrock` adapter, region configuration, settings UI, and immutable adapter/region snapshots for trials and refinements.
+- Add AWS SDK dependencies and wire env / credentials for both Compose services.
+- Document IAM permissions and credential refresh.
+- Implement Converse generation with option translation, output limits, response validation, bounded retries, and token/time metrics.
+- Support model and inference-profile discovery, explicit invocation IDs, and connection checks without losing catalog entries on discovery failure.
+- Add native JSON-schema evaluation and teacher capability checks.
+- Test the adapter and full refinement flow with stubbed AWS clients, including reference reuse, automatic iterations, completion conditions, and failures.
+- Verify a small live refinement with an Ollama student and Bedrock teacher, and document setup and usage.
+
 ## Explicitly deferred
 
-User accounts and multi-user authorization, alternative hosted inference providers, distributed workers, general-purpose automated LLM judging outside of refinement, statistical significance analysis, and managed remote deployment are outside the first release. The data model and service boundaries should avoid preventing these additions later.
+User accounts and multi-user authorization, hosted inference providers beyond Amazon Bedrock, distributed workers, general-purpose automated LLM judging outside of refinement, statistical significance analysis, and managed remote deployment are outside the first release. The data model and service boundaries should avoid preventing these additions later.
