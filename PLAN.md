@@ -19,7 +19,7 @@ The goal of this project is to build a small local-first application for prompt 
 - ~~Reject trials for provisional test suites in `Trial` validations, not only by hiding them from the trial form.~~
 - ~~Make `TestSuiteRevision.capture!` refuse provisional test suites. `Trial.create_for!` already rolls back the revision when a trial is rejected, so this only guards direct calls to `capture!`.~~
 - ~~Document CSV imports in the README, and optionally add a sample CSV to the seed demo data.~~
-- Prevent provisional test suites from being archived.
+- ~~Prevent provisional test suites from being archived.~~
 - Refuse test case changes for provisional test suites in `TestCasesController`.
 - Redirect the revision history of a provisional test suite to its import preview.
 - Discard abandoned imports with a recurring job that destroys provisional test suites older than a day and purges their CSV files.
@@ -40,26 +40,12 @@ The goal of this project is to build a small local-first application for prompt 
 
 ## Review and scoring
 
+- ~~Compare outputs from several trials side by side where they share the same test case.~~
 - Review outputs one at a time or in a filterable table.
 - Record a numeric score, optional pass/fail decision, and reviewer notes.
 - Run automated checks against responses: exact match, regex, and JSON schema.
-- Compare outputs from several trials side by side where they share the same test case.
 - Show aggregate metrics for a trial and highlight regressions between prompt revisions.
 - Export trial data and reviews as JSON and CSV.
-
-## Refinement
-
-A refinement exercise uses a teacher model to improve a prompt for a student model:
-
-- Select a student model, a teacher model, a starting prompt revision, and a test suite.
-- On the first iteration, create one trial for the student model and one for the teacher model. Each model executes every test case in the suite.
-- Once both trials are complete, a separate instance of the teacher model evaluates the outputs and generates a new prompt revision that is expected to close the gap between student and teacher.
-- Record each iteration with its trials, the teacher's evaluation, and the resulting prompt revision, so the path from starting prompt to final prompt can be reviewed.
-
-## Open questions
-
-- How later iterations proceed: whether only the student reruns with the new revision while the teacher trial is reused, and when the exercise stops (iteration limit, score threshold, or manual).
-- Whether the teacher's evaluation is scored per test case, summarised across the suite, or both.
 
 ## Explicitly deferred
 
