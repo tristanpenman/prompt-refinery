@@ -7,6 +7,16 @@ class PromptRefinementTest < ActiveSupport::TestCase
     @test_suite = create_test_suite
   end
 
+  test "both roles preserve immutable adapter snapshots" do
+    refinement = create_refinement
+    %w[student teacher].each do |role|
+      assert_equal "ollama", refinement.public_send("#{role}_backend_adapter")
+      refinement.reload
+      assert_not refinement.update("#{role}_backend_adapter" => "unsupported")
+      assert_match(/cannot be changed/, refinement.errors[:base].join)
+    end
+  end
+
   test "defaults to a pending refinement with the default instructions" do
     refinement = create_refinement
 

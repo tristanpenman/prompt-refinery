@@ -53,6 +53,7 @@ Implementation details: [notes/bedrock.md](notes/bedrock.md).
 
 - ~~Add shared inference errors and completion results, preserving Ollama behavior.~~
 - ~~Add AWS SDK dependencies.~~
+- ~~Track immutable adapter snapshots for trials and refinements, using saved configuration throughout execution (Ollama initially).~~
 - Wire env / credentials for both Compose services.
 - Add the `bedrock` adapter, region configuration, settings UI, and immutable adapter/region snapshots for trials and refinements.
 - Document IAM permissions and credential refresh.

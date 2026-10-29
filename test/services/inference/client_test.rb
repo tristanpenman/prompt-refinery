@@ -1,6 +1,13 @@
 require "test_helper"
 
 class Inference::ClientTest < ActiveSupport::TestCase
+  test "can build an Ollama client from saved adapter configuration" do
+    backend = Backend.new(adapter: "unsupported")
+    client = Inference::Client.for(backend, adapter: "ollama", base_url: "http://saved.test")
+    assert_instance_of Ollama::Client, client
+    assert_equal "http://saved.test", client.instance_variable_get(:@base_url)
+  end
+
   test "builds an Ollama client using the backend URL" do
     backend = Backend.new(adapter: "ollama", base_url: "http://edge-board.local:8080")
 

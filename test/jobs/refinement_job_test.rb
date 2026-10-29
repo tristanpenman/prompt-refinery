@@ -13,11 +13,41 @@ class RefinementJobTest < ActiveJob::TestCase
     )
     @refinement.start_iteration!
     @evaluations = []
+    @configurations = []
   end
 
   teardown do
     TrialExecutionJob.client_factory = Inference::Client
     RefinementJob.client_factory = Inference::Client
+  end
+
+  test "all iterations use saved adapter configuration for separate Ollama backends" do
+    teacher = Backend.create!(name: "Teacher server", base_url: "http://teacher.test")
+    @refinement = PromptRefinement.create_for!(
+      prompt: @prompt, test_suite: @test_suite,
+      student: LanguageModel.find_by!(backend: @backend, name: "student:1b"),
+      teacher: LanguageModel.create!(backend: teacher, name: "teacher:8b")
+    )
+    student_snapshot = @refinement.backend_snapshot(:student)
+    teacher_snapshot = @refinement.backend_snapshot(:teacher)
+    @backend.update!(name: "Renamed local", base_url: "http://changed.test")
+    teacher.update!(name: "Renamed teacher", base_url: "http://changed-teacher.test")
+    use_client(evaluation_replies: [ evaluation_reply(verdicts: %w[miss miss]), evaluation_reply(verdicts: %w[match match]) ])
+    @refinement.start_iteration!
+
+    RefinementJob.perform_now(@refinement.reload)
+    reference = @refinement.reload.reference_trial
+    @refinement.start_iteration!
+    RefinementJob.perform_now(@refinement.reload)
+
+    assert_equal teacher_snapshot, reference.backend_snapshot
+    assert_equal reference, @refinement.reload.reference_trial
+    assert_equal [ teacher_snapshot.except(:name), student_snapshot.except(:name), teacher_snapshot.except(:name),
+      student_snapshot.except(:name), teacher_snapshot.except(:name) ], @configurations
+    assert_equal 2, @refinement.iterations.completed.count
+    @refinement.iterations.each do |iteration|
+      assert_equal student_snapshot, iteration.student_trial.backend_snapshot
+    end
   end
 
   test "runs one iteration and returns the refinement to pending" do
@@ -263,8 +293,12 @@ class RefinementJobTest < ActiveJob::TestCase
         Inference::Completion.new(content: generate(model: model, prompt: prompt), metrics: {})
       end
     end
+    configurations = @configurations
     factory = Class.new do
-      define_singleton_method(:for) { |_backend, **_options| client_class.new }
+      define_singleton_method(:for) do |_backend, **options|
+        configurations << options
+        client_class.new
+      end
     end
     TrialExecutionJob.client_factory = factory
     RefinementJob.client_factory = factory

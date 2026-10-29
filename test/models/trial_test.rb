@@ -9,6 +9,13 @@ class TrialTest < ActiveSupport::TestCase
     ])
   end
 
+  test "captures the adapter and prevents changes to its snapshot" do
+    trial = create_trial(prompt: @prompt, test_suite: @test_suite)
+    assert_equal "ollama", trial.backend_adapter
+    assert_not trial.update(backend_adapter: "unsupported")
+    assert_includes trial.errors[:backend], "cannot be changed after the trial is created"
+  end
+
   test "requires revisions, a backend, a model, and a valid status" do
     trial = Trial.new(model: "", status: "unknown")
 

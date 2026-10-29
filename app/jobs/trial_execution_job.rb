@@ -5,7 +5,7 @@ class TrialExecutionJob < ApplicationJob
 
   def perform(trial)
     trial.update!(status: :running, started_at: Time.current)
-    client = client_factory.for(trial.backend, base_url: trial.backend_base_url)
+    client = client_factory.for(trial.backend, **trial.inference_configuration)
 
     trial.responses
       .joins(:test_suite_revision_case)

@@ -55,7 +55,7 @@ class RefinementJob < ApplicationJob
   def run_iteration(refinement, iteration)
     ensure_reference_trial(refinement)
 
-    student_trial = run_trial(refinement, iteration.prompt_revision, refinement.student_backend, refinement.student_model)
+    student_trial = run_trial(refinement, iteration.prompt_revision, :student)
     iteration.update!(student_trial: student_trial, status: :evaluating)
     if student_trial.responses.completed.none?
       raise IterationFailed, "Every response in the student trial (##{student_trial.id}) failed."
@@ -81,18 +81,19 @@ class RefinementJob < ApplicationJob
   def ensure_reference_trial(refinement)
     return if refinement.reference_trial
 
-    trial = run_trial(refinement, refinement.starting_prompt_revision, refinement.teacher_backend, refinement.teacher_model)
+    trial = run_trial(refinement, refinement.starting_prompt_revision, :teacher)
     raise IterationFailed, "The reference trial (##{trial.id}) failed, so there is nothing to compare with." unless trial.completed?
 
     refinement.update!(reference_trial: trial)
   end
 
-  def run_trial(refinement, prompt_revision, backend, model)
+  def run_trial(refinement, prompt_revision, role)
     trial = Trial.create_from_revisions!(
       prompt_revision: prompt_revision,
       test_suite_revision: refinement.test_suite_revision,
-      backend: backend,
-      model: model
+      backend: refinement.public_send("#{role}_backend"),
+      model: refinement.public_send("#{role}_model"),
+      backend_snapshot: refinement.backend_snapshot(role)
     )
     TrialExecutionJob.perform_now(trial)
     trial.reload
@@ -102,7 +103,7 @@ class RefinementJob < ApplicationJob
   # once, with the reason added to the request.
   def evaluate(refinement, iteration)
     evaluation = RefinementEvaluation.new(refinement: refinement, iteration: iteration)
-    client = client_factory.for(refinement.teacher_backend)
+    client = client_factory.for(refinement.teacher_backend, **refinement.inference_configuration(:teacher))
     prompt = evaluation.prompt
 
     2.times do |attempt|

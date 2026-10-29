@@ -47,6 +47,8 @@ The uploaded files are stored with Active Storage in `storage/`, next to the SQL
 
 Prompt Refinery uses [Ollama](https://ollama.com/) to run models locally. Ollama will use a supported GPU when one is available and otherwise fall back to CPU execution.
 
+Backends record the inference adapter they use; only Ollama is currently supported. Create a new backend to switch providers. Trials and both refinement roles preserve the original adapter, backend name, and URL, so later backend edits do not redirect queued work or subsequent refinement iterations.
+
 ## Local development
 
 Prompt Refinery is a Rails 8.1 application using Hotwire, SQLite, and Solid Queue. Ruby and Rails run in Docker; Ollama runs locally and is reached from the app at `http://host.docker.internal:11434` by default.

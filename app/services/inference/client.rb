@@ -2,12 +2,12 @@ module Inference
   class Client
     UnsupportedAdapter = Class.new(Inference::Error)
 
-    def self.for(backend, base_url: backend.base_url)
-      case backend.adapter
+    def self.for(backend, base_url: backend.base_url, adapter: backend.adapter)
+      case adapter
       when "ollama"
         Ollama::Client.new(base_url: base_url)
       else
-        raise UnsupportedAdapter, "Unsupported inference adapter: #{backend.adapter}"
+        raise UnsupportedAdapter, "Unsupported inference adapter: #{adapter}"
       end
     end
   end

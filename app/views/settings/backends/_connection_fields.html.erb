@@ -1,0 +1,8 @@
+<%= form.label :adapter %>
+<%= form.select :adapter, Backend::ADAPTERS.map { |adapter| [adapter.humanize, adapter] }, {}, disabled: backend.persisted? %>
+<% if backend.persisted? %>
+  <p>Create another backend to switch providers.</p>
+<% end %>
+
+<%= form.label :base_url, "Base URL" %>
+<%= form.url_field :base_url, required: true, placeholder: "http://edge-board.local:8080" %>

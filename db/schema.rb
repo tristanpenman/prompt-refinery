@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_24_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_28_000000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -50,6 +50,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_010000) do
     t.index ["name"], name: "index_backends_on_name", unique: true
     t.index ["system"], name: "index_backends_on_system", unique: true, where: "system = 1"
     t.check_constraint "adapter IN ('ollama')", name: "backends_adapter_check"
+    t.check_constraint "system = 0 OR adapter = 'ollama'", name: "backends_system_adapter_check"
   end
 
   create_table "language_model_families", force: :cascade do |t|
@@ -125,6 +126,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_010000) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "student_backend_adapter", default: "ollama", null: false
+    t.string "teacher_backend_adapter", default: "ollama", null: false
     t.index ["prompt_id"], name: "index_prompt_refinements_on_prompt_id", unique: true
     t.index ["reference_trial_id"], name: "index_prompt_refinements_on_reference_trial_id", unique: true
     t.index ["starting_prompt_revision_id"], name: "index_prompt_refinements_on_starting_prompt_revision_id"
@@ -252,6 +255,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_010000) do
     t.string "backend_base_url", null: false
     t.integer "prompt_revision_id", null: false
     t.integer "test_suite_revision_id", null: false
+    t.string "backend_adapter", default: "ollama", null: false
     t.index ["backend_id"], name: "index_trials_on_backend_id"
     t.index ["prompt_revision_id"], name: "index_trials_on_prompt_revision_id"
     t.index ["test_suite_revision_id"], name: "index_trials_on_test_suite_revision_id"

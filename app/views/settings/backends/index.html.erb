@@ -15,8 +15,7 @@
       <%= form.label :name %>
       <%= form.text_field :name, required: true, placeholder: "RK3588 board" %>
 
-      <%= form.label :base_url, "Base URL" %>
-      <%= form.url_field :base_url, required: true, placeholder: "http://edge-board.local:8080" %>
+      <%= render "connection_fields", form: form, backend: @backend %>
 
       <%= form.submit "Add backend" %>
     <% end %>

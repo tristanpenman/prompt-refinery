@@ -4,6 +4,7 @@
 # Database name: primary
 #
 #  id                     :integer          not null, primary key
+#  backend_adapter        :string           default("ollama"), not null
 #  backend_base_url       :string           not null
 #  backend_name           :string           not null
 #  completed_at           :datetime
@@ -55,6 +56,7 @@ class Trial < ApplicationRecord
 
   validates :model, presence: true
   validates :backend_name, :backend_base_url, presence: true
+  validates :backend_adapter, inclusion: { in: Backend::ADAPTERS }
   validate :prompt_is_active, on: :create
   validate :test_suite_is_active, on: :create
   validate :test_suite_is_confirmed, on: :create
@@ -79,9 +81,9 @@ class Trial < ApplicationRecord
 
   # Creates a trial of revisions that were already captured, with a pending
   # response for each test case.
-  def self.create_from_revisions!(prompt_revision:, test_suite_revision:, backend:, model:, **attributes)
+  def self.create_from_revisions!(prompt_revision:, test_suite_revision:, backend:, model:, backend_snapshot: nil, **attributes)
     transaction do
-      trial = create!(
+      trial = new(
         attributes.merge(
           prompt_revision: prompt_revision,
           test_suite_revision: test_suite_revision,
@@ -89,6 +91,8 @@ class Trial < ApplicationRecord
           model: model
         )
       )
+      trial.backend_snapshot = backend_snapshot
+      trial.save!
       template = PromptTemplate.new(prompt_revision.template)
       test_suite_revision.test_suite_revision_cases.includes(:test_case_revision).each do |member|
         trial.responses.create!(
@@ -100,18 +104,30 @@ class Trial < ApplicationRecord
     end
   end
 
+  attr_writer :backend_snapshot
+
+  def inference_configuration
+    { adapter: backend_adapter, base_url: backend_base_url }.freeze
+  end
+
+  def backend_snapshot
+    { name: backend_name, **inference_configuration }.freeze
+  end
+
   private
 
   def snapshot_backend
     return unless backend
 
-    self.backend_name = backend.name
-    self.backend_base_url = backend.base_url
+    snapshot = @backend_snapshot || { name: backend.name, **backend.inference_configuration }
+    self.backend_name = snapshot.fetch(:name)
+    self.backend_base_url = snapshot.fetch(:base_url)
+    self.backend_adapter = snapshot.fetch(:adapter)
   end
 
   def execution_input_is_immutable
     changed_fields = changes_to_save.keys
-    if (changed_fields & %w[backend_id backend_name backend_base_url]).any?
+    if (changed_fields & %w[backend_id backend_name backend_base_url backend_adapter]).any?
       errors.add(:backend, "cannot be changed after the trial is created")
     end
     if (changed_fields & %w[prompt_revision_id test_suite_revision_id]).any?

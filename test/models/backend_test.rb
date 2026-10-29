@@ -1,6 +1,18 @@
 require "test_helper"
 
 class BackendTest < ActiveSupport::TestCase
+  test "rejects an unsupported adapter change on a persisted backend" do
+    backend = Backend.create!(name: "Edge", base_url: "http://edge.test")
+    assert_not backend.update(adapter: "unsupported")
+    assert_includes backend.errors[:adapter], "cannot be changed; create another backend to switch providers"
+  end
+
+  test "rejects an unsupported adapter for a system backend" do
+    backend = Backend.new(name: "System", adapter: "unsupported", base_url: "http://edge.test", system: true)
+    assert_not backend.valid?
+    assert_includes backend.errors[:adapter], "must be ollama for the system backend"
+  end
+
   test "normalizes whitespace and trailing slashes from the base URL" do
     backend = Backend.create!(name: "Edge board", base_url: "  http://edge-board.local:8080/ollama///  ")
 

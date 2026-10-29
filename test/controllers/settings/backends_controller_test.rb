@@ -12,6 +12,15 @@ class Settings::BackendsControllerTest < ActionDispatch::IntegrationTest
     ENV["RAILS_AUTH_TOKEN"] = @original_encrypted_token
   end
 
+  test "adapter selection offers only Ollama and is fixed after creation" do
+    get settings_backends_path
+    assert_select "select[name='backend[adapter]'] option[value='ollama']"
+    assert_select "select[name='backend[adapter]'] option", count: Backend::ADAPTERS.size
+    backend = Backend.create!(name: "Edge", base_url: "http://edge.test")
+    get edit_settings_backend_path(backend)
+    assert_select "select[name='backend[adapter]'][disabled]"
+  end
+
   test "lists all backends including the system backend" do
     system_backend = Backend.ensure_system_default!(base_url: "http://ollama:11434")
     Backend.create!(name: "Disabled board", base_url: "http://edge-board.local:8080", enabled: false)

@@ -14,10 +14,12 @@
 #  status                      :string           default("pending"), not null
 #  stop_reason                 :string
 #  stop_requested_at           :datetime
+#  student_backend_adapter     :string           default("ollama"), not null
 #  student_backend_base_url    :string           not null
 #  student_backend_name        :string           not null
 #  student_model               :string           not null
 #  target_agreement            :decimal(4, 3)    default(1.0), not null
+#  teacher_backend_adapter     :string           default("ollama"), not null
 #  teacher_backend_base_url    :string           not null
 #  teacher_backend_name        :string           not null
 #  teacher_model               :string           not null
@@ -74,6 +76,7 @@ class PromptRefinement < ApplicationRecord
     prompt_id starting_prompt_revision_id test_suite_revision_id
     student_backend_id student_model student_backend_name student_backend_base_url
     teacher_backend_id teacher_model teacher_backend_name teacher_backend_base_url
+    student_backend_adapter teacher_backend_adapter
     instructions
   ].freeze
 
@@ -96,6 +99,9 @@ class PromptRefinement < ApplicationRecord
 
   validates :name, :student_model, :teacher_model, :instructions, presence: true
   validates :student_backend_name, :student_backend_base_url, :teacher_backend_name, :teacher_backend_base_url, presence: true
+  %w[student teacher].each do |role|
+    validates "#{role}_backend_adapter", inclusion: { in: Backend::ADAPTERS }
+  end
   validates :max_iterations, numericality: { only_integer: true, in: MAX_ITERATIONS }
   validates :target_agreement, numericality: { in: 0..1 }
   validates :context_size, numericality: { only_integer: true, greater_than: 0 }
@@ -156,16 +162,28 @@ class PromptRefinement < ApplicationRecord
     end
   end
 
+  def backend_snapshot(role)
+    raise ArgumentError, "Unknown refinement role" unless %i[student teacher].include?(role)
+
+    %i[name base_url adapter].to_h { |key| [ key, public_send("#{role}_backend_#{key}") ] }.freeze
+  end
+
+  def inference_configuration(role)
+    backend_snapshot(role).except(:name).freeze
+  end
+
   private
 
   def snapshot_backends
     if student_backend
       self.student_backend_name = student_backend.name
       self.student_backend_base_url = student_backend.base_url
+      self.student_backend_adapter = student_backend.adapter
     end
     if teacher_backend
       self.teacher_backend_name = teacher_backend.name
       self.teacher_backend_base_url = teacher_backend.base_url
+      self.teacher_backend_adapter = teacher_backend.adapter
     end
   end
 

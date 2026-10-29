@@ -45,6 +45,8 @@ class Backend < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :base_url, presence: true
   validates :adapter, presence: true, inclusion: { in: ADAPTERS }
+  validate :adapter_is_immutable, on: :update
+  validate :system_backend_uses_ollama
   validate :base_url_is_valid
   validate :system_backend_cannot_be_demoted, on: :update
 
@@ -64,7 +66,19 @@ class Backend < ApplicationRecord
     find_by!(system: true)
   end
 
+  def inference_configuration
+    { adapter: adapter, base_url: base_url }.freeze
+  end
+
   private
+
+  def adapter_is_immutable
+    errors.add(:adapter, "cannot be changed; create another backend to switch providers") if will_save_change_to_adapter?
+  end
+
+  def system_backend_uses_ollama
+    errors.add(:adapter, "must be ollama for the system backend") if system? && adapter != "ollama"
+  end
 
   def normalize_base_url
     self.base_url = base_url.to_s.strip.sub(%r{/+\z}, "") if base_url.present?

@@ -19,11 +19,7 @@
         <%= form.label :name %>
         <%= form.text_field :name, required: true %>
 
-        <%= form.label :base_url, "Base URL" %>
-        <%= form.url_field :base_url, required: true %>
-
-        <%= form.label :adapter %>
-        <%= form.select :adapter, Backend::ADAPTERS.map { |adapter| [adapter.humanize, adapter] } %>
+        <%= render "connection_fields", form: form, backend: @backend %>
       <% end %>
 
       <%= form.label :enabled do %>
