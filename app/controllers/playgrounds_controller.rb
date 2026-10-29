@@ -17,7 +17,7 @@ class PlaygroundsController < ApplicationController
 
     @answer = client_factory.for(@backend).generate(model: @model, prompt: @prompt)
     render_result
-  rescue ::Ollama::Client::Error, Inference::Client::UnsupportedAdapter => error
+  rescue Inference::Error => error
     @error = error.message
     render_result(status: :bad_gateway)
   end

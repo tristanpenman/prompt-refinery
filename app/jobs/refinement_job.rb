@@ -41,7 +41,7 @@ class RefinementJob < ApplicationJob
       started_at: Time.current
     )
     run_iteration(refinement, iteration)
-  rescue IterationFailed, ::Ollama::Client::Error, Inference::Client::UnsupportedAdapter => error
+  rescue IterationFailed, Inference::Error => error
     iteration&.update!(status: :failed, error: error.message, completed_at: Time.current)
     nil
   rescue StandardError => error

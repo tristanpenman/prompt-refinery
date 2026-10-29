@@ -148,7 +148,7 @@ class Settings::BackendsControllerTest < ActionDispatch::IntegrationTest
   test "reports a backend connection failure" do
     backend = Backend.create!(name: "Offline board", base_url: "http://offline.local:8080")
     client = Object.new
-    client.define_singleton_method(:models) { raise Ollama::Client::Error, "connection refused" }
+    client.define_singleton_method(:models) { raise Inference::Error, "connection refused" }
     factory = Object.new
     factory.define_singleton_method(:for) { |_backend| client }
     Settings::BackendsController.client_factory = factory

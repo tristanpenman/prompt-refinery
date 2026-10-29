@@ -42,7 +42,7 @@ class EvaluationsController < ApplicationController
       prompt: prompt,
       response: client.generate(model: @model, prompt: prompt.template)
     }
-  rescue ::Ollama::Client::Error => error
+  rescue Inference::Error => error
     { prompt: prompt, error: error.message }
   end
 

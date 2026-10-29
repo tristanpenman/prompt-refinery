@@ -41,12 +41,12 @@ module Settings
     def test_connection
       models = client_factory.for(@backend).models
       unless models.is_a?(Array) && models.all? { |model| model.is_a?(Hash) && model["name"].present? }
-        raise Ollama::Client::Error, "the server returned an invalid model list"
+        raise Inference::Error, "the server returned an invalid model list"
       end
 
       redirect_to settings_backends_path,
         notice: "Connected to #{@backend.name}. Found #{helpers.pluralize(models.size, "model")}."
-    rescue Ollama::Client::Error, Inference::Client::UnsupportedAdapter => error
+    rescue Inference::Error => error
       redirect_to settings_backends_path,
         alert: "Could not connect to #{@backend.name}: #{error.message}"
     end

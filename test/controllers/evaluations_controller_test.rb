@@ -50,7 +50,7 @@ class EvaluationsControllerTest < ActionDispatch::IntegrationTest
   test "shows a generation failure" do
     client = Class.new do
       def generate(model:, prompt:)
-        raise ::Ollama::Client::Error, "Generation failed"
+        raise Inference::Error, "Generation failed"
       end
     end
     EvaluationsController.client_factory = factory_for(client)

@@ -3,7 +3,7 @@ require "json"
 
 module Ollama
   class Client
-    Error = Class.new(StandardError)
+    Error = Class.new(Inference::Error)
     OPEN_TIMEOUT = 2
     READ_TIMEOUT = 5
     GENERATION_TIMEOUT = 300
@@ -11,7 +11,7 @@ module Ollama
 
     # The generated content, and the token counts and timings Ollama reported
     # for it, keyed by the names in METRICS. Durations are in nanoseconds.
-    Completion = Data.define(:content, :metrics)
+    Completion = Inference::Completion
 
     def initialize(base_url: ENV.fetch("OLLAMA_URL", "http://localhost:11434"))
       @base_url = base_url

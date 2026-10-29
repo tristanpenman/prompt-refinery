@@ -21,7 +21,7 @@ module Inference
           model.merge("backend" => backend, "language_model" => language_model)
         end)
         mark_missing_unavailable(backend, backend_models)
-      rescue Ollama::Client::Error, Inference::Client::UnsupportedAdapter => error
+      rescue Inference::Error => error
         errors << Error.new(backend:, message: error.message)
       end
 

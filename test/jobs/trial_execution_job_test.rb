@@ -16,7 +16,7 @@ class TrialExecutionJobTest < ActiveJob::TestCase
     client_class = Class.new do
       define_method(:complete) do |model:, prompt:|
         calls << [ model, prompt ]
-        Ollama::Client::Completion.new(content: "Response to #{prompt}", metrics: { "prompt_eval_count" => 12, "eval_count" => 34, "total_duration" => 2_000_000_000 })
+        Inference::Completion.new(content: "Response to #{prompt}", metrics: { "prompt_eval_count" => 12, "eval_count" => 34, "total_duration" => 2_000_000_000 })
       end
     end
     TrialExecutionJob.client_factory = factory_for(client_class)
@@ -37,9 +37,9 @@ class TrialExecutionJobTest < ActiveJob::TestCase
   test "records an individual failure and continues the trial" do
     client_class = Class.new do
       def complete(model:, prompt:)
-        raise ::Ollama::Client::Error, "Generation failed" if prompt == "First prompt"
+        raise Inference::Error, "Generation failed" if prompt == "First prompt"
 
-        Ollama::Client::Completion.new(content: "Generated successfully", metrics: {})
+        Inference::Completion.new(content: "Generated successfully", metrics: {})
       end
     end
     TrialExecutionJob.client_factory = factory_for(client_class)

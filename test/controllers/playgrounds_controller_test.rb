@@ -62,7 +62,7 @@ class PlaygroundsControllerTest < ActionDispatch::IntegrationTest
   test "reports a generation error" do
     client = Class.new do
       def generate(model:, prompt:)
-        raise ::Ollama::Client::Error, "Ollama timed out"
+        raise Inference::Error, "Ollama timed out"
       end
     end
     PlaygroundsController.client_factory = factory_for(client)

@@ -1,6 +1,6 @@
 module Inference
   class Client
-    UnsupportedAdapter = Class.new(StandardError)
+    UnsupportedAdapter = Class.new(Inference::Error)
 
     def self.for(backend, base_url: backend.base_url)
       case backend.adapter

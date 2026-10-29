@@ -26,7 +26,7 @@ class TrialExecutionJob < ApplicationJob
   def generate_response(client, trial, response)
     completion = client.complete(model: trial.model, prompt: response.rendered_prompt)
     response.update!(status: :completed, content: completion.content, error: nil, **completion.metrics)
-  rescue ::Ollama::Client::Error => error
+  rescue Inference::Error => error
     response.update!(status: :failed, content: nil, error: error.message)
   end
 end

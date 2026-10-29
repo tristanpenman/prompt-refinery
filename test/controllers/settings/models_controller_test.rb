@@ -213,7 +213,7 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     factory.define_singleton_method(:for) do |backend|
       Object.new.tap do |client|
         client.define_singleton_method(:models) do
-          raise Ollama::Client::Error, "connection refused" if backend == edge
+          raise Inference::Error, "connection refused" if backend == edge
 
           [ { "name" => "local-model" } ]
         end
@@ -235,7 +235,7 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     factory.define_singleton_method(:for) do |backend|
       Object.new.tap do |client|
         client.define_singleton_method(:models) do
-          raise Ollama::Client::Error, "connection refused" if backend == edge
+          raise Inference::Error, "connection refused" if backend == edge
 
           []
         end

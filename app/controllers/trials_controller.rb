@@ -70,7 +70,7 @@ class TrialsController < ApplicationController
     requested_backend_id = params[:backend_id] || @trial&.backend_id
     @selected_backend = @backends.find { |backend| backend.id == requested_backend_id.to_i } || @backends.first
     @models = @selected_backend ? client_factory.for(@selected_backend).models.map { |model| model.fetch("name") } : []
-  rescue ::Ollama::Client::Error => error
+  rescue Inference::Error => error
     @models = []
     @ollama_error = error.message
   end

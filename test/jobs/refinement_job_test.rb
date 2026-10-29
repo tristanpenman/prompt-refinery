@@ -160,10 +160,13 @@ class RefinementJobTest < ActiveJob::TestCase
   end
 
   test "records an evaluation request that couldn't be sent" do
-    use_client(evaluation_replies: [ ::Ollama::Client::Error.new("Could not connect to Ollama: refused") ])
+    use_client(evaluation_replies: [ Inference::Error.new("Could not connect to Ollama: refused") ])
 
-    RefinementJob.perform_now(@refinement)
+    assert_no_enqueued_jobs do
+      RefinementJob.perform_now(@refinement, run_to_completion: true)
+    end
 
+    assert_predicate @refinement.iterations.sole, :failed?
     assert_equal "Could not connect to Ollama: refused", @refinement.iterations.sole.error
     assert_predicate @refinement.reload, :pending?
   end
@@ -250,14 +253,14 @@ class RefinementJobTest < ActiveJob::TestCase
           reply
         else
           failing = failing_models.include?(model) || (model.start_with?("student") && failing_student_prompts.include?(prompt))
-          raise ::Ollama::Client::Error, "Generation failed" if failing
+          raise Inference::Error, "Generation failed" if failing
 
           "#{model.start_with?("teacher") ? "Teacher" : "Student"}: #{prompt}"
         end
       end
 
       define_method(:complete) do |model:, prompt:|
-        Ollama::Client::Completion.new(content: generate(model: model, prompt: prompt), metrics: {})
+        Inference::Completion.new(content: generate(model: model, prompt: prompt), metrics: {})
       end
     end
     factory = Class.new do
