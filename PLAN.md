@@ -52,8 +52,9 @@ The goal of this project is to build a small local-first application for prompt 
 Implementation details: [notes/bedrock.md](notes/bedrock.md).
 
 - ~~Add shared inference errors and completion results, preserving Ollama behavior.~~
+- ~~Add AWS SDK dependencies.~~
+- Wire env / credentials for both Compose services.
 - Add the `bedrock` adapter, region configuration, settings UI, and immutable adapter/region snapshots for trials and refinements.
-- Add AWS SDK dependencies and wire env / credentials for both Compose services.
 - Document IAM permissions and credential refresh.
 - Implement Converse generation with option translation, output limits, response validation, bounded retries, and token/time metrics.
 - Support model and inference-profile discovery, explicit invocation IDs, and connection checks without losing catalog entries on discovery failure.
