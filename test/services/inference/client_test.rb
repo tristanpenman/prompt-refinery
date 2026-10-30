@@ -25,6 +25,21 @@ class Inference::ClientTest < ActiveSupport::TestCase
     assert_equal "http://snapshot.local:8080", client.instance_variable_get(:@base_url)
   end
 
+  test "uses the saved adapter instead of the current backend adapter" do
+    backend = Backend.new(adapter: "bedrock")
+    client = Inference::Client.for(backend, adapter: "ollama", base_url: "http://saved.test")
+    assert_instance_of Ollama::Client, client
+    assert_equal "http://saved.test", client.instance_variable_get(:@base_url)
+  end
+
+  test "Bedrock configuration fails clearly until generation and discovery are implemented" do
+    backend = Backend.new(adapter: "bedrock")
+    error = assert_raises(Inference::Client::UnsupportedAdapter) do
+      Inference::Client.for(backend, adapter: "bedrock")
+    end
+    assert_includes error.message, "not implemented yet"
+  end
+
   test "rejects an unsupported adapter" do
     backend = Backend.new(base_url: "http://example.test")
     backend.adapter = "unsupported"

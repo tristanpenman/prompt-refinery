@@ -29,6 +29,25 @@ class PromptRefinementTest < ActiveSupport::TestCase
     assert_includes refinement.instructions, "{{current_prompt}}"
   end
 
+  test "both roles capture the current deployment endpoint without storing a region" do
+    with_aws_region("us-east-1") do
+      backend = Backend.create!(name: "AWS", adapter: "bedrock")
+      with_aws_region("us-west-2") do
+        refinement = create_refinement(student_backend: backend, teacher_backend: backend)
+        snapshot = refinement.backend_snapshot(:teacher)
+        assert_equal "https://bedrock-runtime.us-west-2.amazonaws.com", snapshot[:base_url]
+        backend.update!(name: "New AWS")
+        assert_equal snapshot, refinement.reload.backend_snapshot(:teacher)
+        assert_equal snapshot, refinement.backend_snapshot(:student)
+        assert_equal "bedrock", snapshot[:adapter]
+        %w[student teacher].each do |role|
+          refinement.reload
+          assert_not refinement.update("#{role}_backend_adapter" => "ollama")
+        end
+      end
+    end
+  end
+
   test "copies the student and teacher backends" do
     teacher_backend = Backend.create!(name: "GPU server", base_url: "http://gpu.test:11434")
 

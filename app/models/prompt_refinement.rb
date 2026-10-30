@@ -177,12 +177,12 @@ class PromptRefinement < ApplicationRecord
   def snapshot_backends
     if student_backend
       self.student_backend_name = student_backend.name
-      self.student_backend_base_url = student_backend.base_url
+      self.student_backend_base_url = student_backend.inference_configuration.fetch(:base_url)
       self.student_backend_adapter = student_backend.adapter
     end
     if teacher_backend
       self.teacher_backend_name = teacher_backend.name
-      self.teacher_backend_base_url = teacher_backend.base_url
+      self.teacher_backend_base_url = teacher_backend.inference_configuration.fetch(:base_url)
       self.teacher_backend_adapter = teacher_backend.adapter
     end
   end

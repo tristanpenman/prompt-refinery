@@ -20,7 +20,7 @@ require "uri"
 #  index_backends_on_system  (system) UNIQUE WHERE system = 1
 #
 class Backend < ApplicationRecord
-  ADAPTERS = %w[ollama].freeze
+  ADAPTERS = %w[ollama bedrock].freeze
   DEFAULT_NAME = "Local Ollama"
   DEFAULT_BASE_URL = "http://ollama:11434"
 
@@ -39,7 +39,7 @@ class Backend < ApplicationRecord
     inverse_of: :teacher_backend
   has_many :language_models, dependent: :destroy, inverse_of: :backend
 
-  before_validation :normalize_base_url
+  before_validation :normalize_configuration
   before_destroy :prevent_system_backend_destruction
 
   validates :name, presence: true, uniqueness: true
@@ -47,7 +47,7 @@ class Backend < ApplicationRecord
   validates :adapter, presence: true, inclusion: { in: ADAPTERS }
   validate :adapter_is_immutable, on: :update
   validate :system_backend_uses_ollama
-  validate :base_url_is_valid
+  validate :base_url_is_valid, unless: :bedrock?
   validate :system_backend_cannot_be_demoted, on: :update
 
   def self.ensure_system_default!(base_url: ENV.fetch("OLLAMA_URL", DEFAULT_BASE_URL))
@@ -66,8 +66,12 @@ class Backend < ApplicationRecord
     find_by!(system: true)
   end
 
+  def bedrock?
+    adapter == "bedrock"
+  end
+
   def inference_configuration
-    { adapter: adapter, base_url: base_url }.freeze
+    { adapter: adapter, base_url: bedrock? ? Inference::BedrockConfiguration.endpoint : base_url }.freeze
   end
 
   private
@@ -78,6 +82,17 @@ class Backend < ApplicationRecord
 
   def system_backend_uses_ollama
     errors.add(:adapter, "must be ollama for the system backend") if system? && adapter != "ollama"
+  end
+
+  def normalize_configuration
+    if bedrock?
+      self.base_url = Inference::BedrockConfiguration.endpoint
+    else
+      normalize_base_url
+    end
+  rescue Inference::Error => error
+    self.base_url = nil
+    errors.add(:base, error.message)
   end
 
   def normalize_base_url

@@ -157,6 +157,22 @@ class TrialTest < ActiveSupport::TestCase
     assert_includes trial.errors[:base], "Prompt and test suite revisions cannot be changed after the trial is created"
   end
 
+  test "Bedrock snapshots preserve the adapter and original endpoint without storing a region" do
+    with_aws_region("us-east-1") do
+      backend = Backend.create!(name: "AWS", adapter: "bedrock")
+      trial = create_trial(prompt: @prompt, test_suite: @test_suite, backend: backend)
+      snapshot = trial.backend_snapshot
+      with_aws_region("us-west-2") do
+        backend.update!(name: "New AWS")
+        assert_equal snapshot, trial.reload.backend_snapshot
+        assert_equal "bedrock", trial.backend_adapter
+        assert_equal "https://bedrock-runtime.us-east-1.amazonaws.com", trial.backend_base_url
+        assert_equal "https://bedrock-runtime.us-west-2.amazonaws.com", create_trial(prompt: @prompt, test_suite: @test_suite, backend: backend).backend_base_url
+      end
+      assert_not trial.update(backend_adapter: "ollama")
+    end
+  end
+
   test "snapshots its backend execution input and prevents it from changing" do
     backend = Backend.ensure_system_default!(base_url: "http://ollama:11434")
     trial = create_trial(prompt: @prompt, test_suite: @test_suite, backend: backend)

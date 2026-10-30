@@ -10,6 +10,7 @@ services:
       RAILS_ALLOWED_HOSTS: ${RAILS_ALLOWED_HOSTS:-}
       RAILS_AUTH_TOKEN: ${RAILS_AUTH_TOKEN:-}
       RAILS_LOG_TO_STDOUT: "1"
+      AWS_REGION: ${AWS_REGION:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -24,6 +25,7 @@ services:
     environment:
       OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
       RAILS_LOG_TO_STDOUT: "1"
+      AWS_REGION: ${AWS_REGION:-}
     image: prompt-refinery:dev
     restart: always
     volumes:

@@ -13,6 +13,51 @@ class BackendTest < ActiveSupport::TestCase
     assert_includes backend.errors[:adapter], "must be ollama for the system backend"
   end
 
+  test "Bedrock derives its URL from the deployment region and ignores custom endpoints" do
+    with_aws_region(" us-east-1 ") do
+      backend = Backend.create!(name: "AWS", adapter: "bedrock", base_url: "http://ollama:11434")
+      assert_equal "https://bedrock-runtime.us-east-1.amazonaws.com", backend.base_url
+      assert_equal({ adapter: "bedrock", base_url: backend.base_url }, backend.inference_configuration)
+
+      with_aws_region("cn-north-1") do
+        assert_equal "https://bedrock-runtime.cn-north-1.amazonaws.com.cn", backend.inference_configuration[:base_url]
+        backend.update!(base_url: "https://custom.test")
+        assert_equal "https://bedrock-runtime.cn-north-1.amazonaws.com.cn", backend.base_url
+      end
+    end
+  end
+
+  test "Bedrock requires a valid AWS_REGION but Ollama does not" do
+    [ nil, "", " ", "https://custom.test" ].each do |region|
+      with_aws_region(region) do
+        backend = Backend.new(name: "AWS", adapter: "bedrock", base_url: "http://ignored.test")
+        assert_not backend.valid?
+        assert_match(/AWS_REGION/, backend.errors.full_messages.join)
+        assert_nil backend.base_url
+        assert Backend.new(name: "Ollama", base_url: "http://ollama.test").valid?
+      end
+    end
+  end
+
+  test "persisted backends cannot switch adapters" do
+    with_aws_region("us-east-1") do
+      backend = Backend.create!(name: "Edge", base_url: "http://edge.test")
+      assert_not backend.update(adapter: "bedrock")
+      assert_includes backend.errors[:adapter], "cannot be changed; create another backend to switch providers"
+
+      backend = Backend.create!(name: "AWS", adapter: "bedrock")
+      assert_not backend.update(adapter: "ollama", base_url: "http://edge.test")
+    end
+  end
+
+  test "a system backend must use Ollama" do
+    with_aws_region("us-east-1") do
+      backend = Backend.new(name: "System AWS", adapter: "bedrock", system: true)
+      assert_not backend.valid?
+      assert_includes backend.errors[:adapter], "must be ollama for the system backend"
+    end
+  end
+
   test "normalizes whitespace and trailing slashes from the base URL" do
     backend = Backend.create!(name: "Edge board", base_url: "  http://edge-board.local:8080/ollama///  ")
 

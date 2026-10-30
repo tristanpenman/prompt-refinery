@@ -13,12 +13,12 @@ The teacher has two responsibilities: generate a reference response for every te
 ## Backend configuration and history
 
 - Add `bedrock` to `Backend::ADAPTERS` and extend the `backends_adapter_check` database constraint in a migration. Keep the required system Ollama backend unchanged.
-- Add a `region` field, required for Bedrock. Use a region explicitly selected by the user, optionally prefilled from `AWS_REGION`. Do not hard-code a model or assume it is available in every region.
+- Configure the Bedrock region through the deployment’s `AWS_REGION`, alongside credentials. Do not add region columns to backends, trials, or refinements. Do not hard-code a model or assume it is available in every region.
 - For Bedrock, hide the editable base URL and derive the runtime endpoint through AWS endpoint resolution. The existing non-null `base_url` can hold the resolved runtime URL for display and compatibility; do not treat an Ollama URL as a Bedrock endpoint. Initially support standard AWS endpoints, with custom endpoints deferred.
-- Extend the settings forms and permitted parameters to select the adapter and region, and display the region on the backend list. Apply URL validation according to the adapter.
-- Snapshot adapter and region on trials and on both refinement roles, alongside the existing backend name and URL snapshots. Backfill existing snapshots as `ollama`. Pass this saved configuration into the client factory during execution. Keep credentials out of snapshots.
+- Extend the settings forms and permitted parameters to select the adapter and display the deployment region on the backend list. Do not accept a region form parameter. Apply URL validation according to the adapter.
+- Snapshot adapter on trials and on both refinement roles, alongside the existing backend name and URL snapshots. Backfill existing snapshots as `ollama`. Pass this saved configuration into the client factory during execution. Keep credentials out of snapshots.
 
-This needs an explicit configuration object or extra factory keywords: today `Inference::Client.for(backend, base_url:)` snapshots only the URL. Reading adapter and region from the current backend would let later edits change the meaning of a queued or historical run. Make adapter changes on an existing backend invalid, since its model catalog belongs to that adapter; create another backend to switch providers.
+This needs an explicit configuration object or extra factory keywords: today `Inference::Client.for(backend, base_url:)` snapshots only the URL. Reading the adapter from the current backend would let later edits change the meaning of a queued or historical run. Region and credentials are deployment configuration: changing AWS_REGION affects future Bedrock requests, including queued work; existing URL snapshots remain historical records. Make adapter changes on an existing backend invalid, since its model catalog belongs to that adapter; create another backend to switch providers.
 
 There is also an existing refinement snapshot gap to address: reference and student trials are created from the current backend record, and teacher evaluation constructs its client from that record. Ensure those paths use the refinement's saved configuration, rather than taking fresh settings after every iteration.
 
@@ -111,7 +111,7 @@ Preserve the existing reference reuse and iteration chaining. **Run to completio
 ## Implementation and verification sequence
 
 1. Introduce common inference errors and a shared completion type; verify Ollama behavior remains intact.
-2. Add the adapter/region migration, validations, settings UI, and execution snapshots. Preserve system-backend protections.
+2. Add the adapter constraint migration, environment region configuration, validations, and settings UI. Preserve the existing adapter and URL snapshots. Preserve system-backend protections.
 3. Add AWS SDK dependencies, credential configuration for both containers, the Converse wrapper, and model/profile discovery.
 4. Add native structured-output support and teacher capability validation; adapt Ollama-specific options and labels.
 5. Test with SDK `stub_responses`, without AWS access: plain generation, structured requests, mixed content blocks, stop reasons, usage units, option translation, discovery pagination/failure, credential errors, throttling, and saved configuration after backend edits.

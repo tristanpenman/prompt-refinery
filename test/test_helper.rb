@@ -10,6 +10,14 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
+    def with_aws_region(region)
+      previous_region = ENV["AWS_REGION"]
+      ENV["AWS_REGION"] = region
+      yield
+    ensure
+      ENV["AWS_REGION"] = previous_region
+    end
+
     def create_trial(prompt: create_prompt, test_suite: create_test_suite, backend: Backend.ensure_system_default!, model: "gemma3:4b", **attributes)
       Trial.create_for!(prompt: prompt, test_suite: test_suite, backend: backend, model: model, **attributes)
     end
