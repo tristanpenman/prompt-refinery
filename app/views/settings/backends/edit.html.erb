@@ -16,9 +16,6 @@
     <%= render "shared/errors", record: @backend %>
     <%= form_with model: [:settings, @backend], data: { controller: "backend-configuration" } do |form| %>
       <% unless @backend.system? %>
-        <%= form.label :name %>
-        <%= form.text_field :name, required: true %>
-
         <%= render "connection_fields", form: form, backend: @backend %>
       <% end %>
 

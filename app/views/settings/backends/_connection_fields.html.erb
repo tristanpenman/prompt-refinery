@@ -4,6 +4,9 @@
   <p>Create another backend to switch providers.</p>
 <% end %>
 
+<%= form.label :name %>
+<%= form.text_field :name, required: true, placeholder: backend.bedrock? ? "Amazon Bedrock" : "RK3588 board", data: { backend_configuration_target: "name" } %>
+
 <div data-backend-configuration-target="ollama" <%= "hidden" if backend.bedrock? %>>
   <%= form.label :base_url, "Base URL" %>
   <%= form.url_field :base_url, required: !backend.bedrock?, disabled: backend.bedrock?, placeholder: "http://edge-board.local:8080" %>

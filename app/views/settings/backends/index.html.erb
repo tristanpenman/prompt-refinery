@@ -12,9 +12,6 @@
     <h2>Add backend</h2>
     <%= render "shared/errors", record: @backend %>
     <%= form_with model: [:settings, @backend], data: { controller: "backend-configuration" } do |form| %>
-      <%= form.label :name %>
-      <%= form.text_field :name, required: true, placeholder: "RK3588 board" %>
-
       <%= render "connection_fields", form: form, backend: @backend %>
 
       <%= form.submit "Add backend" %>

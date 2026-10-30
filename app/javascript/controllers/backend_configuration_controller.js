@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["adapter", "ollama", "bedrock"]
+  static targets = ["adapter", "name", "ollama", "bedrock"]
 
   connect() {
     this.update()
@@ -11,6 +11,7 @@ export default class extends Controller {
     if (!this.hasAdapterTarget) return
 
     const bedrock = this.adapterTarget.value === "bedrock"
+    this.nameTarget.placeholder = bedrock ? "Amazon Bedrock" : "RK3588 board"
     this.toggle(this.ollamaTarget, !bedrock)
     this.toggle(this.bedrockTarget, bedrock)
   }
