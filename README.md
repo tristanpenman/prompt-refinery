@@ -47,7 +47,7 @@ The uploaded files are stored with Active Storage in `storage/`, next to the SQL
 
 Prompt Refinery uses [Ollama](https://ollama.com/) to run models locally. Ollama will use a supported GPU when one is available and otherwise fall back to CPU execution.
 
-Backends record the inference adapter they use; only Ollama is currently supported. Create a new backend to switch providers. Trials and both refinement roles preserve the original adapter, backend name, and URL, so later backend edits do not redirect queued work or subsequent refinement iterations.
+Backends record the inference adapter they use. Create a new backend to switch providers. Trials and both refinement roles preserve the original adapter, backend name, and URL, so later backend edits do not redirect queued work or subsequent refinement iterations.
 
 ## Local development
 
@@ -81,6 +81,25 @@ RAILS_AUTH_TOKEN=<encrypted value>
 ```
 
 Enter the original plaintext token on the login page. Prompt Refinery stores it in an encrypted, HTTP-only session cookie. You can also use a one-time-style login URL such as `https://prompt_refinery.example.test/?token=<plaintext token>`; Prompt Refinery removes the token from the URL after setting the cookie.
+
+### Amazon Bedrock configuration
+
+In **Settings → Backends**, choose **Amazon Bedrock**. Configure its region using `AWS_REGION` in the deployment environment. The runtime URL is derived using AWS endpoint resolution. Existing backends cannot switch adapters; create a new backend instead. Trials and both refinement roles preserve their original backend name, adapter, and URL after later backend edits. The region is deployment configuration and is not stored on backends, trials, or refinements.
+
+Bedrock configuration is available now; generation and model discovery are still planned. No AWS request is sent when saving a backend.
+
+Compose passes `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` to both `app` and `jobs`. Use one deployment identity and supply temporary credentials through your shell or an uncommitted local `.env` file. `AWS_REGION` determines the runtime endpoint alongside the deployment credentials. Changing it changes the region used by future Bedrock requests, including queued work. Historical URL snapshots remain unchanged. Host AWS profiles are not mounted into the containers by this configuration.
+
+For temporary credentials, export all three credential variables from your organization's AWS login process, or update them together in `.env`:
+
+```dotenv
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=<temporary access key>
+AWS_SECRET_ACCESS_KEY=<temporary secret key>
+AWS_SESSION_TOKEN=<session token>
+```
+
+After login or credential renewal, run `scripts/compose.sh` to recreate both services with the refreshed environment. Restarting a container alone does not update its environment. Keep credentials out of backend records, run snapshots, images, and version control.
 
 ### Demo data
 

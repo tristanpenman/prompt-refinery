@@ -110,6 +110,57 @@ class Settings::BackendsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".flash--alert", text: "The system backend cannot be deleted"
   end
 
+  test "shows the deployment region without a region field" do
+    with_aws_region("ap-southeast-2") do
+      get settings_backends_path
+      assert_select "select[name='backend[adapter]'] option[selected][value='ollama']"
+      assert_select "input[name='backend[region]']", count: 0
+      assert_select "p", text: /AWS region: ap-southeast-2/
+    end
+  end
+
+  test "creates and edits Bedrock configuration using the deployment endpoint" do
+    with_aws_region("us-east-1") do
+      post settings_backends_path, params: { backend: { name: "AWS", adapter: "bedrock", base_url: "http://ignored.test" } }
+      assert_redirected_to settings_backends_path
+      backend = Backend.find_by!(name: "AWS")
+      assert_equal "bedrock", backend.adapter
+      assert_equal "https://bedrock-runtime.us-east-1.amazonaws.com", backend.base_url
+
+      get edit_settings_backend_path(backend)
+      assert_select "input[name='backend[base_url]'][disabled]"
+      assert_select "input[name='backend[region]']", count: 0
+      assert_select "select[name='backend[adapter]'][disabled]"
+
+      patch settings_backend_path(backend), params: { backend: { name: "New AWS" } }
+      assert_redirected_to settings_backends_path
+      assert_equal "New AWS", backend.reload.name
+      get settings_backends_path
+      assert_select ".backend-list li", text: /Region: us-east-1/
+      assert_select "button", text: "Check credentials / discovery"
+    end
+  end
+
+  test "rejects adapter changes submitted directly" do
+    with_aws_region("us-east-1") do
+      backend = Backend.create!(name: "Edge", base_url: "http://edge.test")
+      patch settings_backend_path(backend), params: { backend: { adapter: "bedrock" } }
+      assert_response :unprocessable_content
+      assert_equal "ollama", backend.reload.adapter
+    end
+  end
+
+  test "Bedrock creation explains missing environment configuration" do
+    with_aws_region(nil) do
+      assert_no_difference "Backend.count" do
+        post settings_backends_path, params: { backend: { name: "AWS", adapter: "bedrock" } }
+      end
+      assert_response :unprocessable_content
+      assert_select "[role=alert]", text: /Set AWS_REGION/
+      assert_select "input[name='backend[base_url]'][disabled]"
+    end
+  end
+
   test "creates a backend" do
     assert_difference "Backend.count", 1 do
       post settings_backends_path, params: {

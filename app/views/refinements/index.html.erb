@@ -33,6 +33,7 @@
         <%= form.select :teacher_language_model_id,
           grouped_options_for_select(@model_options, @selected[:teacher_language_model_id]),
           { prompt: "Choose a stronger model" }, required: true %>
+        <p class="field-hint">The teacher receives test cases and both reference and student outputs.</p>
         <%= form.label :max_iterations, "Maximum iterations" %>
         <%= form.number_field :max_iterations, value: @refinement.max_iterations,
           min: PromptRefinement::MAX_ITERATIONS.min, max: PromptRefinement::MAX_ITERATIONS.max, required: true %>

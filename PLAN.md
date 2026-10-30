@@ -54,9 +54,9 @@ Implementation details: [notes/bedrock.md](notes/bedrock.md).
 - ~~Add shared inference errors and completion results, preserving Ollama behavior.~~
 - ~~Add AWS SDK dependencies.~~
 - ~~Track immutable adapter snapshots for trials and refinements, using saved configuration throughout execution (Ollama initially).~~
-- Wire env / credentials for both Compose services.
+- ~~Wire env / credentials for both Compose services.~~
 - ~~Register the `bedrock` adapter and derive its endpoint from the deployment’s `AWS_REGION`.~~
-- Adapt backend settings UI for Bedrock with deployment region display and no editable endpoint.
+- ~~Adapt backend settings UI for Bedrock with deployment region display and no editable endpoint.~~
 - Document IAM permissions and credential refresh.
 - Implement Converse generation with option translation, output limits, response validation, bounded retries, and token/time metrics.
 - Support model and inference-profile discovery, explicit invocation IDs, and connection checks without losing catalog entries on discovery failure.

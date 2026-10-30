@@ -36,6 +36,32 @@ class TrialExecutionJobTest < ActiveJob::TestCase
     assert_predicate trial.reload, :completed?
   end
 
+  test "uses the saved Bedrock adapter and endpoint when executing a queued trial" do
+    with_aws_region("us-east-1") do
+      backend = Backend.create!(name: "AWS", adapter: "bedrock")
+      trial = create_trial(prompt: @prompt, test_suite: @test_suite, backend: backend)
+      saved = trial.inference_configuration
+      backend.update!(name: "Renamed AWS")
+      received = nil
+      client = Object.new
+      client.define_singleton_method(:complete) do |**_args|
+        Inference::Completion.new(content: "Saved configuration", metrics: {})
+      end
+      factory = Object.new
+      factory.define_singleton_method(:for) do |_backend, **configuration|
+        received = configuration
+        client
+      end
+      TrialExecutionJob.client_factory = factory
+
+      TrialExecutionJob.perform_now(trial.reload)
+
+      assert_equal saved, received
+      assert_equal "https://bedrock-runtime.us-east-1.amazonaws.com", received[:base_url]
+      assert_predicate trial.reload, :completed?
+    end
+  end
+
   test "records responses sequentially and completes the trial" do
     calls = []
     client_class = Class.new do

@@ -11,7 +11,7 @@
   <section class="editor-card">
     <h2>Add backend</h2>
     <%= render "shared/errors", record: @backend %>
-    <%= form_with model: [:settings, @backend] do |form| %>
+    <%= form_with model: [:settings, @backend], data: { controller: "backend-configuration" } do |form| %>
       <%= form.label :name %>
       <%= form.text_field :name, required: true, placeholder: "RK3588 board" %>
 
@@ -38,11 +38,11 @@
                 </span>
               </h3>
               <p><code><%= backend.base_url %></code></p>
-              <small>Adapter: <%= backend.adapter %></small>
+              <small>Adapter: <%= backend.adapter %><% if backend.bedrock? %> · Region: <%= ENV["AWS_REGION"].presence || "Not configured" %><% end %></small>
             </div>
             <div class="backend-actions">
               <%= link_to "Edit", edit_settings_backend_path(backend), class: "secondary-button" %>
-              <%= button_to "Test connection",
+              <%= button_to backend.bedrock? ? "Check credentials / discovery" : "Test connection",
                 test_connection_settings_backend_path(backend),
                 class: "secondary-button" %>
             </div>

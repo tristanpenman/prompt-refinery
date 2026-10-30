@@ -11,6 +11,9 @@ services:
       RAILS_AUTH_TOKEN: ${RAILS_AUTH_TOKEN:-}
       RAILS_LOG_TO_STDOUT: "1"
       AWS_REGION: ${AWS_REGION:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -26,6 +29,9 @@ services:
       OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
       RAILS_LOG_TO_STDOUT: "1"
       AWS_REGION: ${AWS_REGION:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
     image: prompt-refinery:dev
     restart: always
     volumes:

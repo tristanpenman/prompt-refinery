@@ -50,6 +50,37 @@ class RefinementJobTest < ActiveJob::TestCase
     end
   end
 
+  test "all iterations use saved configuration for the Ollama student and Bedrock teacher" do
+    with_aws_region("us-east-1") do
+      teacher = Backend.create!(name: "AWS", adapter: "bedrock")
+      @refinement = PromptRefinement.create_for!(
+        prompt: @prompt, test_suite: @test_suite,
+        student: LanguageModel.find_by!(backend: @backend, name: "student:1b"),
+        teacher: LanguageModel.create!(backend: teacher, name: "teacher:8b")
+      )
+      student_snapshot = @refinement.backend_snapshot(:student)
+      teacher_snapshot = @refinement.backend_snapshot(:teacher)
+      @backend.update!(name: "Renamed local", base_url: "http://changed.test")
+      teacher.update!(name: "Renamed AWS")
+      use_client(evaluation_replies: [ evaluation_reply(verdicts: %w[miss miss]), evaluation_reply(verdicts: %w[match match]) ])
+      @refinement.start_iteration!
+
+      RefinementJob.perform_now(@refinement.reload)
+      reference = @refinement.reload.reference_trial
+      @refinement.start_iteration!
+      RefinementJob.perform_now(@refinement.reload)
+
+      assert_equal teacher_snapshot, reference.backend_snapshot
+      assert_equal reference, @refinement.reload.reference_trial
+      assert_equal [ teacher_snapshot.except(:name), student_snapshot.except(:name), teacher_snapshot.except(:name),
+        student_snapshot.except(:name), teacher_snapshot.except(:name) ], @configurations
+      assert_equal 2, @refinement.iterations.completed.count
+      @refinement.iterations.each do |iteration|
+        assert_equal student_snapshot, iteration.student_trial.backend_snapshot
+      end
+    end
+  end
+
   test "runs one iteration and returns the refinement to pending" do
     use_client(evaluation_replies: [ evaluation_reply(verdicts: %w[match partial]) ])
 
