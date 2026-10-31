@@ -53,8 +53,8 @@ module Settings
 
     def refresh_summary(catalog, checked_count)
       summary = "Checked #{helpers.pluralize(checked_count, "backend")} and found #{helpers.pluralize(catalog.models.size, "model")}"
-      new_names = catalog.new_models.map(&:name)
-      new_names.any? ? "#{summary}, including #{new_names.size} new: #{new_names.to_sentence}." : "#{summary}. No new models."
+      new_count = catalog.new_models.size
+      new_count.positive? ? "#{summary}, including #{new_count} new." : "#{summary}. No new models."
     end
   end
 end

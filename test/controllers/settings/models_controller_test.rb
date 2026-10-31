@@ -150,7 +150,7 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to settings_models_path
-    assert_equal "Checked 2 backends and found 3 models, including 3 new: gemma3:4b, qwen2.5:7b, and gemma3:1b.", flash[:notice]
+    assert_equal "Checked 2 backends and found 3 models, including 3 new.", flash[:notice]
     assert_nil flash[:alert]
     gemma = @backend.language_models.find_by!(name: "gemma3:4b")
     assert_equal "gemma3", gemma.language_model_family.name
@@ -159,6 +159,24 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "qwen2.5", @backend.language_models.find_by!(name: "qwen2.5:7b").language_model_family.name
     assert_equal [ "gemma3:1b" ], edge.language_models.pluck(:name)
     assert_not calls.key?(disabled.id)
+  end
+
+  test "large Bedrock catalogs fit in the session cookie and persist every model" do
+    @backend.update!(enabled: false)
+    bedrock = Backend.create!(name: "AWS", adapter: "bedrock")
+    models = 113.times.map do |index|
+      { "name" => "arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-sonnet-#{index}-v1:0" }
+    end
+    Settings::ModelsController.client_factory = client_factory(models:)
+
+    post refresh_settings_models_path
+
+    assert_redirected_to settings_models_path
+    assert_equal "Checked 1 backend and found 113 models, including 113 new.", flash[:notice]
+    assert_equal 113, bedrock.language_models.count
+    follow_redirect!
+    assert_response :success
+    assert_select ".model-list li h3", count: 113
   end
 
   test "refresh keeps models that are no longer available and updates known ones" do
@@ -223,7 +241,7 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
 
     post refresh_settings_models_path
 
-    assert_equal "Checked 1 backend and found 1 model, including 1 new: local-model.", flash[:notice]
+    assert_equal "Checked 1 backend and found 1 model, including 1 new.", flash[:notice]
     assert_equal "Could not check RK3588: connection refused", flash[:alert]
     assert @backend.language_models.exists?(name: "local-model")
   end
