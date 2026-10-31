@@ -69,8 +69,32 @@ class PlaygroundsControllerTest < ActionDispatch::IntegrationTest
 
     post playground_path, params: { model: "gemma3:4b", backend_id: @backend.id, question: "Hello" }
 
-    assert_response :bad_gateway
+    assert_response :unprocessable_content
     assert_select "[role=alert]", text: /Ollama timed out/
+  end
+
+  test "Bedrock access errors are rendered in the Turbo result instead of a gateway response" do
+    backend = Backend.create!(name: "AWS", adapter: "bedrock")
+    runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
+    runtime.stub_responses(:converse, Aws::BedrockRuntime::Errors::AccessDeniedException.new(nil,
+      "openai.gpt-6-luna is not available for this account. Contact AWS Sales."))
+    client = Inference::BedrockClient.new(runtime:)
+    factory = Object.new
+    factory.define_singleton_method(:for) { |_| client }
+    PlaygroundsController.client_factory = factory
+
+    post playground_path,
+      params: { model: "global.openai.gpt-6-luna", backend_id: backend.id, question: "Hello" },
+      headers: { "Accept" => "text/vnd.turbo-stream.html, text/html" }
+
+    assert_response :unprocessable_content
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action=replace][target=prompt_result]" do
+      assert_select "[role=alert]" do
+        assert_select "h2", text: "Unable to generate a response"
+        assert_select "p", text: /AccessDeniedException.*openai.gpt-6-luna is not available for this account.*Contact AWS Sales/
+      end
+    end
   end
 
   test "rejects a blank question without contacting Ollama" do

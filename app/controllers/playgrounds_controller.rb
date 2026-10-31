@@ -19,7 +19,7 @@ class PlaygroundsController < ApplicationController
     render_result
   rescue Inference::Error => error
     @error = error.message
-    render_result(status: :bad_gateway)
+    render_result(status: :unprocessable_content)
   end
 
   private
