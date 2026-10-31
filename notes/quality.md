@@ -16,7 +16,7 @@ Measure line and branch coverage to find untested behavior. Establish a baseline
 
 ### 3. ERB linting
 
-Extend checks into templates, which the current Ruby lint command does not cover. Start with syntax and correctness rules, then introduce style rules selectively.
+Implemented with `erb_lint` in local and hosted CI. Run `docker compose exec app bin/erb_lint --lint-all` (or `docker compose run --rm app bin/erb_lint --lint-all` when the app is stopped). The configuration covers all ERB views, including Turbo Stream templates, with parser, comment syntax, and interpolation safety checks. Style rules remain opt-in for later adoption.
 
 ### 4. N+1 query detection
 

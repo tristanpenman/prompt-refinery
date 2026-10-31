@@ -1,0 +1,11 @@
+---
+# Include HTML and Turbo Stream templates without linting generated/vendor files.
+glob: "app/views/**/*.erb"
+EnableDefaultLinters: false
+linters:
+  ParserErrors:
+    enabled: true
+  ErbSafety:
+    enabled: true
+  CommentSyntax:
+    enabled: true
