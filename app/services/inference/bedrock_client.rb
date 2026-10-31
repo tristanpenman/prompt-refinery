@@ -2,8 +2,9 @@ module Inference
   class BedrockClient
     Error = Class.new(Inference::Error)
 
-    def initialize(client: nil)
+    def initialize(client: nil, runtime: nil)
       @client = client
+      @runtime = runtime
     end
 
     def models
@@ -34,28 +35,68 @@ module Inference
       end
       models.uniq { |model| model["name"] }
     rescue Aws::Errors::ServiceError => error
-      context = error.context
-      location = [ context&.operation_name, context&.config&.region ].compact.join(" in ")
-      message = "Bedrock discovery failed (#{error.code || error.class.name.demodulize})"
-      message += " during #{location}" if location.present?
-      message += ": #{error.message}"
-      request_id = context&.http_response&.headers&.[]("x-amzn-requestid")
-      message += " Request ID: #{request_id}." if request_id.present?
-      raise Error, redact_credentials(message)
+      raise Error, service_error_message(error, "discovery")
     rescue Aws::Errors::MissingCredentialsError,
       Seahorse::Client::NetworkingError => error
       raise Error, "Bedrock discovery failed (#{error.class.name.demodulize}). Check AWS credentials, region, and discovery permissions."
     end
 
-    def complete(**)
-      raise Error, "Bedrock generation is not implemented yet."
+    def complete(model:, prompt:, format: nil, options: nil)
+      raise Error, "Bedrock structured output is not implemented yet." if format
+
+      config = (options || {}).stringify_keys
+      unsupported = config.keys - %w[num_ctx num_predict max_tokens temperature top_p stop]
+      raise Error, "Unsupported Bedrock options: #{unsupported.join(', ')}" if unsupported.any?
+
+      inference = {}
+      inference[:max_tokens] = config["max_tokens"] || config["num_predict"] if config.key?("max_tokens") || config.key?("num_predict")
+      inference[:temperature] = config["temperature"] if config.key?("temperature")
+      inference[:top_p] = config["top_p"] if config.key?("top_p")
+      inference[:stop_sequences] = Array(config["stop"]) if config.key?("stop")
+      request = { model_id: model, messages: [ { role: "user", content: [ { text: prompt } ] } ] }
+      request[:inference_config] = inference if inference.any?
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
+      reply = runtime.converse(**request)
+      duration = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond) - started
+      unless %w[end_turn stop_sequence].include?(reply.stop_reason)
+        raise Error, "Bedrock did not complete the response (stop reason: #{reply.stop_reason.presence || 'missing'})."
+      end
+      message = reply.output&.message
+      raise Error, "Bedrock returned an invalid assistant message." unless message&.role == "assistant"
+
+      content = message.content.filter_map(&:text).join
+      raise Error, "Bedrock returned an empty text response." if content.blank?
+
+      metrics = { "total_duration" => duration,
+        "prompt_eval_count" => reply.usage&.input_tokens, "eval_count" => reply.usage&.output_tokens }.compact
+      Completion.new(content:, metrics:)
+    rescue Aws::Errors::ServiceError => error
+      raise Error, service_error_message(error, "generation")
+    rescue Aws::Errors::MissingCredentialsError, Seahorse::Client::NetworkingError => error
+      raise Error, "Bedrock generation failed (#{error.class.name.demodulize}). Check AWS credentials and connectivity."
     end
 
-    def generate(**)
-      raise Error, "Bedrock generation is not implemented yet."
+    def generate(model:, prompt:, format: nil, options: nil)
+      complete(model:, prompt:, format:, options:).content
     end
 
     private
+
+    def runtime
+      @runtime ||= Aws::BedrockRuntime::Client.new(region: BedrockConfiguration.region,
+        retry_limit: 2, http_open_timeout: 10, http_read_timeout: 300)
+    end
+
+    def service_error_message(error, operation)
+      context = error.context
+      location = [ context&.operation_name, context&.config&.region ].compact.join(" in ")
+      message = "Bedrock #{operation} failed (#{error.code || error.class.name.demodulize})"
+      message += " during #{location}" if location.present?
+      message += ": #{error.message}"
+      request_id = context&.http_response&.headers&.[]("x-amzn-requestid")
+      message += " Request ID: #{request_id}." if request_id.present?
+      redact_credentials(message)
+    end
 
     def redact_credentials(message)
       %w[AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_BEARER_TOKEN_BEDROCK]

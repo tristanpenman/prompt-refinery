@@ -115,6 +115,25 @@ class PlaygroundsControllerTest < ActionDispatch::IntegrationTest
     assert_equal edge, selected_backend
   end
 
+  test "Bedrock playground sends the selected profile and renders its answer" do
+    backend = Backend.create!(name: "AWS", adapter: "bedrock")
+    runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
+    runtime.stub_responses(:converse, output: { message: { role: "assistant", content: [ { text: "Bedrock answer" } ] } },
+      stop_reason: "end_turn", usage: { input_tokens: 1, output_tokens: 2, total_tokens: 3 }, metrics: { latency_ms: 1 })
+    client = Inference::BedrockClient.new(runtime:)
+    factory = Object.new
+    factory.define_singleton_method(:for) { |_| client }
+    PlaygroundsController.client_factory = factory
+
+    post playground_path, params: { model: "selected-profile", backend_id: backend.id, question: "Hello" },
+      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "#prompt_result .answer", text: /Bedrock answer/
+    assert_equal "selected-profile", runtime.api_requests.last[:params][:model_id]
+    assert_equal "Hello", runtime.api_requests.last[:params][:messages].first[:content].first[:text]
+  end
+
   private
 
   def factory_for(client_class)

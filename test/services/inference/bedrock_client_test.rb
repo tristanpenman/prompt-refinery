@@ -87,12 +87,67 @@ class Inference::BedrockClientTest < ActiveSupport::TestCase
     ENV["AWS_SECRET_ACCESS_KEY"] = original_secret
   end
 
-  test "generation fails through the common inference error interface" do
-    assert_raises(Inference::Error) { @client.complete(model: "text", prompt: "hello") }
-    assert_raises(Inference::Error) { @client.generate(model: "text", prompt: "hello") }
+  test "Converse sends the exact invocation ID and maps text and usage" do
+    runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
+    runtime.stub_responses(:converse, completion_reply)
+    client = Inference::BedrockClient.new(runtime:)
+    result = client.complete(model: "profile-arn", prompt: "Hello", options: { num_ctx: 4096, num_predict: 100 })
+
+    assert_equal "Hello world", result.content
+    assert_equal 5, result.metrics["prompt_eval_count"]
+    assert_equal 2, result.metrics["eval_count"]
+    assert_operator result.metrics["total_duration"], :>=, 0
+    assert_not result.metrics.key?("eval_duration")
+    assert_equal({ model_id: "profile-arn", messages: [ { role: "user", content: [ { text: "Hello" } ] } ],
+      inference_config: { max_tokens: 100 } }, runtime.api_requests.last[:params])
+    assert_equal "Hello world", client.generate(model: "profile-arn", prompt: "Hello")
+  end
+
+  test "Converse leaves generation parameters to the model by default" do
+    runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
+    runtime.stub_responses(:converse, completion_reply)
+    Inference::BedrockClient.new(runtime:).generate(model: "text", prompt: "Hello")
+    assert_not runtime.api_requests.last[:params].key?(:inference_config)
+  end
+
+  test "Converse rejects incomplete or blocked responses" do
+    runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
+    client = Inference::BedrockClient.new(runtime:)
+    %w[max_tokens guardrail_intervened content_filtered tool_use refusal unknown].each do |reason|
+      runtime.stub_responses(:converse, completion_reply.merge(stop_reason: reason))
+      error = assert_raises(Inference::Error) { client.generate(model: "text", prompt: "Hello") }
+      assert_includes error.message, reason
+    end
+    runtime.stub_responses(:converse, completion_reply.merge(output: { message: { role: "assistant", content: [] } }))
+    assert_raises(Inference::Error) { client.generate(model: "text", prompt: "Hello") }
+  end
+
+  test "Converse failures use the common error interface" do
+    runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
+    runtime.stub_responses(:converse, "AccessDeniedException")
+    error = assert_raises(Inference::Error) do
+      Inference::BedrockClient.new(runtime:).generate(model: "text", prompt: "Hello")
+    end
+    assert_includes error.message, "Bedrock generation failed (AccessDeniedException)"
+  end
+
+  test "structured output and unknown options fail before sending a request" do
+    runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
+    client = Inference::BedrockClient.new(runtime:)
+    assert_raises(Inference::Error) { client.generate(model: "text", prompt: "Hello", format: {}) }
+    assert_raises(Inference::Error) { client.generate(model: "text", prompt: "Hello", options: { seed: 1 }) }
+    assert_empty runtime.api_requests
   end
 
   private
+
+  def completion_reply
+    { output: { message: { role: "assistant", content: [
+      { text: "Hello" }, { reasoning_content: { reasoning_text: { text: "private reasoning", signature: "sig" } } },
+      { text: " world" }
+    ] } }, stop_reason: "end_turn", usage: { input_tokens: 5, output_tokens: 2, total_tokens: 7 },
+      metrics: { latency_ms: 10 } }
+  end
 
   def foundation(id, **overrides)
     { model_id: id, model_name: id.titleize, model_arn: "arn:aws:bedrock:us-east-1::foundation-model/#{id}",
