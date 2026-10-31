@@ -74,25 +74,27 @@ class PlaygroundsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "Bedrock access errors are rendered in the Turbo result instead of a gateway response" do
-    backend = Backend.create!(name: "AWS", adapter: "bedrock")
-    runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
-    runtime.stub_responses(:converse, Aws::BedrockRuntime::Errors::AccessDeniedException.new(nil,
-      "openai.gpt-6-luna is not available for this account. Contact AWS Sales."))
-    client = Inference::BedrockClient.new(runtime:)
-    factory = Object.new
-    factory.define_singleton_method(:for) { |_| client }
-    PlaygroundsController.client_factory = factory
+    with_aws_region("us-east-1") do
+      backend = Backend.create!(name: "AWS", adapter: "bedrock")
+      runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
+      runtime.stub_responses(:converse, Aws::BedrockRuntime::Errors::AccessDeniedException.new(nil,
+        "openai.gpt-6-luna is not available for this account. Contact AWS Sales."))
+      client = Inference::BedrockClient.new(runtime:)
+      factory = Object.new
+      factory.define_singleton_method(:for) { |_| client }
+      PlaygroundsController.client_factory = factory
 
-    post playground_path,
-      params: { model: "global.openai.gpt-6-luna", backend_id: backend.id, question: "Hello" },
-      headers: { "Accept" => "text/vnd.turbo-stream.html, text/html" }
+      post playground_path,
+        params: { model: "global.openai.gpt-6-luna", backend_id: backend.id, question: "Hello" },
+        headers: { "Accept" => "text/vnd.turbo-stream.html, text/html" }
 
-    assert_response :unprocessable_content
-    assert_equal "text/vnd.turbo-stream.html", response.media_type
-    assert_select "turbo-stream[action=replace][target=prompt_result]" do
-      assert_select "[role=alert]" do
-        assert_select "h2", text: "Unable to generate a response"
-        assert_select "p", text: /AccessDeniedException.*openai.gpt-6-luna is not available for this account.*Contact AWS Sales/
+      assert_response :unprocessable_content
+      assert_equal "text/vnd.turbo-stream.html", response.media_type
+      assert_select "turbo-stream[action=replace][target=prompt_result]" do
+        assert_select "[role=alert]" do
+          assert_select "h2", text: "Unable to generate a response"
+          assert_select "p", text: /AccessDeniedException.*openai.gpt-6-luna is not available for this account.*Contact AWS Sales/
+        end
       end
     end
   end
@@ -140,22 +142,24 @@ class PlaygroundsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "Bedrock playground sends the selected profile and renders its answer" do
-    backend = Backend.create!(name: "AWS", adapter: "bedrock")
-    runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
-    runtime.stub_responses(:converse, output: { message: { role: "assistant", content: [ { text: "Bedrock answer" } ] } },
-      stop_reason: "end_turn", usage: { input_tokens: 1, output_tokens: 2, total_tokens: 3 }, metrics: { latency_ms: 1 })
-    client = Inference::BedrockClient.new(runtime:)
-    factory = Object.new
-    factory.define_singleton_method(:for) { |_| client }
-    PlaygroundsController.client_factory = factory
+    with_aws_region("us-east-1") do
+      backend = Backend.create!(name: "AWS", adapter: "bedrock")
+      runtime = Aws::BedrockRuntime::Client.new(region: "us-east-1", stub_responses: true)
+      runtime.stub_responses(:converse, output: { message: { role: "assistant", content: [ { text: "Bedrock answer" } ] } },
+        stop_reason: "end_turn", usage: { input_tokens: 1, output_tokens: 2, total_tokens: 3 }, metrics: { latency_ms: 1 })
+      client = Inference::BedrockClient.new(runtime:)
+      factory = Object.new
+      factory.define_singleton_method(:for) { |_| client }
+      PlaygroundsController.client_factory = factory
 
-    post playground_path, params: { model: "selected-profile", backend_id: backend.id, question: "Hello" },
-      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post playground_path, params: { model: "selected-profile", backend_id: backend.id, question: "Hello" },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    assert_response :success
-    assert_select "#prompt_result .answer", text: /Bedrock answer/
-    assert_equal "selected-profile", runtime.api_requests.last[:params][:model_id]
-    assert_equal "Hello", runtime.api_requests.last[:params][:messages].first[:content].first[:text]
+      assert_response :success
+      assert_select "#prompt_result .answer", text: /Bedrock answer/
+      assert_equal "selected-profile", runtime.api_requests.last[:params][:model_id]
+      assert_equal "Hello", runtime.api_requests.last[:params][:messages].first[:content].first[:text]
+    end
   end
 
   private

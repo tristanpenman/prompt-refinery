@@ -38,22 +38,24 @@ class Inference::BedrockClientTest < ActiveSupport::TestCase
   end
 
   test "a later discovery failure preserves existing availability" do
-    backend = Backend.create!(name: "AWS", adapter: "bedrock")
-    existing = backend.language_models.create!(name: "existing")
-    @sdk.stub_responses(:list_foundation_models, model_summaries: [ foundation("text") ])
-    @sdk.stub_responses(:list_inference_profiles, [
-      { inference_profile_summaries: [ profile("first", "text") ], next_token: "next" },
-      "AccessDeniedException"
-    ])
-    factory = Object.new
-    client = @client
-    factory.define_singleton_method(:for) { |_| client }
+    with_aws_region("us-east-1") do
+      backend = Backend.create!(name: "AWS", adapter: "bedrock")
+      existing = backend.language_models.create!(name: "existing")
+      @sdk.stub_responses(:list_foundation_models, model_summaries: [ foundation("text") ])
+      @sdk.stub_responses(:list_inference_profiles, [
+        { inference_profile_summaries: [ profile("first", "text") ], next_token: "next" },
+        "AccessDeniedException"
+      ])
+      factory = Object.new
+      client = @client
+      factory.define_singleton_method(:for) { |_| client }
 
-    result = Inference::ModelCatalog.new(backends: [ backend ], client_factory: factory).call
+      result = Inference::ModelCatalog.new(backends: [ backend ], client_factory: factory).call
 
-    assert_equal 1, result.errors.size
-    assert existing.reload.available?
-    assert_equal [ "existing" ], backend.language_models.pluck(:name)
+      assert_equal 1, result.errors.size
+      assert existing.reload.available?
+      assert_equal [ "existing" ], backend.language_models.pluck(:name)
+    end
   end
 
   test "stale active profiles do not block discovery of supported models" do

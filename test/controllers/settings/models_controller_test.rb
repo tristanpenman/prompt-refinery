@@ -162,21 +162,23 @@ class Settings::ModelsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "large Bedrock catalogs fit in the session cookie and persist every model" do
-    @backend.update!(enabled: false)
-    bedrock = Backend.create!(name: "AWS", adapter: "bedrock")
-    models = 113.times.map do |index|
-      { "name" => "arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-sonnet-#{index}-v1:0" }
+    with_aws_region("us-east-1") do
+      @backend.update!(enabled: false)
+      bedrock = Backend.create!(name: "AWS", adapter: "bedrock")
+      models = 113.times.map do |index|
+        { "name" => "arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-sonnet-#{index}-v1:0" }
+      end
+      Settings::ModelsController.client_factory = client_factory(models:)
+
+      post refresh_settings_models_path
+
+      assert_redirected_to settings_models_path
+      assert_equal "Checked 1 backend and found 113 models, including 113 new.", flash[:notice]
+      assert_equal 113, bedrock.language_models.count
+      follow_redirect!
+      assert_response :success
+      assert_select ".model-list li h3", count: 113
     end
-    Settings::ModelsController.client_factory = client_factory(models:)
-
-    post refresh_settings_models_path
-
-    assert_redirected_to settings_models_path
-    assert_equal "Checked 1 backend and found 113 models, including 113 new.", flash[:notice]
-    assert_equal 113, bedrock.language_models.count
-    follow_redirect!
-    assert_response :success
-    assert_select ".model-list li h3", count: 113
   end
 
   test "refresh keeps models that are no longer available and updates known ones" do
