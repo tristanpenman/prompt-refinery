@@ -55,7 +55,7 @@ class LanguageModel < ApplicationRecord
   private
 
   def assign_derived_family
-    family_name = self.class.family_name_for(name)
+    family_name = backend&.bedrock? ? details["provider"].presence || "Amazon Bedrock" : self.class.family_name_for(name)
     self.language_model_family = LanguageModelFamily.find_or_create_by!(name: family_name) if family_name
   end
 

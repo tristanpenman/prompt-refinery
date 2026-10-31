@@ -13,5 +13,5 @@
 </div>
 <div data-backend-configuration-target="bedrock" <%= "hidden" unless backend.bedrock? %>>
   <p>AWS region: <%= ENV["AWS_REGION"].presence || "Not configured" %>. Configure AWS_REGION and credentials in the application environment. AWS determines the endpoint.</p>
-  <p>Bedrock generation and model discovery are not available yet.</p>
+  <p>Model discovery checks credentials and catalog access; it does not verify invocation access. Bedrock generation is not available yet.</p>
 </div>

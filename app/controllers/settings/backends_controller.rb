@@ -44,8 +44,10 @@ module Settings
         raise Inference::Error, "the server returned an invalid model list"
       end
 
-      redirect_to settings_backends_path,
-        notice: "Connected to #{@backend.name}. Found #{helpers.pluralize(models.size, "model")}."
+      notice = "Connected to #{@backend.name}. Found #{helpers.pluralize(models.size, "model")}."
+      notice += " Discovery does not verify invocation access." if @backend.bedrock?
+      redirect_to settings_backends_path, notice:
+
     rescue Inference::Error => error
       redirect_to settings_backends_path,
         alert: "Could not connect to #{@backend.name}: #{error.message}"

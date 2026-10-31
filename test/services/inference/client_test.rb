@@ -32,12 +32,8 @@ class Inference::ClientTest < ActiveSupport::TestCase
     assert_equal "http://saved.test", client.instance_variable_get(:@base_url)
   end
 
-  test "Bedrock configuration fails clearly until generation and discovery are implemented" do
-    backend = Backend.new(adapter: "bedrock")
-    error = assert_raises(Inference::Client::UnsupportedAdapter) do
-      Inference::Client.for(backend, adapter: "bedrock")
-    end
-    assert_includes error.message, "not implemented yet"
+  test "builds a Bedrock client without making AWS requests" do
+    assert_instance_of Inference::BedrockClient, Inference::Client.for(Backend.new(adapter: "bedrock"))
   end
 
   test "rejects an unsupported adapter" do
