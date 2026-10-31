@@ -58,8 +58,10 @@ Implementation details: [notes/bedrock.md](notes/bedrock.md).
 - ~~Register the `bedrock` adapter and derive its endpoint from the deployment’s `AWS_REGION`.~~
 - ~~Adapt backend settings UI for Bedrock with deployment region display and no editable endpoint.~~
 - ~~Support model and inference-profile discovery, explicit invocation IDs, and connection checks without losing catalog entries on discovery failure.~~
-- ~~Document IAM permissions and credential refresh.~~
-- Implement Converse generation with option translation, output limits, response validation, bounded retries, and token/time metrics.
+- ~~Document IAM permissions and credential refresh.~~'
+- Implement Converse generation.
+- Hide models that have not been permitted in AWS Console.
+- Extend Converse generation with option translation, output limits, response validation, bounded retries, and token/time metrics.
 - Add native JSON-schema evaluation and teacher capability checks.
 - Test the adapter and full refinement flow with stubbed AWS clients, including reference reuse, automatic iterations, completion conditions, and failures.
 - Verify a small live refinement with an Ollama student and Bedrock teacher, and document setup and usage.
