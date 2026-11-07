@@ -3,7 +3,7 @@ source "https://rubygems.org"
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.3"
 # Bedrock Converse generation (including native JSON schema) and model discovery
-gem "aws-sdk-bedrockruntime", "~> 1.89"
+gem "aws-sdk-bedrockruntime", "~> 1.90"
 gem "aws-sdk-bedrock", "~> 1.100"
 # Render model responses written in Markdown
 gem "commonmarker", "~> 2.10"
