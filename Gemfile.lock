@@ -75,7 +75,7 @@ GEM
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
-    annotaterb (4.25.0)
+    annotaterb (4.26.0)
       activerecord (>= 6.0.0)
       activesupport (>= 6.0.0)
     ast (2.4.3)
@@ -177,9 +177,9 @@ GEM
       net-smtp
     marcel (1.2.1)
     mini_mime (1.1.5)
-    minitest (6.0.6)
+    minitest (6.1.0)
       drb (~> 2.0)
-      prism (~> 1.5)
+      prism (>= 1.5, < 3)
     msgpack (1.8.5)
     net-imap (0.6.8)
       date
@@ -367,7 +367,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
-  annotaterb (~> 4.25)
+  annotaterb (~> 4.26)
   aws-sdk-bedrock (~> 1.100)
   aws-sdk-bedrockruntime (~> 1.89)
   bootsnap

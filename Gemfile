@@ -55,7 +55,7 @@ end
 
 group :development do
   # Adds database schema comments to Active Record models.
-  gem "annotaterb", "~> 4.25", require: false
+  gem "annotaterb", "~> 4.26", require: false
 
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
